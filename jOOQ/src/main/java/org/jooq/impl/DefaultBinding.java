@@ -1011,7 +1011,9 @@ public class DefaultBinding<T, U> implements Binding<T, U> {
                     break;
                 }
                 default:
-                    throw new SQLDialectNotSupportedException("Cannot bind ARRAY types in dialect " + ctx.family());
+                    ctx.statement().setArray(ctx.index(), new MockArray(ctx.family(), value, type));
+                    break;
+                    //throw new SQLDialectNotSupportedException("Cannot bind ARRAY types in dialect " + ctx.family());
             }
         }
 
