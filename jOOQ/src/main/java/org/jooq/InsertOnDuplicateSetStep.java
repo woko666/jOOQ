@@ -41,11 +41,17 @@ package org.jooq;
 // ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+import static org.jooq.SQLDialect.POSTGRES;
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
@@ -91,28 +97,44 @@ public interface InsertOnDuplicateSetStep<R extends Record> {
 
     /**
      * Set values for <code>UPDATE</code> in the <code>INSERT</code> statement's
-     * <code>ON DUPLICATE KEY UPDATE</code> clause.
+     * <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support
     <T> InsertOnDuplicateSetMoreStep<R> set(Field<T> field, T value);
 
     /**
      * Set values for <code>UPDATE</code> in the <code>INSERT</code> statement's
-     * <code>ON DUPLICATE KEY UPDATE</code> clause.
+     * <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support
     <T> InsertOnDuplicateSetMoreStep<R> set(Field<T> field, Field<T> value);
 
     /**
      * Set values for <code>UPDATE</code> in the <code>INSERT</code> statement's
-     * <code>ON DUPLICATE KEY UPDATE</code> clause.
+     * <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support
     <T> InsertOnDuplicateSetMoreStep<R> set(Field<T> field, Select<? extends Record1<T>> value);
 
     /**
+     * Set a <code>null</code> value for <code>UPDATE</code> in the
+     * <code>INSERT</code> statement's <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
+     * <p>
+     * This method is convenience for calling {@link #set(Field, Object)},
+     * without the necessity of casting the Java <code>null</code> literal to
+     * <code>(T)</code>.
+     */
+    @Support
+    <T> InsertOnDuplicateSetMoreStep<R> setNull(Field<T> field);
+
+    /**
      * Set multiple values for <code>UPDATE</code> in the <code>INSERT</code>
-     * statement's <code>ON DUPLICATE KEY UPDATE</code> clause.
+     * statement's <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * Keys can either be of type {@link String}, {@link Name}, or
      * {@link Field}.
@@ -121,19 +143,20 @@ public interface InsertOnDuplicateSetStep<R extends Record> {
      * <code>Field&lt;T&gt;</code>. jOOQ will attempt to convert values to their
      * corresponding field's type.
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support
     InsertOnDuplicateSetMoreStep<R> set(Map<?, ?> map);
 
     /**
      * Set multiple values for <code>UPDATE</code> in the <code>INSERT</code>
-     * statement's <code>ON DUPLICATE KEY UPDATE</code> clause.
+     * statement's <code>ON DUPLICATE KEY UPDATE</code> or
+     * <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * This is the same as calling {@link #set(Map)} with the argument record
-     * treated as a <code>Map&lt;Field&lt;?>, Object></code>.
+     * treated as a <code>Map&lt;Field&lt;?&gt;, Object&gt;</code>.
      *
      * @see #set(Map)
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support
     InsertOnDuplicateSetMoreStep<R> set(Record record);
 
 }

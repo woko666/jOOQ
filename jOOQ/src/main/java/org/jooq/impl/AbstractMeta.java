@@ -54,6 +54,8 @@ import org.jooq.Named;
 import org.jooq.Schema;
 import org.jooq.Sequence;
 import org.jooq.Table;
+import org.jooq.UniqueKey;
+import org.jooq.exception.DataAccessException;
 
 /**
  * @author Lukas Eder
@@ -62,24 +64,17 @@ abstract class AbstractMeta implements Meta, Serializable {
 
     private static final long                  serialVersionUID = 910484713008245977L;
 
-    private final Map<Name, Catalog>           cachedCatalogs;
-    private final Map<Name, Schema>            cachedQualifiedSchemas;
-    private final Map<Name, Table<?>>          cachedQualifiedTables;
-    private final Map<Name, Sequence<?>>       cachedQualifiedSequences;
-    private final Map<Name, List<Schema>>      cachedUnqualifiedSchemas;
-    private final Map<Name, List<Table<?>>>    cachedUnqualifiedTables;
-    private final Map<Name, List<Sequence<?>>> cachedUnqualifiedSequences;
+    private Map<Name, Catalog>           cachedCatalogs;
+    private Map<Name, Schema>            cachedQualifiedSchemas;
+    private Map<Name, Table<?>>          cachedQualifiedTables;
+    private Map<Name, Sequence<?>>       cachedQualifiedSequences;
+    private Map<Name, List<Schema>>      cachedUnqualifiedSchemas;
+    private Map<Name, List<Table<?>>>    cachedUnqualifiedTables;
+    private Map<Name, List<Sequence<?>>> cachedUnqualifiedSequences;
+    private List<UniqueKey<?>>           cachedPrimaryKeys;
 
-    AbstractMeta() {
-
-        // [#7165] TODO: Allow for opting out of this cache
-        this.cachedCatalogs = new LinkedHashMap<Name, Catalog>();
-        this.cachedQualifiedSchemas = new LinkedHashMap<Name, Schema>();
-        this.cachedQualifiedTables = new LinkedHashMap<Name, Table<?>>();
-        this.cachedQualifiedSequences = new LinkedHashMap<Name, Sequence<?>>();
-        this.cachedUnqualifiedSchemas = new LinkedHashMap<Name, List<Schema>>();
-        this.cachedUnqualifiedTables = new LinkedHashMap<Name, List<Table<?>>>();
-        this.cachedUnqualifiedSequences = new LinkedHashMap<Name, List<Sequence<?>>>();
+    protected AbstractMeta() {
+        // [#9010] TODO: Allow for opting out of this cache
     }
 
     @Override
@@ -89,12 +84,25 @@ abstract class AbstractMeta implements Meta, Serializable {
 
     @Override
     public final Catalog getCatalog(Name name) {
-        if (cachedCatalogs.isEmpty())
-            for (Catalog catalog : getCatalogs())
-                cachedCatalogs.put(catalog.getQualifiedName(), catalog);
-
+        initCatalogs();
         return cachedCatalogs.get(name);
     }
+
+    @Override
+    public final List<Catalog> getCatalogs() throws DataAccessException {
+        initCatalogs();
+        return Collections.unmodifiableList(new ArrayList<>(cachedCatalogs.values()));
+    }
+
+    private final void initCatalogs() {
+        if (cachedCatalogs == null) {
+            cachedCatalogs = new LinkedHashMap<>();
+            for (Catalog catalog : getCatalogs0())
+                cachedCatalogs.put(catalog.getQualifiedName(), catalog);
+        }
+    }
+
+    protected abstract List<Catalog> getCatalogs0() throws DataAccessException;
 
     @Override
     public final List<Schema> getSchemas(String name) {
@@ -103,12 +111,39 @@ abstract class AbstractMeta implements Meta, Serializable {
 
     @Override
     public final List<Schema> getSchemas(Name name) {
+        initSchemas();
         return get(name, new Iterable<Schema>() {
             @Override
             public Iterator<Schema> iterator() {
-                return getSchemas().iterator();
+                return getSchemas0().iterator();
             }
         }, cachedQualifiedSchemas, cachedUnqualifiedSchemas);
+    }
+
+    @Override
+    public final List<Schema> getSchemas() throws DataAccessException {
+        initSchemas();
+        return Collections.unmodifiableList(new ArrayList<>(cachedQualifiedSchemas.values()));
+    }
+
+    private final void initSchemas() {
+        if (cachedQualifiedSchemas == null) {
+            cachedQualifiedSchemas = new LinkedHashMap<>();
+            cachedUnqualifiedSchemas = new LinkedHashMap<>();
+            get(name(""), new Iterable<Schema>() {
+                @Override
+                public Iterator<Schema> iterator() {
+                    return getSchemas0().iterator();
+                }
+            }, cachedQualifiedSchemas, cachedUnqualifiedSchemas);
+        }
+    }
+
+    protected List<Schema> getSchemas0() throws DataAccessException {
+        List<Schema> result = new ArrayList<>();
+        for (Catalog catalog : getCatalogs())
+            result.addAll(catalog.getSchemas());
+        return result;
     }
 
     @Override
@@ -118,6 +153,7 @@ abstract class AbstractMeta implements Meta, Serializable {
 
     @Override
     public final List<Table<?>> getTables(Name name) {
+        initTables();
         return get(name, new Iterable<Table<?>>() {
             @Override
             public Iterator<Table<?>> iterator() {
@@ -127,18 +163,90 @@ abstract class AbstractMeta implements Meta, Serializable {
     }
 
     @Override
+    public final List<Table<?>> getTables() throws DataAccessException {
+        initTables();
+        return Collections.unmodifiableList(new ArrayList<>(cachedQualifiedTables.values()));
+    }
+
+    private final void initTables() {
+        if (cachedQualifiedTables == null) {
+            cachedQualifiedTables = new LinkedHashMap<>();
+            cachedUnqualifiedTables = new LinkedHashMap<>();
+            get(name(""), new Iterable<Table<?>>() {
+                @Override
+                public Iterator<Table<?>> iterator() {
+                    return getTables0().iterator();
+                }
+            }, cachedQualifiedTables, cachedUnqualifiedTables);
+        }
+    }
+
+    protected List<Table<?>> getTables0() throws DataAccessException {
+        List<Table<?>> result = new ArrayList<>();
+        for (Schema schema : getSchemas())
+            result.addAll(schema.getTables());
+        return result;
+    }
+
+    @Override
     public final List<Sequence<?>> getSequences(String name) {
         return getSequences(name(name));
     }
 
     @Override
     public final List<Sequence<?>> getSequences(Name name) {
+        initSequences();
         return get(name, new Iterable<Sequence<?>>() {
             @Override
             public Iterator<Sequence<?>> iterator() {
                 return getSequences().iterator();
             }
         }, cachedQualifiedSequences, cachedUnqualifiedSequences);
+    }
+
+    @Override
+    public final List<Sequence<?>> getSequences() throws DataAccessException {
+        initSequences();
+        return Collections.unmodifiableList(new ArrayList<>(cachedQualifiedSequences.values()));
+    }
+
+    private final void initSequences() {
+        if (cachedQualifiedSequences == null) {
+            cachedQualifiedSequences = new LinkedHashMap<>();
+            cachedUnqualifiedSequences = new LinkedHashMap<>();
+            get(name(""), new Iterable<Sequence<?>>() {
+                @Override
+                public Iterator<Sequence<?>> iterator() {
+                    return getSequences0().iterator();
+                }
+            }, cachedQualifiedSequences, cachedUnqualifiedSequences);
+        }
+    }
+
+    protected List<Sequence<?>> getSequences0() throws DataAccessException {
+        List<Sequence<?>> result = new ArrayList<>();
+        for (Schema schema : getSchemas())
+            result.addAll(schema.getSequences());
+        return result;
+    }
+
+    @Override
+    public final List<UniqueKey<?>> getPrimaryKeys() throws DataAccessException {
+        initPrimaryKeys();
+        return Collections.unmodifiableList(cachedPrimaryKeys);
+    }
+
+    private final void initPrimaryKeys() {
+        if (cachedPrimaryKeys == null)
+            cachedPrimaryKeys = new ArrayList<>(getPrimaryKeys0());
+    }
+
+    protected List<UniqueKey<?>> getPrimaryKeys0() throws DataAccessException {
+        List<UniqueKey<?>> result = new ArrayList<>();
+        for (Table<?> table : getTables())
+            if (table.getPrimaryKey() != null)
+                result.add(table.getPrimaryKey());
+        return result;
     }
 
     private final <T extends Named> List<T> get(Name name, Iterable<T> i, Map<Name, T> qualified, Map<Name, List<T>> unqualified) {
@@ -151,8 +259,8 @@ abstract class AbstractMeta implements Meta, Serializable {
 
                 List<T> list = unqualified.get(u);
                 if (list == null) {
-                    list = new ArrayList<T>();
-                    unqualified.get(u);
+                    list = new ArrayList<>();
+                    unqualified.put(u, list);
                 }
 
                 list.add(object);

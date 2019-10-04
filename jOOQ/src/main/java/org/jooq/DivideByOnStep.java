@@ -37,6 +37,31 @@
  */
 package org.jooq;
 
+// ...
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
+// ...
+import static org.jooq.SQLDialect.HSQLDB;
+// ...
+// ...
+import static org.jooq.SQLDialect.MARIADB;
+import static org.jooq.SQLDialect.MYSQL;
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+// ...
+import static org.jooq.SQLDialect.SQLITE;
+// ...
+// ...
+// ...
+// ...
+
 import org.jooq.impl.DSL;
 
 
@@ -88,11 +113,14 @@ public interface DivideByOnStep {
     /**
      * Add a division condition to the <code>DIVIDE BY</code> clause
      *
-     * @deprecated - 3.8.0 - [#4763] - Use {@link #on(Condition)} or
-     *             {@link #on(Field)} instead. Due to ambiguity between calling
-     *             this method using {@link Field#equals(Object)} argument, vs.
-     *             calling the other method via a {@link Field#equal(Object)}
-     *             argument, this method will be removed in the future.
+     * @deprecated - 3.8.0 - [#4763] - Use {@link #on(Condition)} (typically
+     *             with {@link DSL#trueCondition()},
+     *             {@link DSL#falseCondition()}, or {@link DSL#noCondition()} as
+     *             the parameter) or {@link #on(Field)} instead. Due to
+     *             ambiguity between calling this method using
+     *             {@link Field#equals(Object)} argument, vs. calling the other
+     *             method via a {@link Field#equal(Object)} argument, this
+     *             method will be removed in the future.
      */
     @Deprecated
     @Support

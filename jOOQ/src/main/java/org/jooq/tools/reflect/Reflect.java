@@ -58,10 +58,10 @@ public class Reflect {
      * <p>
      * For example:
      * <code><pre>
-     * Supplier&lt;String> supplier = Reflect.compile(
+     * Supplier&lt;String&gt; supplier = Reflect.compile(
      *   "org.joor.Test",
      *   "package org.joor;\n" +
-     *   "class Test implements java.util.function.Supplier&lt;String> {\n" +
+     *   "class Test implements java.util.function.Supplier&lt;String&gt; {\n" +
      *   "  public String get() {\n" +
      *   "    return \"Hello World!\";\n" +
      *   "  }\n" +
@@ -74,7 +74,32 @@ public class Reflect {
      * @throws ReflectException if anything went wrong compiling the class.
      */
     public static Reflect compile(String name, String content) throws ReflectException {
-        return on(Compile.compile(name, content));
+        return compile(name, content, new CompileOptions());
+    }
+
+    /**
+     * Compile a class at runtime and reflect on it.
+     * <p>
+     * For example:
+     * <code><pre>
+     * Supplier&lt;String&gt; supplier = Reflect.compile(
+     *   "org.joor.Test",
+     *   "package org.joor;\n" +
+     *   "class Test implements java.util.function.Supplier&lt;String&gt; {\n" +
+     *   "  public String get() {\n" +
+     *   "    return \"Hello World!\";\n" +
+     *   "  }\n" +
+     *   "}\n").create().get();
+     * </pre></code>
+     *
+     * @param name The qualified class name
+     * @param content The source code for the class
+     * @param options compiler options
+     * @return A wrapped {@link Class}
+     * @throws ReflectException if anything went wrong compiling the class.
+     */
+    public static Reflect compile(String name, String content, CompileOptions options) throws ReflectException {
+        return onClass(Compile.compile(name, content, options));
     }
 
 
@@ -86,10 +111,12 @@ public class Reflect {
      * @param name A fully qualified class name
      * @return A wrapped class object, to be used for further reflection.
      * @throws ReflectException If any reflection exception occurred.
-     * @see #on(Class)
+     * @see #onClass(Class)
+     * @deprecated [#78] 0.9.11, use {@link #onClass(String)} instead.
      */
+    @Deprecated
     public static Reflect on(String name) throws ReflectException {
-        return on(forName(name));
+        return onClass(name);
     }
 
     /**
@@ -103,10 +130,59 @@ public class Reflect {
      *            loaded.
      * @return A wrapped class object, to be used for further reflection.
      * @throws ReflectException If any reflection exception occurred.
-     * @see #on(Class)
+     * @see #onClass(Class)
+     * @deprecated [#78] 0.9.11, use {@link #onClass(String, ClassLoader)} instead.
      */
+    @Deprecated
     public static Reflect on(String name, ClassLoader classLoader) throws ReflectException {
-        return on(forName(name, classLoader));
+        return onClass(name, classLoader);
+    }
+
+    /**
+     * Wrap a class.
+     * <p>
+     * Use this when you want to access static fields and methods on a
+     * {@link Class} object, or as a basis for constructing objects of that
+     * class using {@link #create(Object...)}
+     *
+     * @param clazz The class to be wrapped
+     * @return A wrapped class object, to be used for further reflection.
+     * @deprecated [#78] 0.9.11, use {@link #onClass(Class)} instead.
+     */
+    @Deprecated
+    public static Reflect on(Class<?> clazz) {
+        return onClass(clazz);
+    }
+
+    /**
+     * Wrap a class name.
+     * <p>
+     * This is the same as calling <code>onClass(Class.forName(name))</code>
+     *
+     * @param name A fully qualified class name
+     * @return A wrapped class object, to be used for further reflection.
+     * @throws ReflectException If any reflection exception occurred.
+     * @see #onClass(Class)
+     */
+    public static Reflect onClass(String name) throws ReflectException {
+        return onClass(forName(name));
+    }
+
+    /**
+     * Wrap a class name, loading it via a given class loader.
+     * <p>
+     * This is the same as calling
+     * <code>onClass(Class.forName(name, classLoader))</code>
+     *
+     * @param name A fully qualified class name.
+     * @param classLoader The class loader in whose context the class should be
+     *            loaded.
+     * @return A wrapped class object, to be used for further reflection.
+     * @throws ReflectException If any reflection exception occurred.
+     * @see #onClass(Class)
+     */
+    public static Reflect onClass(String name, ClassLoader classLoader) throws ReflectException {
+        return onClass(forName(name, classLoader));
     }
 
     /**
@@ -119,7 +195,7 @@ public class Reflect {
      * @param clazz The class to be wrapped
      * @return A wrapped class object, to be used for further reflection.
      */
-    public static Reflect on(Class<?> clazz) {
+    public static Reflect onClass(Class<?> clazz) {
         return new Reflect(clazz);
     }
 
@@ -138,6 +214,38 @@ public class Reflect {
 
     private static Reflect on(Class<?> type, Object object) {
         return new Reflect(type, object);
+    }
+
+    /**
+     * Get the initialisation or default value for any given type.
+     * <p>
+     * This returns:
+     * <ul>
+     * <li><code>null</code> for reference types (including wrapper types)</li>
+     * <li><code>0</code> for numeric primitive types (including
+     * <code>char</code>)</li>
+     * <li><code>false</code> for the <code>boolean</code> primitive type.
+     * </ul>
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T initValue(Class<T> type) {
+        return type == boolean.class
+            ? (T) Boolean.FALSE
+            : type == byte.class
+            ? (T) Byte.valueOf((byte) 0)
+            : type == short.class
+            ? (T) Short.valueOf((short) 0)
+            : type == int.class
+            ? (T) Integer.valueOf(0)
+            : type == long.class
+            ? (T) Long.valueOf(0L)
+            : type == double.class
+            ? (T) Double.valueOf(0.0)
+            : type == float.class
+            ? (T) Float.valueOf(0.0f)
+            : type == char.class
+            ? (T) Character.valueOf((char) 0)
+            : (T) null;
     }
 
     /**
@@ -181,11 +289,11 @@ public class Reflect {
     static {
         Constructor<MethodHandles.Lookup> result;
 
-        /* [java-9] */
-        // if (true)
-        //     result = null;
-        // else
-        /* [/java-9] */
+
+
+
+
+
         try {
             result = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class);
 
@@ -604,18 +712,31 @@ public class Reflect {
     }
 
     /**
-     * Create a proxy for the wrapped object allowing to typesafely invoke
-     * methods on it using a custom interface
+     * Create a proxy for the wrapped object allowing to typesafely invoke methods
+     * on it using a custom interface.
      *
      * @param proxyType The interface type that is implemented by the proxy
      * @return A proxy for the wrapped object
      */
+    public <P> P as(Class<P> proxyType) {
+        return as(proxyType, new Class[0]);
+    }
+
+    /**
+     * Create a proxy for the wrapped object allowing to typesafely invoke methods
+     * on it using a custom interface.
+     *
+     * @param proxyType            The interface type that is implemented by the
+     *                             proxy
+     * @param additionalInterfaces Additional interfaces that are implemented by the
+     *                             proxy
+     * @return A proxy for the wrapped object
+     */
     @SuppressWarnings("unchecked")
-    public <P> P as(final Class<P> proxyType) {
+    public <P> P as(final Class<P> proxyType, final Class<?>... additionalInterfaces) {
         final boolean isMap = (object instanceof Map);
         final InvocationHandler handler = new InvocationHandler() {
             @Override
-            @SuppressWarnings("null")
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 String name = method.getName();
 
@@ -645,17 +766,17 @@ public class Reflect {
 
                     if (method.isDefault()) {
 
-                        /* [java-9] */
-                        // Java 9 version
-                        // if (CACHED_LOOKUP_CONSTRUCTOR == null) {
-                        //     return MethodHandles
-                        //         .privateLookupIn(proxyType, MethodHandles.lookup())
-                        //         .in(proxyType)
-                        //         .unreflectSpecial(method, proxyType)
-                        //         .bindTo(proxy)
-                        //         .invokeWithArguments(args);
-                        // }
-                        /* [/java-9] */
+
+
+
+
+
+
+
+
+
+
+
 
                         // Java 8 version
                         return CACHED_LOOKUP_CONSTRUCTOR
@@ -671,7 +792,10 @@ public class Reflect {
             }
         };
 
-        return (P) Proxy.newProxyInstance(proxyType.getClassLoader(), new Class[] { proxyType }, handler);
+        Class<?>[] interfaces = new Class[1 + additionalInterfaces.length];
+        interfaces[0] = proxyType;
+        System.arraycopy(additionalInterfaces, 0, interfaces, 1, additionalInterfaces.length);
+        return (P) Proxy.newProxyInstance(proxyType.getClassLoader(), interfaces, handler);
     }
 
     /**
@@ -718,17 +842,11 @@ public class Reflect {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int hashCode() {
         return object.hashCode();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Reflect) {
@@ -738,12 +856,9 @@ public class Reflect {
         return false;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String toString() {
-        return object.toString();
+        return String.valueOf(object);
     }
 
     // ---------------------------------------------------------------------

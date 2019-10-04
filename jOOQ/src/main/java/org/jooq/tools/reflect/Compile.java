@@ -15,24 +15,29 @@ package org.jooq.tools.reflect;
 
 
 
+// ...
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.tools.FileObject;
 import javax.tools.ForwardingJavaFileManager;
 import javax.tools.JavaCompiler;
+import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.JavaFileManager;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
-
-// import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
 
 
 /**
@@ -42,11 +47,12 @@ import javax.tools.ToolProvider;
  */
 class Compile {
 
-    static Class<?> compile(String className, String content) {
+    static Class<?> compile(String className, String content, CompileOptions compileOptions) {
         Lookup lookup = MethodHandles.lookup();
+        ClassLoader cl = lookup.lookupClass().getClassLoader();
 
         try {
-            return lookup.lookupClass().getClassLoader().loadClass(className);
+            return cl.loadClass(className);
         }
         catch (ClassNotFoundException ignore) {
             JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -58,7 +64,31 @@ class Compile {
                 files.add(new CharSequenceJavaFileObject(className, content));
                 StringWriter out = new StringWriter();
 
-                compiler.getTask(null, fileManager, null, null, null, files).call();
+                List<String> options = new ArrayList<String>();
+                StringBuilder classpath = new StringBuilder();
+                String separator = System.getProperty("path.separator");
+                String prop = System.getProperty("java.class.path");
+
+                if (prop != null && !"".equals(prop))
+                    classpath.append(prop);
+
+                if (cl instanceof URLClassLoader) {
+                    for (URL url : ((URLClassLoader) cl).getURLs()) {
+                        if (classpath.length() > 0)
+                            classpath.append(separator);
+
+                        if ("file".equals(url.getProtocol()))
+                            classpath.append(new File(url.getFile()));
+                    }
+                }
+
+                options.addAll(Arrays.asList("-classpath", classpath.toString()));
+                CompilationTask task = compiler.getTask(out, fileManager, null, options, null, files);
+
+                if (!compileOptions.processors.isEmpty())
+                    task.setProcessors(compileOptions.processors);
+
+                task.call();
 
                 if (fileManager.o == null)
                     throw new ReflectException("Compilation error: " + out);
@@ -66,49 +96,48 @@ class Compile {
                 Class<?> result = null;
 
                 // This works if we have private-access to the interfaces in the class hierarchy
-                // if (Reflect.CACHED_LOOKUP_CONSTRUCTOR != null) {
-                    ClassLoader cl = lookup.lookupClass().getClassLoader();
+                if (Reflect.CACHED_LOOKUP_CONSTRUCTOR != null) {
                     byte[] b = fileManager.o.getBytes();
                     result = Reflect.on(cl).call("defineClass", className, b, 0, b.length).get();
-                // }
-                /* [java-9] */
+                }
 
-                // Lookup.defineClass() has only been introduced in Java 9. It is
-                // required to get private-access to interfaces in the class hierarchy
-                // else {
-                //
-                //     // This method is called by client code from two levels up the current stack frame
-                //     // We need a private-access lookup from the class in that stack frame in order to get
-                //     // private-access to any local interfaces at that location.
-                //     Class<?> caller = StackWalker
-                //         .getInstance(RETAIN_CLASS_REFERENCE)
-                //         .walk(s -> s
-                //             .skip(2)
-                //             .findFirst()
-                //             .get()
-                //             .getDeclaringClass());
-                //
-                //     // If the compiled class is in the same package as the caller class, then
-                //     // we can use the private-access Lookup of the caller class
-                //     if (className.startsWith(caller.getPackageName() + ".")) {
-                //         result = MethodHandles
-                //             .privateLookupIn(caller, lookup)
-                //             .defineClass(fileManager.o.getBytes());
-                //     }
-                //
-                //     // Otherwise, use an arbitrary class loader. This approach doesn't allow for
-                //     // loading private-access interfaces in the compiled class's type hierarchy
-                //     else {
-                //         result = new ClassLoader() {
-                //             @Override
-                //             protected Class<?> findClass(String name) throws ClassNotFoundException {
-                //                 byte[] b = fileManager.o.getBytes();
-                //                 return defineClass(className, b, 0, b.length);
-                //             }
-                //         }.loadClass(className);
-                //     }
-                // }
-                /* [/java-9] */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 return result;
             }

@@ -62,8 +62,7 @@ import org.jooq.impl.SQLDataType;
  * <ul>
  * <li>if <code>Y.equals(converter.from(X))</code>, then
  * <code>X.equals(converter.to(Y))</code>.</li>
- * <li>
- * <code>X.equals(converter.from(converter.to(X)))</code></li>
+ * <li><code>X.equals(converter.from(converter.to(X)))</code></li>
  * <li><code>X.equals(converter.to(converter.from(X)))</code></li>
  * </ul>
  * <p>
@@ -72,6 +71,16 @@ import org.jooq.impl.SQLDataType;
  * <li><code>converter.from(null) == null</code></li>
  * <li><code>converter.to(null) == null</code></li>
  * </ul>
+ * <p>
+ * <h3>Creating user defined {@link DataType}s</h3>
+ * <p>
+ * jOOQ provides built in data types through {@link SQLDataType}. Users can
+ * define their own data types programmatically by calling
+ * {@link DataType#asConvertedDataType(Converter)} or
+ * {@link DataType#asConvertedDataType(Binding)}, for example. Custom data types
+ * can also be defined on generated code using the
+ * <code>&lt;forcedType/&gt;</code> configuration, see <a href=
+ * "https://www.jooq.org/doc/latest/manual/code-generation/codegen-advanced/codegen-config-database/codegen-database-forced-types/">the manual for more details</a>
  *
  * @author Lukas Eder
  * @param <T> The database type - i.e. any type available from
@@ -185,7 +194,7 @@ public interface Converter<T, U> extends Serializable {
      * Example:
      * <p>
      * <code><pre>
-     * Converter<String, Integer> converter =
+     * Converter&lt;String, Integer&gt; converter =
      *   Converter.ofNullable(String.class, Integer.class, Integer::parseInt, Object::toString);
      *
      * // No exceptions thrown
@@ -202,18 +211,27 @@ public interface Converter<T, U> extends Serializable {
      * @return The converter.
      * @see Converter
      */
+    @SuppressWarnings("unchecked")
     static <T, U> Converter<T, U> ofNullable(
         Class<T> fromType,
         Class<U> toType,
         Function<? super T, ? extends U> from,
         Function<? super U, ? extends T> to
     ) {
-        return of(
-            fromType,
-            toType,
-            t -> t == null ? null : from.apply(t),
-            u -> u == null ? null : to.apply(u)
-        );
+        Function<T, U> fromS;
+        Function<U, T> toS;
+
+        if (from instanceof Serializable)
+            fromS = (Function<T, U> & Serializable) t -> t == null ? null : from.apply(t);
+        else
+            fromS = t -> t == null ? null : from.apply(t);
+
+        if (to instanceof Serializable)
+            toS = (Function<U, T> & Serializable) u -> u == null ? null : to.apply(u);
+        else
+            toS = u -> u == null ? null : to.apply(u);
+
+        return of(fromType, toType, fromS, toS);
     }
 
 

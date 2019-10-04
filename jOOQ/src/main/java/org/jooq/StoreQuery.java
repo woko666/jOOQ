@@ -43,11 +43,13 @@ import java.util.Map;
 /**
  * A query storing objects to the database. This is either an insert or an
  * update query.
+ * <p>
+ * Instances of this type cannot be created directly, only of its subtypes.
  *
  * @param <R> The record type of the table being modified
  * @author Lukas Eder
  */
-public interface StoreQuery<R extends Record> extends Query {
+public interface StoreQuery<R extends Record> extends RowCountQuery {
 
     /**
      * Add values to the store statement

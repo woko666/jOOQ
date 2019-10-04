@@ -37,13 +37,16 @@
  */
 package org.jooq.impl;
 
-import org.jooq.Configuration;
+import static org.jooq.impl.Keywords.F_CEIL;
+import static org.jooq.impl.Keywords.F_CEILING;
+
+import org.jooq.Context;
 import org.jooq.Field;
 
 /**
  * @author Lukas Eder
  */
-final class Ceil<T extends Number> extends AbstractFunction<T> {
+final class Ceil<T extends Number> extends AbstractField<T> {
 
     /**
      * Generated UID
@@ -53,23 +56,26 @@ final class Ceil<T extends Number> extends AbstractFunction<T> {
     private final Field<T>    argument;
 
     Ceil(Field<T> argument) {
-        super("ceil", argument.getDataType(), argument);
+        super(DSL.name("ceil"), argument.getDataType());
 
         this.argument = argument;
     }
 
     @Override
-    final Field<T> getFunction0(Configuration configuration) {
-        switch (configuration.dialect().family()) {
+    public final void accept(Context<?> ctx) {
+        switch (ctx.family()) {
 
 
 
 
 
 
-            // evaluate "ceil" if unavailable
+
+            // [#8275] Improved emulation for SQLite
             case SQLITE:
-                return DSL.round(argument.add(0.499999999999999));
+                Field<Long> cast = DSL.cast(argument, SQLDataType.BIGINT);
+                ctx.sql('(').visit(cast).sql(" + (").visit(argument).sql(" > ").visit(cast).sql("))");
+                break;
 
 
 
@@ -77,10 +83,12 @@ final class Ceil<T extends Number> extends AbstractFunction<T> {
 
 
             case H2:
-                return DSL.field("{ceiling}({0})", getDataType(), argument);
+                ctx.visit(F_CEILING).sql('(').visit(argument).sql(')');
+                break;
 
             default:
-                return DSL.field("{ceil}({0})", getDataType(), argument);
+                ctx.visit(F_CEIL).sql('(').visit(argument).sql(')');
+                break;
         }
     }
 }

@@ -41,9 +41,17 @@ import static org.jooq.Clause.SEQUENCE;
 import static org.jooq.Clause.SEQUENCE_REFERENCE;
 import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
+import static org.jooq.SQLDialect.HSQLDB;
+import static org.jooq.SQLDialect.MARIADB;
 // ...
-import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.Keywords.F_GEN_ID;
+import static org.jooq.impl.Keywords.K_CURRENT_VALUE_FOR;
+import static org.jooq.impl.Keywords.K_CURRVAL;
+import static org.jooq.impl.Keywords.K_NEXTVAL;
+import static org.jooq.impl.Keywords.K_NEXT_VALUE_FOR;
+import static org.jooq.impl.Keywords.K_PREVIOUS_VALUE_FOR;
 
 import org.jooq.Catalog;
 import org.jooq.Clause;
@@ -51,7 +59,8 @@ import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DataType;
 import org.jooq.Field;
-import org.jooq.RenderContext;
+import org.jooq.Keyword;
+import org.jooq.Name;
 import org.jooq.SQLDialect;
 import org.jooq.Schema;
 import org.jooq.Sequence;
@@ -64,6 +73,7 @@ import org.jooq.exception.SQLDialectNotSupportedException;
  *
  * @author Lukas Eder
  */
+@org.jooq.Internal
 public class SequenceImpl<T extends Number> extends AbstractNamed implements Sequence<T> {
 
     /**
@@ -72,7 +82,6 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
     private static final long     serialVersionUID = 6224349401603636427L;
     private static final Clause[] CLAUSES          = { SEQUENCE, SEQUENCE_REFERENCE };
 
-    final String                  name;
     final boolean                 nameIsPlainSQL;
     final Schema                  schema;
     final DataType<T>             type;
@@ -82,9 +91,12 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
     }
 
     SequenceImpl(String name, Schema schema, DataType<T> type, boolean nameIsPlainSQL) {
-        super(qualify(schema, DSL.name(name)), CommentImpl.NO_COMMENT);
+        this(DSL.name(name), schema, type, nameIsPlainSQL);
+    }
 
-        this.name = name;
+    SequenceImpl(Name name, Schema schema, DataType<T> type, boolean nameIsPlainSQL) {
+        super(qualify(schema, name), CommentImpl.NO_COMMENT);
+
         this.schema = schema;
         this.type = type;
         this.nameIsPlainSQL = nameIsPlainSQL;
@@ -107,31 +119,44 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
 
     @Override
     public final Field<T> currval() {
-        return new SequenceFunction("currval");
+        return new SequenceFunction(SequenceMethod.CURRVAL);
     }
 
     @Override
     public final Field<T> nextval() {
-        return new SequenceFunction("nextval");
+        return new SequenceFunction(SequenceMethod.NEXTVAL);
     }
 
-    private class SequenceFunction extends AbstractFunction<T> {
+    private enum SequenceMethod {
+        CURRVAL(K_CURRVAL, DSL.name("currval")),
+        NEXTVAL(K_NEXTVAL, DSL.name("nextval"));
+
+        final Keyword keyword;
+        final Name name;
+
+        private SequenceMethod(Keyword keyword, Name name) {
+            this.keyword = keyword;
+            this.name = name;
+        }
+    }
+
+    private class SequenceFunction extends AbstractField<T> {
 
         /**
          * Generated UID
          */
-        private static final long     serialVersionUID = 2292275568395094887L;
+        private static final long    serialVersionUID = 2292275568395094887L;
+        private final SequenceMethod method;
 
-        private final String          method;
-
-        SequenceFunction(String method) {
-            super(method, type);
+        SequenceFunction(SequenceMethod method) {
+            super(method.name, type);
 
             this.method = method;
         }
 
         @Override
-        final Field<T> getFunction0(Configuration configuration) {
+        public final void accept(Context<?> ctx) {
+            Configuration configuration = ctx.configuration();
             SQLDialect family = configuration.family();
 
             switch (family) {
@@ -147,28 +172,30 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
 
 
                 case POSTGRES: {
-                    String field = method + "('" + getQualifiedName(configuration) + "')";
-                    return DSL.field(field, getDataType());
-                }
-
-                case H2: {
-                    String field = method + "(" + getQualifiedName(configuration, true) + ")";
-                    return DSL.field(field, getDataType());
+                    ctx.visit(method.keyword).sql('(');
+                    ctx.sql('\'').stringLiteral(true).visit(SequenceImpl.this).stringLiteral(false).sql('\'');
+                    ctx.sql(')');
+                    break;
                 }
 
 
 
 
-                case FIREBIRD:
                 case DERBY:
-                case HSQLDB: {
-                    if ("nextval".equals(method)) {
-                        String field = "next value for " + getQualifiedName(configuration);
-                        return DSL.field(field, getDataType());
-                    }
-                    else if (family == FIREBIRD) {
-                        return DSL.field("gen_id(" + getQualifiedName(configuration) + ", 0)", getDataType());
-                    }
+                case FIREBIRD:
+                case H2:
+                case HSQLDB:
+                case MARIADB: {
+                    if (method == SequenceMethod.NEXTVAL)
+                        ctx.visit(K_NEXT_VALUE_FOR).sql(' ').visit(SequenceImpl.this);
+                    else if (family == H2)
+                        ctx.visit(SequenceImpl.this).sql('.').visit(method.keyword);
+                    else if (family == HSQLDB)
+                        ctx.visit(K_CURRENT_VALUE_FOR).sql(' ').visit(SequenceImpl.this);
+                    else if (family == MARIADB)
+                        ctx.visit(K_PREVIOUS_VALUE_FOR).sql(' ').visit(SequenceImpl.this);
+                    else if (family == FIREBIRD)
+                        ctx.visit(F_GEN_ID).sql('(').visit(SequenceImpl.this).sql(", 0)");
 
 
 
@@ -186,37 +213,26 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
                     else {
                         throw new SQLDialectNotSupportedException("The sequence's current value functionality is not supported for the " + family + " dialect.");
                     }
+                    break;
                 }
 
                 case CUBRID: {
-                    String field = getQualifiedName(configuration) + ".";
+                    ctx.visit(SequenceImpl.this).sql('.');
 
-                    if ("nextval".equals(method)) {
-                        field += "next_value";
-                    }
-                    else {
-                        field += "current_value";
-                    }
+                    if (method == SequenceMethod.NEXTVAL)
+                        ctx.visit(DSL.keyword("next_value"));
+                    else
+                        ctx.visit(DSL.keyword("current_value"));
 
-                    return DSL.field(field, getDataType());
+                    break;
                 }
 
                 // Default is needed for hashCode() and toString()
                 default: {
-                    String field = getQualifiedName(configuration) + "." + method;
-                    return DSL.field(field, getDataType());
+                    ctx.visit(SequenceImpl.this).sql('.').visit(method.keyword);
+                    break;
                 }
             }
-        }
-
-        private final String getQualifiedName(Configuration configuration) {
-            return getQualifiedName(configuration, false);
-        }
-
-        private final String getQualifiedName(Configuration configuration, boolean asStringLiterals) {
-            RenderContext local = create(configuration).renderContext();
-            accept0(local, asStringLiterals);
-            return local.render();
         }
     }
 
@@ -226,26 +242,16 @@ public class SequenceImpl<T extends Number> extends AbstractNamed implements Seq
 
     @Override
     public final void accept(Context<?> ctx) {
-        accept0(ctx, false);
-    }
-
-    private final void accept0(Context<?> ctx, boolean asStringLiterals) {
         Schema mappedSchema = Tools.getMappedSchema(ctx.configuration(), schema);
 
         if (mappedSchema != null && !"".equals(mappedSchema.getName()) && ctx.family() != CUBRID)
-            if (asStringLiterals)
-                ctx.visit(inline(mappedSchema.getName()))
-                   .sql(", ");
-            else
                 ctx.visit(mappedSchema)
                    .sql('.');
 
-        if (asStringLiterals)
-            ctx.visit(inline(name));
-        else if (nameIsPlainSQL)
-            ctx.sql(name);
+        if (nameIsPlainSQL)
+            ctx.sql(getName());
         else
-            ctx.literal(name);
+            ctx.visit(getUnqualifiedName());
     }
 
     @Override

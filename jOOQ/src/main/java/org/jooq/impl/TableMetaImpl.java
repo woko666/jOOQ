@@ -68,41 +68,41 @@ final class TableMetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Catalog> getCatalogs() {
-        Set<Catalog> result = new LinkedHashSet<Catalog>();
+    protected final List<Catalog> getCatalogs0() {
+        Set<Catalog> result = new LinkedHashSet<>();
 
         for (Table<?> table : tables)
             if (table.getSchema() != null)
                 if (table.getSchema().getCatalog() != null)
                     result.add(table.getSchema().getCatalog());
 
-        return new ArrayList<Catalog>(result);
+        return new ArrayList<>(result);
     }
 
     @Override
-    public final List<Schema> getSchemas() {
-        Set<Schema> result = new LinkedHashSet<Schema>();
+    protected final List<Schema> getSchemas0() {
+        Set<Schema> result = new LinkedHashSet<>();
 
         for (Table<?> table : tables)
             if (table.getSchema() != null)
                 result.add(table.getSchema());
 
-        return new ArrayList<Schema>(result);
+        return new ArrayList<>(result);
     }
 
     @Override
-    public final List<Table<?>> getTables() {
+    protected final List<Table<?>> getTables0() {
         return Collections.unmodifiableList(Arrays.asList(tables));
     }
 
     @Override
-    public final List<Sequence<?>> getSequences() {
+    protected final List<Sequence<?>> getSequences0() {
         return Collections.emptyList();
     }
 
     @Override
-    public final List<UniqueKey<?>> getPrimaryKeys() {
-        List<UniqueKey<?>> result = new ArrayList<UniqueKey<?>>();
+    protected final List<UniqueKey<?>> getPrimaryKeys0() {
+        List<UniqueKey<?>> result = new ArrayList<>();
 
         for (Table<?> table : tables)
             if (table.getPrimaryKey() != null)

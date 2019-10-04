@@ -43,11 +43,15 @@ import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
+import static org.jooq.impl.DSL.when;
+import static org.jooq.impl.Tools.flattenEntrySet;
+import static org.jooq.impl.Tools.DataKey.DATA_ON_DUPLICATE_KEY_WHERE;
 
-import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.jooq.Clause;
+import org.jooq.Condition;
 import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.SQLDialect;
@@ -62,17 +66,18 @@ final class FieldMapForUpdate extends AbstractQueryPartMap<Field<?>, Field<?>> {
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID   = -6139709404698673799L;
-    private static final EnumSet<SQLDialect> NO_SUPPORT_QUALIFY = EnumSet.of(POSTGRES, SQLITE);
+    private static final long            serialVersionUID   = -6139709404698673799L;
+    private static final Set<SQLDialect> NO_SUPPORT_QUALIFY = SQLDialect.supported(POSTGRES, SQLITE);
 
-    private final Table<?>                   table;
-    private final Clause                     assignmentClause;
+    private final Table<?>               table;
+    private final Clause                 assignmentClause;
 
     FieldMapForUpdate(Table<?> table, Clause assignmentClause) {
         this.table = table;
         this.assignmentClause = assignmentClause;
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public final void accept(Context<?> ctx) {
         if (size() > 0) {
@@ -87,20 +92,26 @@ final class FieldMapForUpdate extends AbstractQueryPartMap<Field<?>, Field<?>> {
             boolean restoreQualify = ctx.qualify();
             boolean supportsQualify = NO_SUPPORT_QUALIFY.contains(ctx.family()) ? false : restoreQualify;
 
-            for (Entry<Field<?>, Field<?>> entry : entrySet()) {
+            for (Entry<Field<?>, Field<?>> entry : flattenEntrySet(entrySet())) {
                 ctx.sql(separator);
 
-                if (!"".equals(separator)) {
+                if (!"".equals(separator))
                     ctx.formatNewLine();
-                }
 
                 ctx.start(assignmentClause)
                    .qualify(supportsQualify)
                    .visit(entry.getKey())
                    .qualify(restoreQualify)
-                   .sql(" = ")
-                   .visit(entry.getValue())
-                   .end(assignmentClause);
+                   .sql(" = ");
+
+                // [#8479] Emulate WHERE clause using CASE
+                Condition condition = (Condition) ctx.data(DATA_ON_DUPLICATE_KEY_WHERE);
+                if (condition != null)
+                    ctx.visit(when(condition, (Field) entry.getValue()).else_(entry.getKey()));
+                else
+                    ctx.visit(entry.getValue());
+
+                ctx.end(assignmentClause);
 
                 separator = ", ";
             }
@@ -108,11 +119,6 @@ final class FieldMapForUpdate extends AbstractQueryPartMap<Field<?>, Field<?>> {
         else {
             ctx.sql("[ no fields are updated ]");
         }
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 
     final void set(Map<?, ?> map) {

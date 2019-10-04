@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -19,6 +12,8 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -34,10 +29,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class Jdbc implements Serializable
+public class Jdbc implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String driver;
     @XmlElement(required = true)
@@ -51,6 +46,7 @@ public class Jdbc implements Serializable
     protected String username;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String password;
+    protected Boolean autoCommit;
     @XmlElementWrapper(name = "properties")
     @XmlElement(name = "property")
     protected List<Property> properties;
@@ -58,21 +54,13 @@ public class Jdbc implements Serializable
     /**
      * The JDBC driver class.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getDriver() {
         return driver;
     }
 
     /**
-     * Sets the value of the driver property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The JDBC driver class.
      *
      */
     public void setDriver(String value) {
@@ -82,21 +70,13 @@ public class Jdbc implements Serializable
     /**
      * The JDBC connection URL.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getUrl() {
         return url;
     }
 
     /**
-     * Sets the value of the url property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The JDBC connection URL.
      *
      */
     public void setUrl(String value) {
@@ -106,23 +86,17 @@ public class Jdbc implements Serializable
     /**
      * @deprecated Use database schema configuration elements instead.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
+    @Deprecated
     public String getSchema() {
         return schema;
     }
 
     /**
-     * Sets the value of the schema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * @deprecated Use database schema configuration elements instead.
      *
      */
+    @Deprecated
     public void setSchema(String value) {
         this.schema = value;
     }
@@ -130,21 +104,13 @@ public class Jdbc implements Serializable
     /**
      * The JDBC connection user. Be sure this user has all required GRANTs to the dictionary views/tables to generate the desired artefacts
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getUser() {
         return user;
     }
 
     /**
-     * Sets the value of the user property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The JDBC connection user. Be sure this user has all required GRANTs to the dictionary views/tables to generate the desired artefacts
      *
      */
     public void setUser(String value) {
@@ -154,21 +120,13 @@ public class Jdbc implements Serializable
     /**
      * Just a synonym for "user" to be compatible with other Maven plugins.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getUsername() {
         return username;
     }
 
     /**
-     * Sets the value of the username property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * Just a synonym for "user" to be compatible with other Maven plugins.
      *
      */
     public void setUsername(String value) {
@@ -178,25 +136,41 @@ public class Jdbc implements Serializable
     /**
      * The JDBC connection password.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getPassword() {
         return password;
     }
 
     /**
-     * Sets the value of the password property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The JDBC connection password.
      *
      */
     public void setPassword(String value) {
         this.password = value;
+    }
+
+    /**
+     * The value of the JDBC autocommit flag. The flag is not set by default, i.e. it keeps the default provided to jOOQ.
+     *
+     * @return
+     *     possible object is
+     *     {@link Boolean }
+     *
+     */
+    public Boolean isAutoCommit() {
+        return autoCommit;
+    }
+
+    /**
+     * Sets the value of the autoCommit property.
+     *
+     * @param value
+     *     allowed object is
+     *     {@link Boolean }
+     *
+     */
+    public void setAutoCommit(Boolean value) {
+        this.autoCommit = value;
     }
 
     public List<Property> getProperties() {
@@ -210,33 +184,63 @@ public class Jdbc implements Serializable
         this.properties = properties;
     }
 
+    /**
+     * The JDBC driver class.
+     *
+     */
     public Jdbc withDriver(String value) {
         setDriver(value);
         return this;
     }
 
+    /**
+     * The JDBC connection URL.
+     *
+     */
     public Jdbc withUrl(String value) {
         setUrl(value);
         return this;
     }
 
+    /**
+     * @deprecated Use database schema configuration elements instead.
+     *
+     */
+    @Deprecated
     public Jdbc withSchema(String value) {
         setSchema(value);
         return this;
     }
 
+    /**
+     * The JDBC connection user. Be sure this user has all required GRANTs to the dictionary views/tables to generate the desired artefacts
+     *
+     */
     public Jdbc withUser(String value) {
         setUser(value);
         return this;
     }
 
+    /**
+     * Just a synonym for "user" to be compatible with other Maven plugins.
+     *
+     */
     public Jdbc withUsername(String value) {
         setUsername(value);
         return this;
     }
 
+    /**
+     * The JDBC connection password.
+     *
+     */
     public Jdbc withPassword(String value) {
         setPassword(value);
+        return this;
+    }
+
+    public Jdbc withAutoCommit(Boolean value) {
+        setAutoCommit(value);
         return this;
     }
 
@@ -262,44 +266,22 @@ public class Jdbc implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("driver", driver);
+        builder.append("url", url);
+        builder.append("schema", schema);
+        builder.append("user", user);
+        builder.append("username", username);
+        builder.append("password", password);
+        builder.append("autoCommit", autoCommit);
+        builder.append("properties", "property", properties);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (driver!= null) {
-            sb.append("<driver>");
-            sb.append(driver);
-            sb.append("</driver>");
-        }
-        if (url!= null) {
-            sb.append("<url>");
-            sb.append(url);
-            sb.append("</url>");
-        }
-        if (schema!= null) {
-            sb.append("<schema>");
-            sb.append(schema);
-            sb.append("</schema>");
-        }
-        if (user!= null) {
-            sb.append("<user>");
-            sb.append(user);
-            sb.append("</user>");
-        }
-        if (username!= null) {
-            sb.append("<username>");
-            sb.append(username);
-            sb.append("</username>");
-        }
-        if (password!= null) {
-            sb.append("<password>");
-            sb.append(password);
-            sb.append("</password>");
-        }
-        if (properties!= null) {
-            sb.append("<properties>");
-            sb.append(properties);
-            sb.append("</properties>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override
@@ -368,6 +350,15 @@ public class Jdbc implements Serializable
                 return false;
             }
         }
+        if (autoCommit == null) {
+            if (other.autoCommit!= null) {
+                return false;
+            }
+        } else {
+            if (!autoCommit.equals(other.autoCommit)) {
+                return false;
+            }
+        }
         if (properties == null) {
             if (other.properties!= null) {
                 return false;
@@ -390,6 +381,7 @@ public class Jdbc implements Serializable
         result = ((prime*result)+((user == null)? 0 :user.hashCode()));
         result = ((prime*result)+((username == null)? 0 :username.hashCode()));
         result = ((prime*result)+((password == null)? 0 :password.hashCode()));
+        result = ((prime*result)+((autoCommit == null)? 0 :autoCommit.hashCode()));
         result = ((prime*result)+((properties == null)? 0 :properties.hashCode()));
         return result;
     }

@@ -38,6 +38,7 @@
 
 package org.jooq.impl;
 
+import static java.lang.Boolean.TRUE;
 import static org.jooq.Constants.FULL_VERSION;
 import static org.jooq.ExecuteType.DDL;
 // ...
@@ -53,8 +54,8 @@ import static org.jooq.impl.DSL.using;
 import static org.jooq.impl.Tools.EMPTY_PARAM;
 import static org.jooq.impl.Tools.blocking;
 import static org.jooq.impl.Tools.consumeExceptions;
-import static org.jooq.impl.Tools.DataKey.DATA_COUNT_BIND_VALUES;
-import static org.jooq.impl.Tools.DataKey.DATA_FORCE_STATIC_STATEMENT;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_COUNT_BIND_VALUES;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_FORCE_STATIC_STATEMENT;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -73,10 +74,12 @@ import org.jooq.Query;
 import org.jooq.RenderContext;
 import org.jooq.Select;
 import org.jooq.conf.ParamType;
+import org.jooq.conf.QueryPoolable;
 import org.jooq.conf.SettingsTools;
 import org.jooq.conf.StatementType;
 import org.jooq.exception.ControlFlowSignal;
 import org.jooq.exception.DetachedException;
+import org.jooq.tools.Ints;
 import org.jooq.tools.JooqLogger;
 
 /**
@@ -89,6 +92,7 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
 
     private Configuration           configuration;
     private int                     timeout;
+    private QueryPoolable           poolable = QueryPoolable.DEFAULT;
     private boolean                 keepStatement;
     transient PreparedStatement     statement;
     transient int                   statementExecutionCount;
@@ -156,25 +160,23 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
     @SuppressWarnings("deprecation")
     @Override
     public Query bind(String param, Object value) {
-        try {
-            int index = Integer.valueOf(param);
+        Integer index = Ints.tryParse(param);
+        if (index != null)
             return bind(index, value);
+
+        ParamCollector collector = new ParamCollector(configuration(), true);
+        collector.visit(this);
+        List<Param<?>> params = collector.result.get(param);
+
+        if (params == null || params.size() == 0)
+            throw new IllegalArgumentException("No such parameter : " + param);
+
+        for (Param<?> p : params) {
+            p.setConverted(value);
+            closeIfNecessary(p);
         }
-        catch (NumberFormatException e) {
-            ParamCollector collector = new ParamCollector(configuration(), true);
-            collector.visit(this);
-            List<Param<?>> params = collector.result.get(param);
 
-            if (params == null || params.size() == 0)
-                throw new IllegalArgumentException("No such parameter : " + param);
-
-            for (Param<?> p : params) {
-                p.setConverted(value);
-                closeIfNecessary(p);
-            }
-
-            return this;
-        }
+        return this;
     }
 
     /**
@@ -222,6 +224,17 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
                 close();
             }
         }
+    }
+
+    /**
+     * Subclasses may override this for covariant result types
+     * <p>
+     * {@inheritDoc}
+     */
+    @Override
+    public Query poolable(boolean p) {
+        this.poolable = p ? QueryPoolable.TRUE : QueryPoolable.FALSE;
+        return this;
     }
 
     /**
@@ -327,9 +340,14 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
 
                 // [#1856] [#4753] Set the query timeout onto the Statement
                 int t = SettingsTools.getQueryTimeout(timeout, ctx.settings());
-                if (t != 0) {
+                if (t != 0)
                     ctx.statement().setQueryTimeout(t);
-                }
+
+                QueryPoolable p = SettingsTools.getQueryPoolable(poolable, ctx.settings());
+                if (p == QueryPoolable.TRUE)
+                    ctx.statement().setPoolable(true);
+                else if (p == QueryPoolable.FALSE)
+                    ctx.statement().setPoolable(false);
 
                 if (
 
@@ -339,7 +357,7 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
                     executePreparedStatements(c.settings()) &&
 
                     // [#1520] Renderers may enforce static statements, too
-                    !Boolean.TRUE.equals(ctx.data(DATA_FORCE_STATIC_STATEMENT))) {
+                    !TRUE.equals(ctx.data(DATA_FORCE_STATIC_STATEMENT))) {
 
                     listener.bindStart(ctx);
                     if (rendered.bindValues != null)
@@ -547,17 +565,11 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
 
 
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public final String getSQL() {
         return getSQL(getParamType(Tools.settings(configuration())));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public final String getSQL(ParamType paramType) {
         switch (paramType) {
@@ -569,14 +581,13 @@ abstract class AbstractQuery extends AbstractQueryPart implements Query {
                 return create().renderNamedParams(this);
             case NAMED_OR_INLINED:
                 return create().renderNamedOrInlinedParams(this);
+            case FORCE_INDEXED:
+                return create().renderContext().paramType(paramType).visit(this).render();
         }
 
         throw new IllegalArgumentException("ParamType not supported: " + paramType);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Deprecated
     public final String getSQL(boolean inline) {

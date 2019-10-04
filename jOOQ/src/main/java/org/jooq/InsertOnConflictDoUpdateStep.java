@@ -40,10 +40,14 @@ package org.jooq;
 // ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
@@ -56,9 +60,8 @@ import static org.jooq.SQLDialect.POSTGRES_9_5;
  *
  * create.insertInto(table, field1, field2)
  *       .values(value1, value2)
- *       .values(value3, value4)
- *       .onDuplicateKeyUpdate()
- *       .set(field1, value1)
+ *       .onConflict(field1)
+ *       .doUpdate()
  *       .set(field2, value2)
  *       .execute();
  * </pre></code>
@@ -71,11 +74,11 @@ public interface InsertOnConflictDoUpdateStep<R extends Record> {
     /**
      * Add the <code>DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE })
     InsertOnDuplicateSetStep<R> doUpdate();
 
     /**
-     * Add the <code>DO IGNORE</code> clause.
+     * Add the <code>DO NOTHING</code> clause.
      */
     @Support
     InsertReturningStep<R> doNothing();

@@ -38,7 +38,6 @@
 package org.jooq.codegen;
 
 import static java.util.Collections.emptyList;
-import static java.util.regex.Pattern.compile;
 import static org.jooq.tools.StringUtils.defaultIfEmpty;
 
 import java.util.ArrayList;
@@ -49,6 +48,7 @@ import java.util.regex.Pattern;
 import org.jooq.meta.ColumnDefinition;
 import org.jooq.meta.Definition;
 import org.jooq.meta.EnumDefinition;
+import org.jooq.meta.Patterns;
 import org.jooq.meta.RoutineDefinition;
 import org.jooq.meta.SchemaDefinition;
 import org.jooq.meta.SequenceDefinition;
@@ -73,9 +73,23 @@ import org.jooq.tools.StringUtils;
 public class MatcherStrategy extends DefaultGeneratorStrategy {
 
     private final Matchers matchers;
+    private final Patterns patterns;
 
     public MatcherStrategy(Matchers matchers) {
+        this(matchers, new Patterns());
+    }
+
+    public MatcherStrategy(Matchers matchers, Patterns patterns) {
         this.matchers = matchers;
+        this.patterns = patterns;
+    }
+
+    public Matchers getMatchers() {
+        return matchers;
+    }
+
+    public Patterns getPatterns() {
+        return patterns;
     }
 
     /**
@@ -83,9 +97,8 @@ public class MatcherStrategy extends DefaultGeneratorStrategy {
      * against an expression, and apply a rule upon match.
      */
     private final String match(Definition definition, String expression, MatcherRule rule) {
-        if (rule != null) {
+        if (rule != null)
             return match(definition, expression, rule.getExpression(), rule.getTransform());
-        }
 
         return null;
     }
@@ -101,18 +114,16 @@ public class MatcherStrategy extends DefaultGeneratorStrategy {
             ruleExpression = "$0";
 
         if (ruleExpression != null) {
-            Pattern p = compile(defaultIfEmpty(expression, "^.*$").trim());
+            Pattern p = patterns.pattern(defaultIfEmpty(expression, "^.*$").trim());
             Matcher m = p.matcher(definition.getName());
 
-            if (m.matches()) {
+            if (m.matches())
                 return transform(m.replaceAll(ruleExpression), ruleTransformType);
-            }
 
             m = p.matcher(definition.getQualifiedName());
 
-            if (m.matches()) {
+            if (m.matches())
                 return transform(m.replaceAll(ruleExpression), ruleTransformType);
-            }
         }
 
         return null;
@@ -127,8 +138,12 @@ public class MatcherStrategy extends DefaultGeneratorStrategy {
                 return string;
             case LOWER:
                 return string.toLowerCase();
+            case LOWER_FIRST_LETTER:
+                return StringUtils.toLC(string);
             case UPPER:
                 return string.toUpperCase();
+            case UPPER_FIRST_LETTER:
+                return StringUtils.toUC(string);
             case CAMEL:
                 return StringUtils.toCamelCaseLC(string);
             case PASCAL:
@@ -183,7 +198,7 @@ public class MatcherStrategy extends DefaultGeneratorStrategy {
 
     private final List<String> split(String result) {
         String[] split = result.split(",");
-        List<String> list = new ArrayList<String>(split.length);
+        List<String> list = new ArrayList<>(split.length);
 
         for (String string : split)
             list.add(string.trim());

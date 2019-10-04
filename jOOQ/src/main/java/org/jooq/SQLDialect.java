@@ -38,18 +38,20 @@
 
 package org.jooq;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
 /**
  * Dialects and dialect families as supported by jOOQ.
  * <p>
- * jOOQ supports a variety of dialects, which are grouped into dialect families.
- * For instance, the SQL Server dialect family {@link #POSTGRES} is specialised
- * by its dialects
+ * The commercial jOOQ distributions support a variety of dialects, which are
+ * grouped into dialect families. For instance, the SQL Server dialect family
+ * {@link #POSTGRES} is specialised by its dialects
  * <ul>
- * <li> {@link #POSTGRES_9_3}</li>
- * <li> {@link #POSTGRES_9_4}</li>
+ * <li>{@link #POSTGRES_9_3}</li>
+ * <li>{@link #POSTGRES_9_4}</li>
  * </ul>
  *
  * @author Lukas Eder
@@ -63,7 +65,7 @@ public enum SQLDialect {
      *             pseudo-dialect.
      */
     @Deprecated
-    SQL99("", false),
+    SQL99("", false, false),
 
     /**
      * The default SQL dialect.
@@ -72,7 +74,7 @@ public enum SQLDialect {
      * not intended to be used with any actual database as it may combined
      * dialect-specific things from various dialects.
      */
-    DEFAULT("", false),
+    DEFAULT("", false, false),
 
     // -------------------------------------------------------------------------
     // SQL dialects for free usage
@@ -81,111 +83,286 @@ public enum SQLDialect {
     /**
      * The CUBRID dialect family.
      */
-    CUBRID("CUBRID", false),
+    CUBRID("CUBRID", false, true),
 
     /**
      * The Apache Derby dialect family.
      */
-    DERBY("Derby", false),
+    DERBY("Derby", false, true),
 
     /**
      * The Firebird dialect family.
+     * <p>
+     * This family behaves like the versioned dialect {@link #FIREBIRD_3_0}.
      */
-    FIREBIRD("Firebird", false),
+    FIREBIRD("Firebird", false, true),
 
-    /**
-     * The Firebird 2.5 dialect.
-     */
-    FIREBIRD_2_5("Firebird", false, FIREBIRD, null),
 
-    /**
-     * The Firebird 3.0 dialect.
-     */
-    FIREBIRD_3_0("Firebird", false, FIREBIRD, FIREBIRD_2_5),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * The H2 dialect family.
      */
-    H2("H2", false),
+    H2("H2", false, true),
 
     /**
      * The Hypersonic dialect family.
      */
-    HSQLDB("HSQLDB", false),
+    HSQLDB("HSQLDB", false, true),
 
     /**
      * The MariaDB dialect family.
+     * <p>
+     * This family behaves like the versioned dialect {@link #MARIADB_10_5}.
      */
-    MARIADB("MariaDB", false),
+    MARIADB("MariaDB", false, true),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * The MySQL dialect family.
+     * <p>
+     * This family behaves like the versioned dialect {@link #MYSQL_8_0}.
      */
-    MYSQL("MySQL", false),
+    MYSQL("MySQL", false, true),
 
-    /**
-     * The MySQL 5.7 dialect.
-     */
-    MYSQL_5_7("MySQL", false, MYSQL, null),
 
-    /**
-     * The MySQL 8.0 dialect.
-     */
-    MYSQL_8_0("MySQL", false, MYSQL, MYSQL_5_7),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * The PostgreSQL dialect family.
      * <p>
-     * While this family (and its dialects) have been observed to work to some
-     * extent on Amazon RedShift as well, we strongly suggest you use the
-     * official {@link #REDSHIFT} support, instead.
-     */
-    POSTGRES("Postgres", false),
-
-    /**
-     * The PostgreSQL 9.3 dialect.
+     * This family behaves like the versioned dialect {@link #POSTGRES_11}.
      * <p>
      * While this family (and its dialects) have been observed to work to some
      * extent on Amazon RedShift as well, we strongly suggest you use the
      * official {@link #REDSHIFT} support, instead.
      */
-    POSTGRES_9_3("Postgres", false, POSTGRES, null),
+    POSTGRES("Postgres", false, true),
 
-    /**
-     * The PostgreSQL 9.4 dialect.
-     * <p>
-     * While this family (and its dialects) have been observed to work to some
-     * extent on Amazon RedShift as well, we strongly suggest you use the
-     * official {@link #REDSHIFT} support, instead.
-     */
-    POSTGRES_9_4("Postgres", false, POSTGRES, POSTGRES_9_3),
 
-    /**
-     * The PostgreSQL 9.5 dialect.
-     * <p>
-     * While this family (and its dialects) have been observed to work to some
-     * extent on Amazon RedShift as well, we strongly suggest you use the
-     * official {@link #REDSHIFT} support, instead.
-     */
-    POSTGRES_9_5("Postgres", false, POSTGRES, POSTGRES_9_4),
 
-    /**
-     * The PostgreSQL 10 dialect.
-     * <p>
-     * While this family (and its dialects) have been observed to work to some
-     * extent on Amazon RedShift as well, we strongly suggest you use the
-     * official {@link #REDSHIFT} support, instead.
-     */
-    POSTGRES_10("Postgres", false, POSTGRES, POSTGRES_9_5),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * The SQLite dialect family.
+     * <p>
+     * This family behaves like the versioned dialect {@link #SQLITE_3_28}.
      */
-    SQLITE("SQLite", false),
+    SQLITE("SQLite", false, true),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // -------------------------------------------------------------------------
     // SQL dialects for commercial usage
     // -------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -416,23 +593,85 @@ public enum SQLDialect {
         FAMILIES = set.toArray(new SQLDialect[0]);
     }
 
-    private final String              name;
-    private final boolean             commercial;
-    private final SQLDialect          family;
-    private SQLDialect                predecessor;
-    private final ThirdParty          thirdParty;
+    private final String                  name;
+    private final boolean                 commercial;
+    private final boolean                 supported;
+    private final SQLDialect              family;
+    private SQLDialect                    predecessor;
+    private transient EnumSet<SQLDialect> predecessors;
+    private final ThirdParty              thirdParty;
 
-    private SQLDialect(String name, boolean commercial) {
-        this(name, commercial, null, null);
+    /**
+     * Get a list of all {@link SQLDialect#family()} values.
+     */
+    public static final SQLDialect[] families() {
+        return FAMILIES.clone();
     }
 
-    private SQLDialect(String name, boolean commercial, SQLDialect family) {
-        this(name, commercial, family, null);
+    /**
+     * Get a set of dialects preceding a given set of dialects.
+     * <p>
+     * The resulting set of dialects contain all the families and dialect
+     * versions that precede the argument dialects.
+     */
+    public static final Set<SQLDialect> predecessors(SQLDialect... dialects) {
+        EnumSet<SQLDialect> result = EnumSet.noneOf(SQLDialect.class);
+
+        for (SQLDialect dialect : dialects)
+            result.addAll(dialect.predecessors());
+
+        return Collections.unmodifiableSet(result);
     }
 
-    private SQLDialect(String name, boolean commercial, SQLDialect family, SQLDialect predecessor) {
+    /**
+     * Get a set of supported dialect versions given a dialect version.
+     * <p>
+     * The resulting set of dialects contain all the families and dialect
+     * versions that support the argument dialect.
+     */
+    public static final Set<SQLDialect> supported(SQLDialect dialect) {
+        EnumSet<SQLDialect> result = EnumSet.noneOf(SQLDialect.class);
+        addSupported(dialect, result);
+        return Collections.unmodifiableSet(result);
+    }
+
+    /**
+     * Get a set of supported dialect versions given a set of dialect versions.
+     * <p>
+     * The resulting set of dialects contain all the families and dialect
+     * versions that support the argument dialects.
+     */
+    public static final Set<SQLDialect> supported(SQLDialect... dialects) {
+        EnumSet<SQLDialect> result = EnumSet.noneOf(SQLDialect.class);
+
+        for (SQLDialect dialect : dialects)
+            addSupported(dialect, result);
+
+        return Collections.unmodifiableSet(result);
+    }
+
+    private static final void addSupported(SQLDialect dialect, EnumSet<SQLDialect> supported) {
+        supported.add(dialect);
+
+        if (dialect.isFamily())
+            supported.addAll(dialect.predecessors());
+        else
+            for (SQLDialect candidate = dialect.family(); candidate != dialect; candidate = candidate.predecessor())
+                supported.add(candidate);
+    }
+
+    private SQLDialect(String name, boolean commercial, boolean supported) {
+        this(name, commercial, supported, null, null);
+    }
+
+    private SQLDialect(String name, boolean commercial, boolean supported, SQLDialect family) {
+        this(name, commercial, supported, family, null);
+    }
+
+    private SQLDialect(String name, boolean commercial, boolean supported, SQLDialect family, SQLDialect predecessor) {
         this.name = name;
         this.commercial = commercial;
+        this.supported = supported;
         this.family = family == null ? this : family;
         this.predecessor = predecessor == null ? this : predecessor;
 
@@ -447,6 +686,21 @@ public enum SQLDialect {
      */
     public final boolean commercial() {
         return commercial;
+    }
+
+    /**
+     * Whether this dialect is supported by jOOQ as an output dialect.
+     * <p>
+     * Unsupported, non-output dialects include:
+     * <ul>
+     * <li>{@link #DEFAULT}: A hypothetical dialect used for
+     * {@link QueryPart#toString()} calls of unattached query parts.</li>
+     * <li>{@link #SQL99}: A legacy version of {@link #DEFAULT}.</li>
+     * <li>{@link #POSTGRESPLUS}: A not yet supported dialect.</li>
+     * </ul>
+     */
+    public final boolean supported() {
+        return supported;
     }
 
     /**
@@ -484,6 +738,33 @@ public enum SQLDialect {
     }
 
     /**
+     * The predecessor dialects.
+     * <p>
+     * Recursively calls {@link #predecessor()} and finds all the preceding
+     * dialects to this one, including this one.
+     */
+    public final Set<SQLDialect> predecessors() {
+        if (predecessors == null) {
+            SQLDialect curr = this;
+
+            EnumSet<SQLDialect> result = EnumSet.of(curr);
+            for (;;) {
+                SQLDialect pred = curr.predecessor();
+                result.add(pred);
+
+                if (curr == pred)
+                    break;
+
+                curr = pred;
+            }
+
+            predecessors = result;
+        }
+
+        return Collections.unmodifiableSet(predecessors);
+    }
+
+    /**
      * Whether this dialect precedes an other dialect from the same family.
      * <p>
      * This returns:
@@ -517,18 +798,7 @@ public enum SQLDialect {
         if (family != other.family)
             return false;
 
-        SQLDialect candidate = other;
-        while (candidate != null) {
-            if (this == candidate)
-                return true;
-
-            if (candidate == candidate.predecessor())
-                return false;
-
-            candidate = candidate.predecessor();
-        }
-
-        return false;
+        return other.predecessors().contains(this);
     }
 
     /**
@@ -556,6 +826,26 @@ public enum SQLDialect {
     }
 
     /**
+     * Check whether this dialect supports any dialect from the argument
+     * collection.
+     */
+    public final boolean supports(Collection<SQLDialect> other) {
+        if (other.contains(family))
+            return true;
+
+        SQLDialect candidate = family.predecessor();
+        boolean successor = this == family;
+        for (;;) {
+            successor = successor || this == candidate;
+            if (other.contains(candidate))
+                return successor;
+
+            if (candidate == (candidate = candidate.predecessor()))
+                return false;
+        }
+    }
+
+    /**
      * The name of this dialect as it appears in related class names.
      */
     public final String getName() {
@@ -574,13 +864,6 @@ public enum SQLDialect {
      */
     public final String getNameUC() {
         return name == null ? null : name.toUpperCase();
-    }
-
-    /**
-     * Get a list of all {@link SQLDialect#family()} values.
-     */
-    public static final SQLDialect[] families() {
-        return FAMILIES.clone();
     }
 
     /**
@@ -619,6 +902,9 @@ public enum SQLDialect {
                 case H2:        return "H2";
                 case HSQLDB:    return "HSQL";
                 case MARIADB:
+
+
+
                 case MYSQL:     return "MySQL";
                 case POSTGRES:  return "PostgreSQL";
 
@@ -665,17 +951,31 @@ public enum SQLDialect {
 
 
 
+
                 case CUBRID:        return "org.hibernate.dialect.CUBRIDDialect";
                 case DERBY:         return "org.hibernate.dialect.DerbyTenSevenDialect";
                 case FIREBIRD:      return "org.hibernate.dialect.FirebirdDialect";
                 case H2:            return "org.hibernate.dialect.H2Dialect";
                 case HSQLDB:        return "org.hibernate.dialect.HSQLDialect";
                 case MARIADB:
+
+
+
+
+
+
+
+
+
+
+
                 case MYSQL:         return "org.hibernate.dialect.MySQL5Dialect";
-                case POSTGRES_9_3:  return "org.hibernate.dialect.PostgreSQL92Dialect";
-                case POSTGRES_9_4:
-                case POSTGRES_9_5:
-                case POSTGRES_10:
+
+
+
+
+
+
                 case POSTGRES:      return "org.hibernate.dialect.PostgreSQL94Dialect";
                 case SQLITE:        return null;
 

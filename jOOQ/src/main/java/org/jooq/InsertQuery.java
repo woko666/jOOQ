@@ -45,16 +45,17 @@ import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+// ...
 import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
@@ -65,7 +66,14 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * A query for data insertion
+ * An <code>INSERT</code> statement (model API).
+ * <p>
+ * This type is the model API representation of a {@link Insert} statement,
+ * which can be mutated after creation. The advantage of this API compared to
+ * the DSL API is a more simple approach to writing dynamic SQL.
+ * <p>
+ * Instances can be created using {@link DSLContext#insertQuery(Table)} and
+ * overloads.
  *
  * @param <R> The record type of the table being inserted into
  * @author Lukas Eder
@@ -123,23 +131,23 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
     void onConflict(Collection<? extends Field<?>> fields);
 
     /**
-     * Whether use a <code>On CONFLICT</code> or
+     * Whether use a <code>ON CONFLICT</code> or
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, HSQLDB, MYSQL, POSTGRES })
     void onConflictOnConstraint(Name constraint);
 
     /**
-     * Whether use a <code>On CONFLICT</code> or
+     * Whether use a <code>ON CONFLICT</code> or
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, HSQLDB, MYSQL, POSTGRES })
     void onConflictOnConstraint(Constraint constraint);
 
     /**
-     * Whether use a <code>On CONFLICT</code> or
+     * Whether use a <code>ON CONFLICT</code> or
      * <code>ON CONFLICT ON CONSTRAINT</code> clause in this <code>INSERT</code>
      * statement.
      */
@@ -159,7 +167,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     void onDuplicateKeyUpdate(boolean flag);
 
     /**
@@ -178,7 +186,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      * <td><code><pre>INSERT IGNORE INTO ..</pre></code></td>
      * </tr>
      * <tr>
-     * <td>{@link SQLDialect#POSTGRES_9_5}</td>
+     * <td>{@link SQLDialect#POSTGRES_9_5} and {@link SQLDialect#SQLITE}</td>
      * <td><code><pre>INSERT INTO .. ON CONFLICT DO NOTHING</pre></code></td>
      * </tr>
      * <tr>
@@ -223,7 +231,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     <T> void addValueForUpdate(Field<T> field, T value);
 
     /**
@@ -232,7 +240,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     <T> void addValueForUpdate(Field<T> field, Field<T> value);
 
     /**
@@ -245,7 +253,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @see InsertOnDuplicateStep#onDuplicateKeyUpdate()
      */
-    @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     void addValuesForUpdate(Map<?, ?> map);
 
     /**
@@ -257,7 +265,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param condition The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Condition condition);
 
     /**
@@ -269,7 +277,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Condition... conditions);
 
     /**
@@ -281,7 +289,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Collection<? extends Condition> conditions);
 
     /**
@@ -293,7 +301,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param condition The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Operator operator, Condition condition);
 
     /**
@@ -305,7 +313,7 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Operator operator, Condition... conditions);
 
     /**
@@ -317,13 +325,13 @@ public interface InsertQuery<R extends Record> extends StoreQuery<R>, Insert<R> 
      *
      * @param conditions The condition
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     void addConditions(Operator operator, Collection<? extends Condition> conditions);
 
     /**
      * Set an empty record with the <code>DEFAULT VALUES</code> clause.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     void setDefaultValues();
 
     /**

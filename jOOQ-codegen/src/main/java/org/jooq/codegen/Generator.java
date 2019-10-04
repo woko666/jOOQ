@@ -40,9 +40,8 @@ package org.jooq.codegen;
 
 import java.io.Serializable;
 
-import javax.annotation.Generated;
-
 import org.jooq.meta.Database;
+import org.jooq.meta.jaxb.GeneratedAnnotationType;
 
 /**
  * The Generator provides a basic interface for java code generation
@@ -139,14 +138,24 @@ public interface Generator {
     void setGenerateInstanceFields(boolean generateInstanceFields);
 
     /**
-     * Whether the {@link Generated} annotation should be generated
+     * Whether the {@link javax.annotation.Generated} or {@link javax.annotation.processing.Generated} annotation should be generated
      */
     boolean generateGeneratedAnnotation();
 
     /**
-     * Whether the {@link Generated} annotation should be generated
+     * Whether the {@link javax.annotation.Generated} or {@link javax.annotation.processing.Generated} annotation should be generated
      */
     void setGenerateGeneratedAnnotation(boolean generateGeneratedAnnotation);
+
+    /**
+     * Whether the {@link javax.annotation.Generated} or {@link javax.annotation.processing.Generated} annotation should be generated
+     */
+    GeneratedAnnotationType generateGeneratedAnnotationType();
+
+    /**
+     * Whether the {@link javax.annotation.Generated} or {@link javax.annotation.processing.Generated} annotation should be generated
+     */
+    void setGenerateGeneratedAnnotationType(GeneratedAnnotationType generateGeneratedAnnotationType);
 
     boolean useSchemaVersionProvider();
     void setUseSchemaVersionProvider(boolean useSchemaVersionProvider);
@@ -192,6 +201,16 @@ public interface Generator {
      * Whether Tables should be generated
      */
     void setGenerateTables(boolean generateTables);
+
+    /**
+     * Whether embeddable types should be generated
+     */
+    boolean generateEmbeddables();
+
+    /**
+     * Whether embeddable types should be generated
+     */
+    void setGenerateEmbeddables(boolean generateEmbeddables);
 
     /**
      * Whether TableRecords should be generated in addition to tables
@@ -753,6 +772,26 @@ public interface Generator {
      * Whether wrapper types for primary keys should be generated.
      */
     void setGeneratePrimaryKeyTypes(boolean generatePrimaryKeyTypes);
+
+    /**
+     * The newline character(s) to be used in generated code.
+     */
+    String generateNewline();
+
+    /**
+     * The newline character(s) to be used in generated code.
+     */
+    void setGenerateNewline(String newline);
+
+    /**
+     * The indentation character(s) to be used in generated code.
+     */
+    String generateIndentation();
+
+    /**
+     * The indentation character(s) to be used in generated code.
+     */
+    void setGenerateIndentation(String indentation);
 
     /**
      * The target directory

@@ -54,7 +54,7 @@ import org.jooq.exception.DataAccessException;
  * @param <R> The generic record type.
  * @param <P> The generic POJO type.
  * @param <T> The generic primary key type. This is a regular
- *            <code>&lt;T></code> type for single-column keys, or a
+ *            <code>&lt;T&gt;</code> type for single-column keys, or a
  *            {@link Record} subtype for composite keys.
  */
 public interface DAO<R extends TableRecord<R>, P, T> {
@@ -87,7 +87,7 @@ public interface DAO<R extends TableRecord<R>, P, T> {
      * The {@link SQLDialect#family()} wrapped by this context.
      * <p>
      * This method is a convenient way of accessing
-     * <code>configuration().dialect().family()</code>.
+     * <code>configuration().family()</code>.
      */
     SQLDialect family();
 
@@ -252,6 +252,20 @@ public interface DAO<R extends TableRecord<R>, P, T> {
     <Z> List<P> fetch(Field<Z> field, Z... values) throws DataAccessException;
 
     /**
+     * Find records by a given field and a range of values.
+     *
+     * @param field The field to compare values against
+     * @param lowerInclusive The range's lower bound (inclusive), or unbounded
+     *            if <code>null</code>.
+     * @param upperInclusive The range's upper bound (inclusive), or unbounded
+     *            if <code>null</code>.
+     * @return A list of records fulfilling
+     *         <code>field BETWEEN lowerInclusive AND upperInclusive</code>
+     * @throws DataAccessException if something went wrong executing the query
+     */
+    <Z> List<P> fetchRange(Field<Z> field, Z lowerInclusive, Z upperInclusive) throws DataAccessException;
+
+    /**
      * Find a unique record by a given field and a value.
      *
      * @param field The field to compare value against
@@ -283,12 +297,18 @@ public interface DAO<R extends TableRecord<R>, P, T> {
 
 
     /**
-     * Get the underlying table
+     * Get the underlying table.
      */
     Table<R> getTable();
 
     /**
-     * Get the underlying POJO type
+     * Get the underlying POJO type.
      */
     Class<P> getType();
+
+    /**
+     * Extract the ID value from a POJO.
+     */
+    T getId(P object);
+
 }

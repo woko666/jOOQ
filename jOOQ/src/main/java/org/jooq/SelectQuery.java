@@ -45,19 +45,21 @@ import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+// ...
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
+// ...
 import static org.jooq.SQLDialect.MYSQL;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
 // ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
 // ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
@@ -74,7 +76,13 @@ import java.util.Collection;
 import org.jooq.exception.DataAccessException;
 
 /**
- * A query for data selection
+ * A <code>SELECT</code> statement (model API).
+ * <p>
+ * This type is the model API representation of a {@link Select} statement,
+ * which can be mutated after creation. The advantage of this API compared to
+ * the DSL API is a more simple approach to writing dynamic SQL.
+ * <p>
+ * Instances can be created using {@link DSLContext#selectQuery()} and overloads.
  *
  * @author Lukas Eder
  */
@@ -108,7 +116,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * <p>
      * This also sets the <code>distinct</code> flag to <code>true</code>
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     void addDistinctOn(SelectFieldOrAsterisk... fields);
 
     /**
@@ -116,7 +124,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * <p>
      * This also sets the <code>distinct</code> flag to <code>true</code>
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     void addDistinctOn(Collection<? extends SelectFieldOrAsterisk> fields);
 
     /**
@@ -190,6 +198,8 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      */
     @Support
     void addJoin(TableLike<?> table, JoinType type, Condition... conditions);
+
+
 
 
 
@@ -339,7 +349,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
 
     /**
      * Adds a new condition to the having clause of query, connecting it with
-     * each other with {@link Operator#AND}.
+     * each other with <code>operator</code>.
      *
      * @param operator The operator to use to add the conditions to the existing
      *            conditions
@@ -350,7 +360,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
 
     /**
      * Adds new conditions to the having clause of query, connecting them with
-     * each other with {@link Operator#AND}.
+     * each other with <code>operator</code>.
      *
      * @param operator The operator to use to add the conditions to the existing
      *            conditions
@@ -361,7 +371,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
 
     /**
      * Adds new conditions to the having clause of query, connecting them with
-     * each other with {@link Operator#AND}.
+     * each other with <code>operator</code>.
      *
      * @param operator The operator to use to add the conditions to the existing
      *            conditions
@@ -375,7 +385,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      *
      * @param definitions The definitions
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     void addWindow(WindowDefinition... definitions);
 
     /**
@@ -383,8 +393,68 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      *
      * @param definitions The definitions
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     void addWindow(Collection<? extends WindowDefinition> definitions);
+
+    /**
+     * Adds a new condition to the qualify clause of the query, connecting it
+     * with each other with {@link Operator#AND}.
+     *
+     * @param condition The condition
+     */
+    @Support({ H2 })
+    void addQualify(Condition condition);
+
+    /**
+     * Adds new conditions to the qualify clause of the query, connecting them
+     * with each other with {@link Operator#AND}.
+     *
+     * @param conditions The condition
+     */
+    @Support({ H2 })
+    void addQualify(Condition... conditions);
+
+    /**
+     * Adds new conditions to the qualify clause of the query, connecting them
+     * with each other with {@link Operator#AND}.
+     *
+     * @param conditions The condition
+     */
+    @Support({ H2 })
+    void addQualify(Collection<? extends Condition> conditions);
+
+    /**
+     * Adds a new condition to the qualify clause of query, connecting it with
+     * each other with <code>operator</code>.
+     *
+     * @param operator The operator to use to add the conditions to the existing
+     *            conditions
+     * @param condition The condition
+     */
+    @Support({ H2 })
+    void addQualify(Operator operator, Condition condition);
+
+    /**
+     * Adds new conditions to the qualify clause of query, connecting them with
+     * each other with <code>operator</code>.
+     *
+     * @param operator The operator to use to add the conditions to the existing
+     *            conditions
+     * @param conditions The condition
+     */
+    @Support({ H2 })
+    void addQualify(Operator operator, Condition... conditions);
+
+    /**
+     * Adds new conditions to the qualify clause of query, connecting them with
+     * each other with <code>operator</code>.
+     *
+     * @param operator The operator to use to add the conditions to the existing
+     *            conditions
+     * @param conditions The condition
+     */
+    @Support({ H2 })
+    void addQualify(Operator operator, Collection<? extends Condition> conditions);
 
     /**
      * Add an Oracle-style hint to the select clause.
@@ -473,44 +543,26 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
     // Methods from ConditionProvider, OrderProvider, LockProvider
     // ------------------------------------------------------------------------
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Condition condition);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Condition... conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Collection<? extends Condition> conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Condition condition);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Condition... conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Collection<? extends Condition> conditions);
@@ -603,8 +655,19 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * emulated with a <code>ROW_NUMBER()</code> window function and nested
      * <code>SELECT</code> statements.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     void addOffset(int offset);
+
+    /**
+     * Add an <code>OFFSET</code> clause to the query.
+     * <p>
+     * If there is no <code>LIMIT .. OFFSET</code> or <code>TOP</code> clause in
+     * your RDBMS, or if your RDBMS does not natively support offsets, this is
+     * emulated with a <code>ROW_NUMBER()</code> window function and nested
+     * <code>SELECT</code> statements.
+     */
+    @Support
+    void addOffset(Number offset);
 
     /**
      * Add an <code>OFFSET</code> clause to the query using a named parameter.
@@ -614,8 +677,8 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * emulated with a <code>ROW_NUMBER()</code> window function and nested
      * <code>SELECT</code> statements.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    void addOffset(Param<Integer> offset);
+    @Support
+    void addOffset(Param<? extends Number> offset);
 
     /**
      * Limit the results of this select.
@@ -626,6 +689,16 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      */
     @Support
     void addLimit(int numberOfRows);
+
+    /**
+     * Limit the results of this select.
+     * <p>
+     * This is the same as calling {@link #addLimit(int, int)} with offset = 0
+     *
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Number numberOfRows);
 
     /**
      * Limit the results of this select using named parameters.
@@ -643,8 +716,8 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      *
      * @param numberOfRows The number of rows to return
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    void addLimit(Param<Integer> numberOfRows);
+    @Support
+    void addLimit(Param<? extends Number> numberOfRows);
 
     /**
      * Limit the results of this select.
@@ -660,8 +733,25 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * @param offset The lowest offset starting at 0
      * @param numberOfRows The number of rows to return
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     void addLimit(int offset, int numberOfRows);
+
+    /**
+     * Limit the results of this select.
+     * <p>
+     * Note that some dialects do not support bind values at all in
+     * <code>LIMIT</code> or <code>TOP</code> clauses!
+     * <p>
+     * If there is no <code>LIMIT</code> or <code>TOP</code> clause in your
+     * RDBMS, or if your RDBMS does not natively support offsets, this is
+     * emulated with a <code>ROW_NUMBER()</code> window function and nested
+     * <code>SELECT</code> statements.
+     *
+     * @param offset The lowest offset starting at 0
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Number offset, Number numberOfRows);
 
     /**
      * Limit the results of this select.
@@ -678,8 +768,26 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * @param offset The lowest offset starting at 0
      * @param numberOfRows The number of rows to return
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     void addLimit(Param<Integer> offset, int numberOfRows);
+
+    /**
+     * Limit the results of this select.
+     * <p>
+     * Note that some dialects do not support bind values at all in
+     * <code>LIMIT</code> or <code>TOP</code> clauses!
+     * <p>
+     * If there is no <code>LIMIT</code> or <code>TOP</code> clause in your
+     * RDBMS, or the <code>LIMIT</code> or <code>TOP</code> clause does not
+     * support bind values, or if your RDBMS does not natively support offsets,
+     * this may be emulated with a <code>ROW_NUMBER()</code> window function
+     * and nested <code>SELECT</code> statements.
+     *
+     * @param offset The lowest offset starting at 0
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Param<? extends Number> offset, Number numberOfRows);
 
     /**
      * Limit the results of this select using named parameters.
@@ -696,7 +804,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * @param offset The lowest offset starting at 0
      * @param numberOfRows The number of rows to return
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     void addLimit(int offset, Param<Integer> numberOfRows);
 
     /**
@@ -714,23 +822,37 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * @param offset The lowest offset starting at 0
      * @param numberOfRows The number of rows to return
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    void addLimit(Param<Integer> offset, Param<Integer> numberOfRows);
+    @Support
+    void addLimit(Number offset, Param<? extends Number> numberOfRows);
 
+    /**
+     * Limit the results of this select using named parameters.
+     * <p>
+     * Note that some dialects do not support bind values at all in
+     * <code>LIMIT</code> or <code>TOP</code> clauses!
+     * <p>
+     * If there is no <code>LIMIT</code> or <code>TOP</code> clause in your
+     * RDBMS, or the <code>LIMIT</code> or <code>TOP</code> clause does not
+     * support bind values, or if your RDBMS does not natively support offsets,
+     * this may be emulated with a <code>ROW_NUMBER()</code> window function
+     * and nested <code>SELECT</code> statements.
+     *
+     * @param offset The lowest offset starting at 0
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Param<? extends Number> offset, Param<? extends Number> numberOfRows);
 
-
-
-
-
-
-
-
-
+    /**
+     * Add the <code>PERCENT</code> clause to a <code>LIMIT</code> clause.
+     */
+    @Support({ H2 })
+    void setLimitPercent(boolean percent);
 
     /**
      * Add the <code>WITH TIES</code> clause to a <code>LIMIT</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
     void setWithTies(boolean withTies);
 
     /**
@@ -798,6 +920,12 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
     void setForUpdate(boolean forUpdate);
 
     /**
+     * Sets the "FOR NO KEY UPDATE" flag onto the query.
+     */
+    @Support({ POSTGRES })
+    void setForNoKeyUpdate(boolean forNoKeyUpdate);
+
+    /**
      * Some RDBMS allow for specifying the fields that should be locked by the
      * <code>FOR UPDATE</code> clause, instead of the full row.
      * <p>
@@ -860,29 +988,27 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      *
      * @param tables The tables that should be locked
      */
-    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MYSQL_8_0, POSTGRES })
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MYSQL, POSTGRES })
     void setForUpdateOf(Table<?>... tables);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Some RDBMS allow for specifying the locking mode for the applied
+     * <code>FOR UPDATE</code> clause. In this case, the session will wait for
+     * some <code>seconds</code>, before aborting the lock acquirement if the
+     * lock is not available.
+     * <p>
+     * This automatically sets the {@link #setForUpdate(boolean)} flag, and
+     * unsets the {@link #setForShare(boolean)} flag, if it was previously set.
+     * <p>
+     * This has been observed to be supported by any of these dialects:
+     * <ul>
+     * <li>Oracle</li>
+     * </ul>
+     *
+     * @param seconds The number of seconds to wait for a lock
+     */
+    @Support({ MARIADB })
+    void setForUpdateWait(int seconds);
 
     /**
      * Some RDBMS allow for specifying the locking mode for the applied
@@ -897,7 +1023,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * <li>Oracle</li>
      * </ul>
      */
-    @Support({ MYSQL_8_0, POSTGRES })
+    @Support({ MARIADB, MYSQL, POSTGRES })
     void setForUpdateNoWait();
 
     /**
@@ -913,7 +1039,7 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      * <li>Oracle</li>
      * </ul>
      */
-    @Support({ MYSQL_8_0, POSTGRES_9_5 })
+    @Support({ MYSQL, POSTGRES })
     void setForUpdateSkipLocked();
 
     /**
@@ -939,6 +1065,14 @@ public interface SelectQuery<R extends Record> extends Select<R>, ConditionProvi
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
     void setForShare(boolean forShare);
+
+    /**
+     * Sets the "FOR KEY SHARE" flag onto the query.
+     */
+    @Support({ POSTGRES })
+    void setForKeyShare(boolean forKeyShare);
+
+
 
 
 

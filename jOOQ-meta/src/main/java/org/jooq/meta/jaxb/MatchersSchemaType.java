@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -14,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -29,10 +24,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatchersSchemaType implements Serializable
+public class MatchersSchemaType implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String expression;
     protected MatcherRule schemaClass;
@@ -43,21 +38,13 @@ public class MatchersSchemaType implements Serializable
     /**
      * This schema matcher applies to all unqualified or qualified schema names matched by this expression. If left empty, this matcher applies to all schemas.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getExpression() {
         return expression;
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This schema matcher applies to all unqualified or qualified schema names matched by this expression. If left empty, this matcher applies to all schemas.
      *
      */
     public void setExpression(String value) {
@@ -67,21 +54,13 @@ public class MatchersSchemaType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Schema} object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getSchemaClass() {
         return schemaClass;
     }
 
     /**
-     * Sets the value of the schemaClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Schema} object.
      *
      */
     public void setSchemaClass(MatcherRule value) {
@@ -91,21 +70,13 @@ public class MatchersSchemaType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Schema} identifier.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getSchemaIdentifier() {
         return schemaIdentifier;
     }
 
     /**
-     * Sets the value of the schemaIdentifier property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Schema} identifier.
      *
      */
     public void setSchemaIdentifier(MatcherRule value) {
@@ -115,71 +86,68 @@ public class MatchersSchemaType implements Serializable
     /**
      * This string provides additional interfaces that a generated {@link org.jooq.Schema} should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getSchemaImplements() {
         return schemaImplements;
     }
 
     /**
-     * Sets the value of the schemaImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated {@link org.jooq.Schema} should implement.
      *
      */
     public void setSchemaImplements(String value) {
         this.schemaImplements = value;
     }
 
+    /**
+     * This schema matcher applies to all unqualified or qualified schema names matched by this expression. If left empty, this matcher applies to all schemas.
+     *
+     */
     public MatchersSchemaType withExpression(String value) {
         setExpression(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Schema} object.
+     *
+     */
     public MatchersSchemaType withSchemaClass(MatcherRule value) {
         setSchemaClass(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Schema} identifier.
+     *
+     */
     public MatchersSchemaType withSchemaIdentifier(MatcherRule value) {
         setSchemaIdentifier(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated {@link org.jooq.Schema} should implement.
+     *
+     */
     public MatchersSchemaType withSchemaImplements(String value) {
         setSchemaImplements(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("expression", expression);
+        builder.append("schemaClass", schemaClass);
+        builder.append("schemaIdentifier", schemaIdentifier);
+        builder.append("schemaImplements", schemaImplements);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        if (schemaClass!= null) {
-            sb.append("<schemaClass>");
-            sb.append(schemaClass);
-            sb.append("</schemaClass>");
-        }
-        if (schemaIdentifier!= null) {
-            sb.append("<schemaIdentifier>");
-            sb.append(schemaIdentifier);
-            sb.append("</schemaIdentifier>");
-        }
-        if (schemaImplements!= null) {
-            sb.append("<schemaImplements>");
-            sb.append(schemaImplements);
-            sb.append("</schemaImplements>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

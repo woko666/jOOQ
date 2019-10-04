@@ -63,7 +63,7 @@ import static org.jooq.impl.Keywords.K_VIEW;
 import static org.jooq.impl.Tools.beginTryCatch;
 import static org.jooq.impl.Tools.endTryCatch;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.AlterViewFinalStep;
 import org.jooq.AlterViewStep;
@@ -72,13 +72,14 @@ import org.jooq.Comment;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Name;
+// ...
 import org.jooq.SQLDialect;
 import org.jooq.Table;
 
 /**
  * @author Lukas Eder
  */
-final class AlterViewImpl extends AbstractQuery implements
+final class AlterViewImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for ALTER VIEW behaviour
     AlterViewStep,
@@ -89,7 +90,7 @@ final class AlterViewImpl extends AbstractQuery implements
      */
     private static final long                serialVersionUID  = 8904572826501186329L;
     private static final Clause[]            CLAUSES           = { ALTER_VIEW };
-    private static final EnumSet<SQLDialect> SUPPORT_IF_EXISTS = EnumSet.of(CUBRID, DERBY, FIREBIRD);
+    private static final Set<SQLDialect>     SUPPORT_IF_EXISTS = SQLDialect.supported(CUBRID, DERBY, FIREBIRD);
 
     private final Table<?>                   view;
     private final boolean                    ifExists;
@@ -106,6 +107,10 @@ final class AlterViewImpl extends AbstractQuery implements
         this.view = view;
         this.ifExists = ifExists;
     }
+
+    final Table<?> $view()     { return view; }
+    final boolean  $ifExists() { return ifExists; }
+    final Table<?> $renameTo() { return renameTo; }
 
     // ------------------------------------------------------------------------
     // XXX: DSL API
@@ -184,6 +189,9 @@ final class AlterViewImpl extends AbstractQuery implements
 
         accept1(ctx);
     }
+
+
+
 
 
 

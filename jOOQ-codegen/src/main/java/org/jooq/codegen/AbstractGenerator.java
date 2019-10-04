@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.jooq.meta.Database;
+import org.jooq.meta.jaxb.GeneratedAnnotationType;
 import org.jooq.tools.JooqLogger;
 
 
@@ -61,15 +62,17 @@ abstract class AbstractGenerator implements Generator {
     boolean                            generateDeprecationOnUnknownTypes  = true;
     boolean                            generateIndexes                    = true;
     boolean                            generateRelations                  = true;
-    boolean                            generateImplicitJoinPathsToOne                        = true;
+    boolean                            generateImplicitJoinPathsToOne     = true;
     boolean                            generateInstanceFields             = true;
     boolean                            generateGeneratedAnnotation        = true;
+    GeneratedAnnotationType            generateGeneratedAnnotationType    = GeneratedAnnotationType.DETECT_FROM_JDK;
     boolean                            useSchemaVersionProvider           = false;
     boolean                            useCatalogVersionProvider          = false;
     boolean                            generateRoutines                   = true;
     boolean                            generateSequences                  = true;
     boolean                            generateUDTs                       = true;
     boolean                            generateTables                     = true;
+    boolean                            generateEmbeddables                = true;
     boolean                            generateRecords                    = true;
     boolean                            generateRecordsImplementingRecordN = true;
     boolean                            generatePojos                      = false;
@@ -117,16 +120,19 @@ abstract class AbstractGenerator implements Generator {
     boolean                            generateJavaBeansGettersAndSetters = false;
     boolean                            generateVarargsSetters             = true;
     String                             generateFullyQualifiedTypes        = "";
-    boolean                            generateJavaTimeTypes              = false;
+    boolean                            generateJavaTimeTypes              = true;
     boolean                            generateTableValuedFunctions       = false;
     boolean                            generateEmptyCatalogs              = false;
     boolean                            generateEmptySchemas               = false;
     boolean                            generatePrimaryKeyTypes            = false;
+    String                             generateNewline                    = "\n";
+    String                             generateIndentation;
 
     protected GeneratorStrategyWrapper strategy;
     protected String                   targetEncoding                     = "UTF-8";
     protected boolean                  targetClean                        = true;
     final Language                     language;
+
 
     AbstractGenerator(Language language) {
         this.language = language;
@@ -280,6 +286,16 @@ abstract class AbstractGenerator implements Generator {
     }
 
     @Override
+    public GeneratedAnnotationType generateGeneratedAnnotationType() {
+        return generateGeneratedAnnotationType;
+    }
+
+    @Override
+    public void setGenerateGeneratedAnnotationType(GeneratedAnnotationType generateGeneratedAnnotationType) {
+        this.generateGeneratedAnnotationType = generateGeneratedAnnotationType;
+    }
+
+    @Override
     public boolean useSchemaVersionProvider() {
         return useSchemaVersionProvider;
     }
@@ -339,6 +355,16 @@ abstract class AbstractGenerator implements Generator {
     @Override
     public void setGenerateTables(boolean generateTables) {
         this.generateTables = generateTables;
+    }
+
+    @Override
+    public boolean generateEmbeddables() {
+        return generateEmbeddables;
+    }
+
+    @Override
+    public void setGenerateEmbeddables(boolean generateEmbeddables) {
+        this.generateEmbeddables = generateEmbeddables;
     }
 
     @Override
@@ -878,6 +904,28 @@ abstract class AbstractGenerator implements Generator {
     @Override
     public void setGeneratePrimaryKeyTypes(boolean generatePrimaryKeyTypes) {
         this.generatePrimaryKeyTypes = generatePrimaryKeyTypes;
+    }
+
+    @Override
+    public String generateNewline() {
+        return generateNewline;
+    }
+
+    @Override
+    public void setGenerateNewline(String newline) {
+        // [#6234] The character provided in the configuration may either be the
+        //         ASCII character itself, or an escaped version of it, such as "\\n"
+        this.generateNewline = newline == null ? newline : newline.replace("\\r", "\r").replace("\\n", "\n");
+    }
+
+    @Override
+    public String generateIndentation() {
+        return generateIndentation;
+    }
+
+    @Override
+    public void setGenerateIndentation(String indentation) {
+        this.generateIndentation = indentation;
     }
 
     // ----

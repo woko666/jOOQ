@@ -38,6 +38,7 @@
 package org.jooq;
 
 // ...
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.POSTGRES;
 
 import java.util.Collection;
@@ -57,9 +58,9 @@ import java.util.Collection;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -111,7 +112,7 @@ public interface SelectDistinctOnStep<R extends Record> extends SelectIntoStep<R
      * This implicitly enforces the <code>DISTINCT</code> clause, no matter if
      * it is added explicitly via the jOOQ API.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     SelectIntoStep<R> on(SelectFieldOrAsterisk... fields);
 
     /**
@@ -121,20 +122,20 @@ public interface SelectDistinctOnStep<R extends Record> extends SelectIntoStep<R
      * This implicitly enforces the <code>DISTINCT</code> clause, no matter if
      * it is added explicitly via the jOOQ API.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     SelectIntoStep<R> on(Collection<? extends SelectFieldOrAsterisk> fields);
 
     /**
      * Add the PostgreSQL-specific <code>ON(...)</code> clause to a
      * <code>SELECT DISTINCT ON (...)</code> statement.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     SelectIntoStep<R> distinctOn(SelectFieldOrAsterisk... fields);
 
     /**
      * Add the PostgreSQL-specific <code>ON(...)</code> clause to a
      * <code>SELECT DISTINCT ON (...)</code> statement.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, POSTGRES })
     SelectIntoStep<R> distinctOn(Collection<? extends SelectFieldOrAsterisk> fields);
 }

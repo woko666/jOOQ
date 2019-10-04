@@ -38,8 +38,6 @@
 
 package org.jooq;
 
-import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,11 +47,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.annotation.Generated;
 import javax.persistence.Column;
 
 import org.jooq.exception.DataTypeException;
-import org.jooq.exception.IOException;
 import org.jooq.exception.MappingException;
 import org.jooq.impl.DefaultRecordMapper;
 import org.jooq.impl.DefaultRecordMapperProvider;
@@ -88,7 +84,7 @@ import org.jooq.tools.Convert;
  * <h5>Records of well-defined degree</h5>
  * <p>
  * When projecting custom record types in SQL, new ad-hoc types of a certain
- * degree are formed on the fly. Records with degree &lt= 22 are reflected by
+ * degree are formed on the fly. Records with degree &lt;= 22 are reflected by
  * jOOQ through the {@link Record1}, {@link Record2}, ... {@link Record22}
  * classes, which cover the respective row value expressions {@link Row1},
  * {@link Row2}, ... {@link Row22}
@@ -105,7 +101,7 @@ import org.jooq.tools.Convert;
  * @author Lukas Eder
  * @see Result
  */
-public interface Record extends Attachable, Comparable<Record> {
+public interface Record extends Attachable, Comparable<Record>, Formattable {
 
     /**
      * Get this record's fields as a {@link Row}.
@@ -192,6 +188,33 @@ public interface Record extends Attachable, Comparable<Record> {
      * @see Row#fields(int...)
      */
     Field<?>[] fields(int... fieldIndexes);
+
+    /**
+     * Get a field's index from this record.
+     *
+     * @param field The field to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this record.
+     */
+    int indexOf(Field<?> field);
+
+    /**
+     * Get a field's index from this record.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this record.
+     */
+    int indexOf(String fieldName);
+
+    /**
+     * Get a field's index from this record.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this record
+     */
+    int indexOf(Name fieldName);
 
     /**
      * Get this record's values as a {@link Row}.
@@ -702,7 +725,7 @@ public interface Record extends Attachable, Comparable<Record> {
      */
     Record into(Field<?>... fields);
 
-    // [jooq-tools] START [into-fields]
+
 
     /**
      * Copy this record into a new record holding only a subset of the previous
@@ -711,7 +734,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1> Record1<T1> into(Field<T1> field1);
 
     /**
@@ -721,7 +743,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2> Record2<T1, T2> into(Field<T1> field1, Field<T2> field2);
 
     /**
@@ -731,7 +752,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3> Record3<T1, T2, T3> into(Field<T1> field1, Field<T2> field2, Field<T3> field3);
 
     /**
@@ -741,7 +761,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4> Record4<T1, T2, T3, T4> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4);
 
     /**
@@ -751,7 +770,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5> Record5<T1, T2, T3, T4, T5> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5);
 
     /**
@@ -761,7 +779,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6> Record6<T1, T2, T3, T4, T5, T6> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6);
 
     /**
@@ -771,7 +788,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7> Record7<T1, T2, T3, T4, T5, T6, T7> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7);
 
     /**
@@ -781,7 +797,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8> Record8<T1, T2, T3, T4, T5, T6, T7, T8> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8);
 
     /**
@@ -791,7 +806,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9> Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9);
 
     /**
@@ -801,7 +815,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10);
 
     /**
@@ -811,7 +824,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11);
 
     /**
@@ -821,7 +833,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12);
 
     /**
@@ -831,7 +842,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13);
 
     /**
@@ -841,7 +851,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14);
 
     /**
@@ -851,7 +860,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15);
 
     /**
@@ -861,7 +869,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16);
 
     /**
@@ -871,7 +878,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17);
 
     /**
@@ -881,7 +887,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18);
 
     /**
@@ -891,7 +896,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19);
 
     /**
@@ -901,7 +905,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20);
 
     /**
@@ -911,7 +914,6 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21);
 
     /**
@@ -921,10 +923,9 @@ public interface Record extends Attachable, Comparable<Record> {
      * @return The new record
      * @see #into(Table)
      */
-    @Generated("This class was generated using jOOQ-tools")
     <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> into(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22);
 
-// [jooq-tools] END [into-fields]
+
 
     /**
      * Map resulting records onto a custom type.
@@ -1044,6 +1045,12 @@ public interface Record extends Attachable, Comparable<Record> {
      * <p>
      * Loading of data is delegated to {@link #fromMap(Map)}
      * <p>
+     * <h5>If <code>source</code> is an {@link Iterable}</h5>
+     * <p>
+     * <p>
+     * Loading of data is equivalent to loading {@link #fromArray(Object...)},
+     * transforming the {@link Iterable} to an array, first.
+     * <p>
      * <h5>If any JPA {@link Column} annotations are found on the {@link Class}
      * of the provided <code>source</code>, only those are used. Matching
      * candidates are:</h5>
@@ -1062,7 +1069,8 @@ public interface Record extends Attachable, Comparable<Record> {
      * <li>{@link Column#name()} must match {@link Field#getName()}. All other
      * annotation attributes are ignored</li>
      * <li>Only the first match per field is used</li>
-     * <li>Matching methods have a higher priority than matching member fields</li>
+     * <li>Matching methods have a higher priority than matching member
+     * fields</li>
      * <li>Explicitly matching methods have a higher priority than implicitly
      * matching methods (implicitly matching getter = setter is annotated)</li>
      * <li>Static methods / member fields are ignored</li>
@@ -1324,153 +1332,6 @@ public interface Record extends Attachable, Comparable<Record> {
     void fromArray(Object[] array, int... fieldIndexes);
 
     // -------------------------------------------------------------------------
-    // Formatting methods
-    // -------------------------------------------------------------------------
-
-    /**
-     * Get a simple formatted representation of this result as a text table.
-     * <p>
-     * The format is the following:<p>
-     * <code><pre>
-     * +------+------+------+
-     * | COL1 | COL2 | COL3 |
-     * +------+------+------+
-     * | VAL1 | VAL2 | VAL3 |
-     * +------+------+------+
-     * </pre></code>
-     *
-     * @return The formatted result
-     */
-    String format();
-
-    /**
-     * Get a simple formatted representation of this result as a text data
-     * structure, according to the format.
-     *
-     * @return The formatted result
-     * @see TXTFormat
-     */
-    String format(TXTFormat format);
-
-    /**
-     * Like {@link #format()}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void format(OutputStream stream) throws IOException;
-
-    /**
-     * Like {@link #format(TXTFormat)}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void format(OutputStream stream, TXTFormat format) throws IOException;
-
-    /**
-     * Like {@link #format()}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void format(Writer writer) throws IOException;
-
-    /**
-     * Like {@link #format(TXTFormat)}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void format(Writer writer, TXTFormat format) throws IOException;
-
-    /**
-     * Get a simple formatted representation of this result as a JSON array.
-     * <p>
-     * The format is the following: <code><pre>
-     * [value-2-1,value-2-2,...,value-2-n]
-     * </pre></code>
-     *
-     * @return The formatted result
-     */
-    String formatJSON();
-
-    /**
-     * Get a simple formatted representation of this result as a JSON data
-     * structure, according to the format.
-     *
-     * @return The formatted result
-     * @see JSONFormat
-     */
-    String formatJSON(JSONFormat format);
-
-    /**
-     * Like {@link #formatJSON()}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatJSON(OutputStream stream) throws IOException;
-
-    /**
-     * Like {@link #formatJSON(JSONFormat)}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatJSON(OutputStream stream, JSONFormat format) throws IOException;
-
-    /**
-     * Like {@link #formatJSON()}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatJSON(Writer writer) throws IOException;
-
-    /**
-     * Like {@link #formatJSON(JSONFormat)}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatJSON(Writer writer, JSONFormat format) throws IOException;
-
-    /**
-     * Get this record formatted as XML.
-     *
-     * @see Result#formatXML()
-     */
-    String formatXML();
-
-    /**
-     * Get this record formatted as XML.
-     *
-     * @see Result#formatXML(XMLFormat)
-     */
-    String formatXML(XMLFormat format);
-
-    /**
-     * Like {@link #formatXML()}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatXML(OutputStream stream) throws IOException;
-
-    /**
-     * Like {@link #formatXML(XMLFormat)}, but the data is output onto an {@link OutputStream}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatXML(OutputStream stream, XMLFormat format) throws IOException;
-
-    /**
-     * Like {@link #formatXML()}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatXML(Writer writer) throws IOException;
-
-    /**
-     * Like {@link #formatXML(XMLFormat)}, but the data is output onto a {@link Writer}.
-     *
-     * @throws IOException - an unchecked wrapper for {@link java.io.IOException}, if anything goes wrong.
-     */
-    void formatXML(Writer writer, XMLFormat format) throws IOException;
-
-    // -------------------------------------------------------------------------
     // Inherited methods
     // -------------------------------------------------------------------------
 
@@ -1547,7 +1408,7 @@ public interface Record extends Attachable, Comparable<Record> {
      * <li><code>X = Y</code> means <code>X.compareTo(Y) == 0</code></li>
      * <li><code>X &lt; Y</code> means <code>X.compareTo(Y) &lt; 0</code></li>
      * <li><code>X[i] = Y[i]</code> means
-     * <code>(X[i] == null && Y[i] == null) || X[i].compareTo(Y[i]) == 0</code>
+     * <code>(X[i] == null &amp;&amp; Y[i] == null) || X[i].compareTo(Y[i]) == 0</code>
      * </li>
      * <li><code>X[i] &lt; Y[i]</code> means
      * <code>Y[i] == null || X[i].compareTo(Y[i]) &lt; 0</code>. This
@@ -1566,10 +1427,10 @@ public interface Record extends Attachable, Comparable<Record> {
      * OR (r1[0] = r2[0] AND ... AND r1[N-1] = r2[N-1] AND r1[N] = r2[N])</pre></code>
      * </li>
      * <li><strong><code>x = 1</code></strong>: if <code><pre>
-     *    (r1[0] > r2[0])
-     * OR (r1[0] = r2[0] AND r1[1] > r2[1])
+     *    (r1[0] &gt; r2[0])
+     * OR (r1[0] = r2[0] AND r1[1] &gt; r2[1])
      * OR  ...
-     * OR (r1[0] = r2[0] AND ... AND r1[N-1] = r2[N-1] AND r1[N] > r2[N])</pre></code>
+     * OR (r1[0] = r2[0] AND ... AND r1[N-1] = r2[N-1] AND r1[N] &gt; r2[N])</pre></code>
      * </li>
      * </ul>
      * <p>
@@ -1607,8 +1468,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a value from this Record, providing a field.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the {@link #getValue(Field)}
-     * method. It is recommended to use {@link #get(Field)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(Field)} instead.
      *
      * @see #get(Field)
      */
@@ -1632,9 +1493,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(Field, Class)} method. It is recommended to use
-     * {@link #get(Field, Class)} instead.
+     * [#2211] Future versions of jOOQ might remove tthis method. It is
+     * recommended to use {@link #get(Field, Class)} instead.
      *
      * @see #get(Field, Class)
      */
@@ -1663,9 +1523,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(Field, Converter)} method. It is recommended to use
-     * {@link #get(Field, Converter)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(Field, Converter)} instead.
      *
      * @see #get(Field, Converter)
      */
@@ -1696,8 +1555,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the {@link #getValue(String)}
-     * method. It is recommended to use {@link #get(String)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(String)} instead.
      *
      * @see #get(String)
      */
@@ -1720,9 +1579,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(String, Class)} method. It is recommended to use
-     * {@link #get(String, Class)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(String, Class)} instead.
      *
      * @see #get(String, Class)
      */
@@ -1751,9 +1609,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(String, Converter)} method. It is recommended to use
-     * {@link #get(String, Converter)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(String, Converter)} instead.
      *
      * @see #get(String, Converter)
      */
@@ -1782,8 +1639,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the {@link #getValue(Name)}
-     * method. It is recommended to use {@link #get(Name)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(Name)} instead.
      *
      * @see #get(Name)
      */
@@ -1792,9 +1649,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(Name, Class)} method. It is recommended to use
-     * {@link #get(Name, Class)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(Name, Class)} instead.
      *
      * @see #get(Name, Class)
      */
@@ -1803,9 +1659,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this Record, providing a field name.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(Name, Converter)} method. It is recommended to use
-     * {@link #get(Name, Converter)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(Name, Converter)} instead.
      *
      * @see #get(Name, Converter)
      */
@@ -1814,8 +1669,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a value from this record, providing a field index.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the {@link #getValue(int)}
-     * method. It is recommended to use {@link #get(int)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(int)} instead.
      *
      * @see #get(int)
      */
@@ -1838,9 +1693,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this record, providing a field index.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(int, Class)} method. It is recommended to use
-     * {@link #get(int, Class)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(int, Class)} instead.
      *
      * @see #get(int, Class)
      */
@@ -1869,9 +1723,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Get a converted value from this record, providing a field index.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #getValue(int, Converter)} method. It is recommended to use
-     * {@link #get(int, Converter)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #get(int, Converter)} instead.
      *
      * @see #get(int, Converter)
      */
@@ -1900,9 +1753,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Set a value into this record.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #set(Field, Object)} method. It is recommended to use
-     * {@link #set(Field, Object)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #set(Field, Object)} instead.
      *
      * @see #set(Field, Object)
      */
@@ -1911,9 +1763,8 @@ public interface Record extends Attachable, Comparable<Record> {
     /**
      * Set a value into this record.
      * <p>
-     * [#2211] Future versions of jOOQ might remove the
-     * {@link #set(Field, Object, Converter)} method. It is recommended to use
-     * {@link #set(Field, Object, Converter)} instead.
+     * [#2211] Future versions of jOOQ might remove this method. It is
+     * recommended to use {@link #set(Field, Object, Converter)} instead.
      *
      * @see #set(Field, Object, Converter)
      */

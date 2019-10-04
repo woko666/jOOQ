@@ -37,21 +37,22 @@
  */
 package org.jooq.impl;
 
-import static org.jooq.impl.DSL.keyword;
+import static org.jooq.impl.Keywords.F_STRFTIME;
+import static org.jooq.impl.Keywords.K_DATE;
+import static org.jooq.impl.Keywords.K_TIME;
+import static org.jooq.impl.Keywords.K_TIMESTAMP;
+import static org.jooq.impl.Tools.castIfNeeded;
 
-import java.sql.Date;
-import java.sql.Time;
-
-import org.jooq.Configuration;
+import org.jooq.Context;
 import org.jooq.DataType;
 import org.jooq.Field;
-import org.jooq.QueryPart;
+import org.jooq.Keyword;
 
 
 /**
  * @author Lukas Eder
  */
-final class DateOrTime<T> extends AbstractFunction<T> {
+final class DateOrTime<T> extends AbstractField<T> {
 
     /**
      * Generated UID
@@ -61,42 +62,53 @@ final class DateOrTime<T> extends AbstractFunction<T> {
     private final Field<?>    field;
 
     DateOrTime(Field<?> field, DataType<T> dataType) {
-        super(name(dataType), dataType, field);
+        super(DSL.name(name(dataType)), dataType);
 
         this.field = field;
     }
 
     private static String name(DataType<?> dataType) {
-        return dataType.getType() == Date.class
+        return dataType.isDate()
              ? "date"
-             : dataType.getType() == Time.class
+             : dataType.isTime()
              ? "time"
              : "timestamp";
     }
 
+    private static Keyword keyword(DataType<?> dataType) {
+        return dataType.isDate()
+             ? K_DATE
+             : dataType.isTime()
+             ? K_TIME
+             : K_TIMESTAMP;
+    }
+
     @Override
-    final QueryPart getFunction0(Configuration configuration) {
-        switch (configuration.family()) {
+    public final void accept(Context<?> ctx) {
+        switch (ctx.family()) {
+
 
 
 
             case MYSQL:
             case MARIADB:
-                return DSL.field("{" + name(getDataType()) + "}({0})", getDataType(), field);
+                ctx.visit(keyword(getDataType())).sql('(').visit(field).sql(')');
+                break;
 
             case SQLITE: {
-                String name =
-                      getDataType().getType() == Date.class
-                    ? "date"
-                    : getDataType().getType() == Time.class
-                    ? "time"
-                    : "datetime";
-
-                return DSL.field("{0}({1})", getDataType(), keyword(name), field);
+                if (getDataType().isDate())
+                    ctx.visit(K_DATE).sql('(').visit(field).sql(')');
+                else if (getDataType().isTime())
+                    // [#8733] No fractional seconds for time literals
+                    ctx.visit(K_TIME).sql('(').visit(field).sql(')');
+                else
+                    ctx.visit(F_STRFTIME).sql("('%Y-%m-%d %H:%M:%f', ").visit(field).sql(')');
+                break;
             }
 
             default:
-                return field.cast(getDataType());
+                ctx.visit(castIfNeeded(field, getDataType()));
+                break;
         }
     }
 }

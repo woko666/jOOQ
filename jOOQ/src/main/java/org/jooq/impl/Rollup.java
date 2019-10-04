@@ -37,13 +37,11 @@
  */
 package org.jooq.impl;
 
+import static org.jooq.impl.Keywords.F_ROLLUP;
 import static org.jooq.impl.Keywords.K_WITH_ROLLUP;
 
-import org.jooq.Clause;
-import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.FieldOrRow;
-import org.jooq.QueryPart;
 
 /**
  * @author Lukas Eder
@@ -59,31 +57,24 @@ final class Rollup extends AbstractField<Object> {
     Rollup(FieldOrRow... arguments) {
         super(DSL.name("rollup"), SQLDataType.OTHER);
 
-        this.arguments = new QueryPartList<FieldOrRow>(arguments);
+        this.arguments = new QueryPartList<>(arguments);
     }
 
     @Override
     public final void accept(Context<?> ctx) {
-        ctx.visit(delegate(ctx.configuration()));
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
-    private final QueryPart delegate(Configuration configuration) {
-        switch (configuration.family()) {
+        switch (ctx.family()) {
 
 
 
             case CUBRID:
             case MARIADB:
             case MYSQL:
-                return new MySQLWithRollup();
+                ctx.visit(new MySQLWithRollup());
+                break;
 
             default:
-                return DSL.field("{rollup}({0})", Object.class, arguments);
+                ctx.visit(F_ROLLUP).sql('(').visit(arguments).sql(')');
+                break;
         }
     }
 
@@ -99,11 +90,6 @@ final class Rollup extends AbstractField<Object> {
             ctx.visit(arguments)
                .formatSeparator()
                .visit(K_WITH_ROLLUP);
-        }
-
-        @Override
-        public final Clause[] clauses(Context<?> ctx) {
-            return null;
         }
     }
 }

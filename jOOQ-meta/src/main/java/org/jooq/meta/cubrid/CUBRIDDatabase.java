@@ -93,9 +93,8 @@ public class CUBRIDDatabase extends AbstractDatabase {
             String columnName = record.get(DB_INDEX_KEY.KEY_ATTR_NAME);
 
             TableDefinition table = getTable(getSchemata().get(0), tableName);
-            if (table != null) {
-                relations.addUniqueKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addUniqueKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -107,9 +106,8 @@ public class CUBRIDDatabase extends AbstractDatabase {
             String columnName = record.get(DB_INDEX_KEY.KEY_ATTR_NAME);
 
             TableDefinition table = getTable(getSchemata().get(0), tableName);
-            if (table != null) {
-                relations.addPrimaryKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addPrimaryKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -154,12 +152,19 @@ public class CUBRIDDatabase extends AbstractDatabase {
                             record.get("PKTABLE_NAME", String.class) +
                             "__" +
                             record.get("PK_NAME", String.class);
+                        String uniqueKeyTableName = record.get("PKTABLE_NAME", String.class);
 
-                        TableDefinition referencingTable = getTable(getSchemata().get(0), foreignKeyTableName);
-                        if (referencingTable != null) {
-                            ColumnDefinition column = referencingTable.getColumn(foreignKeyColumnName);
-                            relations.addForeignKey(foreignKeyName, uniqueKeyName, column, getSchemata().get(0));
-                        }
+                        TableDefinition foreignKeyTable = getTable(getSchemata().get(0), foreignKeyTableName);
+                        TableDefinition uniqueKeyTable = getTable(getSchemata().get(0), uniqueKeyTableName);
+
+                        if (foreignKeyTable != null && uniqueKeyTable != null)
+                            relations.addForeignKey(
+                                foreignKeyName,
+                                foreignKeyTable,
+                                foreignKeyTable.getColumn(foreignKeyColumnName),
+                                uniqueKeyName,
+                                uniqueKeyTable
+                            );
                     }
                 }
             }
@@ -173,21 +178,21 @@ public class CUBRIDDatabase extends AbstractDatabase {
 
     @Override
     protected List<CatalogDefinition> getCatalogs0() throws SQLException {
-        List<CatalogDefinition> result = new ArrayList<CatalogDefinition>();
+        List<CatalogDefinition> result = new ArrayList<>();
         result.add(new CatalogDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
         result.add(new SchemaDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SequenceDefinition> getSequences0() throws SQLException {
-        List<SequenceDefinition> result = new ArrayList<SequenceDefinition>();
+        List<SequenceDefinition> result = new ArrayList<>();
 
         for (Record record : create()
                 .select(
@@ -210,7 +215,7 @@ public class CUBRIDDatabase extends AbstractDatabase {
 
     @Override
     protected List<TableDefinition> getTables0() throws SQLException {
-        List<TableDefinition> result = new ArrayList<TableDefinition>();
+        List<TableDefinition> result = new ArrayList<>();
 
         for (Record record : create()
                 .select(
@@ -231,7 +236,7 @@ public class CUBRIDDatabase extends AbstractDatabase {
 
     @Override
     protected List<EnumDefinition> getEnums0() throws SQLException {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>();
+        List<EnumDefinition> result = new ArrayList<>();
 
         for (TableDefinition tableDefinition : getTables(getSchemata().get(0))) {
             for (Record record : create().fetch("SHOW COLUMNS FROM {0} WHERE TYPE LIKE 'ENUM(%)'", field(name(tableDefinition.getInputName())))) {
@@ -260,31 +265,31 @@ public class CUBRIDDatabase extends AbstractDatabase {
 
     @Override
     protected List<DomainDefinition> getDomains0() throws SQLException {
-        List<DomainDefinition> result = new ArrayList<DomainDefinition>();
+        List<DomainDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<UDTDefinition> getUDTs0() throws SQLException {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<ArrayDefinition> getArrays0() throws SQLException {
-        List<ArrayDefinition> result = new ArrayList<ArrayDefinition>();
+        List<ArrayDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<RoutineDefinition> getRoutines0() throws SQLException {
-        List<RoutineDefinition> result = new ArrayList<RoutineDefinition>();
+        List<RoutineDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<PackageDefinition> getPackages0() throws SQLException {
-        List<PackageDefinition> result = new ArrayList<PackageDefinition>();
+        List<PackageDefinition> result = new ArrayList<>();
         return result;
     }
 

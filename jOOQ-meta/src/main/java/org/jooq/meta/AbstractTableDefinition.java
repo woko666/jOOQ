@@ -57,15 +57,20 @@ public abstract class AbstractTableDefinition
 extends AbstractElementContainerDefinition<ColumnDefinition>
 implements TableDefinition {
 
-    private List<ParameterDefinition>       parameters;
-    private TableDefinition                 parentTable;
-    private List<TableDefinition>           childTables;
+    private List<ParameterDefinition> parameters;
+    private TableDefinition           parentTable;
+    private List<TableDefinition>     childTables;
 
     public AbstractTableDefinition(SchemaDefinition schema, String name, String comment) {
         super(schema, name, comment);
 
         this.parentTable = null;
-        this.childTables = new ArrayList<TableDefinition>();
+        this.childTables = new ArrayList<>();
+    }
+
+    @Override
+    public final List<EmbeddableDefinition> getEmbeddables() {
+        return getDatabase().getEmbeddables(this);
     }
 
     @Override
@@ -99,7 +104,7 @@ implements TableDefinition {
 
     @Override
     public final List<ForeignKeyDefinition> getForeignKeys(TableDefinition referenced) {
-        List<ForeignKeyDefinition> result = new ArrayList<ForeignKeyDefinition>();
+        List<ForeignKeyDefinition> result = new ArrayList<>();
 
         for (ForeignKeyDefinition key : getForeignKeys())
             if (referenced.equals(key.getReferencedTable()))

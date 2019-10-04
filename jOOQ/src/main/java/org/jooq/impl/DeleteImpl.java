@@ -52,6 +52,8 @@ import org.jooq.DeleteResultStep;
 import org.jooq.DeleteWhereStep;
 import org.jooq.Field;
 import org.jooq.Operator;
+import org.jooq.OrderField;
+import org.jooq.Param;
 import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -88,7 +90,7 @@ import org.jooq.Table;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 final class DeleteImpl<R extends Record>
-    extends AbstractDelegatingQuery<DeleteQueryImpl<R>>
+    extends AbstractDelegatingRowCountQuery<DeleteQueryImpl<R>>
     implements
 
     // Cascading interface implementations for Delete behaviour
@@ -103,7 +105,7 @@ final class DeleteImpl<R extends Record>
     private boolean           returningResult;
 
     DeleteImpl(Configuration configuration, WithImpl with, Table<R> table) {
-        super(new DeleteQueryImpl<R>(configuration, with, table));
+        super(new DeleteQueryImpl<>(configuration, with, table));
     }
 
     @Override
@@ -292,6 +294,35 @@ final class DeleteImpl<R extends Record>
     }
 
     @Override
+    public final DeleteImpl<R> orderBy(OrderField<?>... fields) {
+        getDelegate().addOrderBy(fields);
+        return this;
+    }
+
+    @Override
+    public final DeleteImpl<R> orderBy(Collection<? extends OrderField<?>> fields) {
+        getDelegate().addOrderBy(fields);
+        return this;
+    }
+
+    @Override
+    public final DeleteImpl<R> orderBy(int... fieldIndexes) {
+        return orderBy(Tools.inline(fieldIndexes));
+    }
+
+    @Override
+    public final DeleteImpl<R> limit(Number numberOfRows) {
+        getDelegate().addLimit(numberOfRows);
+        return this;
+    }
+
+    @Override
+    public final DeleteImpl<R> limit(Param<? extends Number> numberOfRows) {
+        getDelegate().addLimit(numberOfRows);
+        return this;
+    }
+
+    @Override
     public final DeleteImpl<R> returning() {
         getDelegate().setReturning();
         return this;
@@ -323,7 +354,7 @@ final class DeleteImpl<R extends Record>
         return this;
     }
 
-    // [jooq-tools] START [returning]
+
 
     @Override
     public final <T1> DeleteResultStep<Record1<T1>> returningResult(SelectField<T1> field1) {
@@ -435,7 +466,7 @@ final class DeleteImpl<R extends Record>
         return returningResult(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
     }
 
-// [jooq-tools] END [returning]
+
 
     @Override
     public final Result<R> fetch() {

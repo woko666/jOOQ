@@ -40,11 +40,10 @@ package org.jooq.impl;
 
 import static org.jooq.impl.DSL.count;
 import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.Tools.fieldNameStrings;
 
 import java.sql.ResultSetMetaData;
-import java.util.List;
 
-import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Field;
@@ -88,26 +87,14 @@ final class FetchCount extends AbstractResultQuery<Record1<Integer>> {
 
 
 
-
-
-
-
-
-
-
             default:
                 return select(count).from(query.asTable("q"));
         }
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
-    public final Class<? extends Record1<Integer>> getRecordType() {
+    final Class<? extends Record1<Integer>> getRecordType0() {
         return (Class) RecordImpl.class;
     }
 

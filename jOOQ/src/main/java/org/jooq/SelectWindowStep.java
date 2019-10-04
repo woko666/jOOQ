@@ -40,14 +40,17 @@ package org.jooq;
 // ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
@@ -70,9 +73,9 @@ import java.util.Collection;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -115,7 +118,7 @@ import java.util.Collection;
  *
  * @author Lukas Eder
  */
-public interface SelectWindowStep<R extends Record> extends SelectOrderByStep<R> {
+public interface SelectWindowStep<R extends Record> extends SelectQualifyStep<R> {
 
     /**
      * Add a <code>WINDOW</code> clause to the statement.
@@ -123,13 +126,24 @@ public interface SelectWindowStep<R extends Record> extends SelectOrderByStep<R>
      * Use the <code>WINDOW</code> clause to specify window definitions for
      * reuse among several window functions.
      * <p>
-     * Only {@link SQLDialect#POSTGRES} and {@link SQLDialect#SYBASE} are known
-     * to support the SQL standard <code>WINDOW</code> clause, but you can still
-     * use this clause in all other databases supporting window functions. jOOQ
+     * The <code>WINDOW</code> clause is only natively supported by
+     * <ul>
+     * <li>{@link SQLDialect#AURORA_POSTGRES}</li>
+     * <li>{@link SQLDialect#H2}</li>
+     * <li>{@link SQLDialect#MYSQL}</li>
+     * <li>{@link SQLDialect#POSTGRES}</li>
+     * <li>{@link SQLDialect#SQLITE} (however, with some limitations. See
+     * <a href=
+     * "https://github.com/jOOQ/jOOQ/issues/8279">https://github.com/jOOQ/jOOQ/issues/8279</a>.
+     * Hence, jOOQ emulates the <code>WINDOW</code> clause for SQLite</li>
+     * <li>{@link SQLDialect#SYBASE}</li>
+     * </ul>
+     * <p>
+     * If you are using any other dialect, you can still use this clause. jOOQ
      * will inline window definitions where they are referenced.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
-    SelectOrderByStep<R> window(WindowDefinition... definitions);
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    SelectQualifyStep<R> window(WindowDefinition... definitions);
 
     /**
      * Add a <code>WINDOW</code> clause to the statement.
@@ -137,11 +151,22 @@ public interface SelectWindowStep<R extends Record> extends SelectOrderByStep<R>
      * Use the <code>WINDOW</code> clause to specify window definitions for
      * reuse among several window functions.
      * <p>
-     * Only {@link SQLDialect#POSTGRES} and {@link SQLDialect#SYBASE} are known
-     * to support the SQL standard <code>WINDOW</code> clause, but you can still
-     * use this clause in all other databases supporting window functions. jOOQ
+     * The <code>WINDOW</code> clause is only natively supported by
+     * <ul>
+     * <li>{@link SQLDialect#AURORA_POSTGRES}</li>
+     * <li>{@link SQLDialect#H2}</li>
+     * <li>{@link SQLDialect#MYSQL}</li>
+     * <li>{@link SQLDialect#POSTGRES}</li>
+     * <li>{@link SQLDialect#SQLITE} (however, with some limitations. See
+     * <a href=
+     * "https://github.com/jOOQ/jOOQ/issues/8279">https://github.com/jOOQ/jOOQ/issues/8279</a>.
+     * Hence, jOOQ emulates the <code>WINDOW</code> clause for SQLite</li>
+     * <li>{@link SQLDialect#SYBASE}</li>
+     * </ul>
+     * <p>
+     * If you are using any other dialect, you can still use this clause. jOOQ
      * will inline window definitions where they are referenced.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
-    SelectOrderByStep<R> window(Collection<? extends WindowDefinition> definitions);
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    SelectQualifyStep<R> window(Collection<? extends WindowDefinition> definitions);
 }

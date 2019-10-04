@@ -40,7 +40,6 @@ package org.jooq.impl;
 import java.util.List;
 import java.util.function.BiFunction;
 
-import org.jooq.Clause;
 import org.jooq.CommonTableExpression;
 import org.jooq.Context;
 import org.jooq.DerivedColumnList;
@@ -76,7 +75,7 @@ import org.jooq.Select;
 final class DerivedColumnListImpl extends AbstractQueryPart
 implements
 
-    // [jooq-tools] START [implements-derived-column-list]
+
     DerivedColumnList1,
     DerivedColumnList2,
     DerivedColumnList3,
@@ -100,7 +99,7 @@ implements
     DerivedColumnList21,
     DerivedColumnList22,
 
-// [jooq-tools] END [implements-derived-column-list]
+
 
     DerivedColumnList {
 
@@ -165,10 +164,5 @@ implements
 
             ctx.sql(')');
         }
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 }

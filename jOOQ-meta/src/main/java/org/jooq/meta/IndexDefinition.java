@@ -44,12 +44,7 @@ import java.util.List;
  *
  * @author Lukas Eder
  */
-public interface IndexDefinition extends Definition {
-
-    /**
-     * The table holding this index.
-     */
-    TableDefinition getTable();
+public interface IndexDefinition extends TableElementDefinition {
 
     /**
      * The list of columns making up the index.

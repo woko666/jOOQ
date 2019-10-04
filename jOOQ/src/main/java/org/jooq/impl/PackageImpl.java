@@ -38,7 +38,6 @@
 package org.jooq.impl;
 
 import org.jooq.Catalog;
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.Package;
 import org.jooq.SQLDialect;
@@ -54,6 +53,7 @@ import org.jooq.Schema;
  *
  * @author Lukas Eder
  */
+@org.jooq.Internal
 public class PackageImpl extends AbstractNamed implements Package {
 
     /**
@@ -87,10 +87,5 @@ public class PackageImpl extends AbstractNamed implements Package {
     @Override
     public final void accept(Context<?> ctx) {
         ctx.visit(getUnqualifiedName());
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 }

@@ -47,7 +47,9 @@ import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.POSTGRES;
+// ...
 // ...
 // ...
 // ...
@@ -67,7 +69,7 @@ import static org.jooq.impl.Tools.EMPTY_SORTFIELD;
 import static org.jooq.impl.Tools.EMPTY_STRING;
 
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -88,7 +90,7 @@ import org.jooq.Table;
 /**
  * @author Lukas Eder
  */
-final class CreateIndexImpl extends AbstractQuery implements
+final class CreateIndexImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for CREATE INDEX behaviour
     CreateIndexStep,
@@ -99,8 +101,9 @@ final class CreateIndexImpl extends AbstractQuery implements
      */
     private static final long                serialVersionUID         = 8904572826501186329L;
     private static final Clause[]            CLAUSES                  = { CREATE_INDEX };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_NOT_EXISTS = EnumSet.of(DERBY, FIREBIRD);
-    private static final EnumSet<SQLDialect> SUPPORT_UNNAMED_INDEX    = EnumSet.of(POSTGRES);
+    private static final Set<SQLDialect>     NO_SUPPORT_IF_NOT_EXISTS = SQLDialect.supported(DERBY, FIREBIRD);
+    private static final Set<SQLDialect>     SUPPORT_UNNAMED_INDEX    = SQLDialect.supported(POSTGRES);
+    private static final Set<SQLDialect>     SUPPORT_INCLUDE          = SQLDialect.supported(POSTGRES);
 
     private final Index                      index;
     private final boolean                    unique;
@@ -138,8 +141,8 @@ final class CreateIndexImpl extends AbstractQuery implements
     }
 
     @Override
-    public final CreateIndexImpl on(Table<?> t, Collection<? extends OrderField<?>> fields) {
-        return on(t, fields.toArray(EMPTY_ORDERFIELD));
+    public final CreateIndexImpl on(Table<?> t, Collection<? extends OrderField<?>> f) {
+        return on(t, f.toArray(EMPTY_ORDERFIELD));
     }
 
     @Override
@@ -179,8 +182,8 @@ final class CreateIndexImpl extends AbstractQuery implements
     }
 
     @Override
-    public final CreateIndexImpl include(Collection<? extends Field<?>> fields) {
-        return include(fields.toArray(EMPTY_FIELD));
+    public final CreateIndexImpl include(Collection<? extends Field<?>> f) {
+        return include(f.toArray(EMPTY_FIELD));
     }
 
     @Override
@@ -268,10 +271,10 @@ final class CreateIndexImpl extends AbstractQuery implements
             ctx.visit(generatedName())
                .sql(' ');
 
-        boolean supportsInclude = false                                                      ;
-        boolean supportsFieldsBeforeTable = false                                                     ;
+        boolean supportsInclude = SUPPORT_INCLUDE.contains(ctx.dialect());
+        boolean supportsFieldsBeforeTable = false;
 
-        QueryPartList<QueryPart> list = new QueryPartList<QueryPart>();
+        QueryPartList<QueryPart> list = new QueryPartList<>();
         if (fields != null)
             list.addAll(asList(fields));
         else
@@ -307,11 +310,11 @@ final class CreateIndexImpl extends AbstractQuery implements
                .visit(K_INCLUDE)
                .sql(" (")
                .qualify(false)
-               .visit(new QueryPartList<QueryPart>(include))
+               .visit(new QueryPartList<>(include))
                .qualify(true)
                .sql(')');
 
-        if (where != null)
+        if (where != null && ctx.configuration().data("org.jooq.ddl.ignore-storage-clauses") == null)
             ctx.formatSeparator()
                .visit(K_WHERE)
                .sql(' ')

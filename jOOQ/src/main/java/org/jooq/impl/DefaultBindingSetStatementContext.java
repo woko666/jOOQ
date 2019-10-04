@@ -47,7 +47,7 @@ import org.jooq.Converter;
 /**
  * @author Lukas Eder
  */
-class DefaultBindingSetStatementContext<U> extends AbstractScope implements BindingSetStatementContext<U> {
+class DefaultBindingSetStatementContext<U> extends AbstractResourceManagingScope implements BindingSetStatementContext<U> {
 
     private final PreparedStatement statement;
     private final int               index;
@@ -78,7 +78,7 @@ class DefaultBindingSetStatementContext<U> extends AbstractScope implements Bind
 
     @Override
     public final <T> BindingSetStatementContext<T> convert(Converter<? extends T, ? super U> converter) {
-        return new DefaultBindingSetStatementContext<T>(configuration, data, statement, index, converter.to(value));
+        return new DefaultBindingSetStatementContext<>(configuration, data, statement, index, converter.to(value));
     }
 
     @Override

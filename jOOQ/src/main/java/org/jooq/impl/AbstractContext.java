@@ -44,24 +44,21 @@ import static java.lang.Boolean.TRUE;
 // ...
 // ...
 // ...
+import static org.jooq.conf.InvocationOrder.REVERSE;
 import static org.jooq.conf.ParamType.INDEXED;
 import static org.jooq.impl.Tools.EMPTY_CLAUSE;
 import static org.jooq.impl.Tools.EMPTY_QUERYPART;
-import static org.jooq.impl.Tools.DataKey.DATA_NESTED_SET_OPERATIONS;
-import static org.jooq.impl.Tools.DataKey.DATA_OMIT_CLAUSE_EVENT_EMISSION;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_NESTED_SET_OPERATIONS;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_OMIT_CLAUSE_EVENT_EMISSION;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.jooq.BindContext;
 import org.jooq.Clause;
@@ -69,6 +66,7 @@ import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DSLContext;
 import org.jooq.ForeignKey;
+// ...
 import org.jooq.QueryPart;
 import org.jooq.QueryPartInternal;
 import org.jooq.RenderContext;
@@ -80,7 +78,6 @@ import org.jooq.VisitListener;
 import org.jooq.VisitListenerProvider;
 import org.jooq.conf.ParamCastMode;
 import org.jooq.conf.ParamType;
-import org.jooq.conf.RenderNameStyle;
 import org.jooq.conf.Settings;
 import org.jooq.conf.SettingsTools;
 import org.jooq.conf.StatementType;
@@ -95,59 +92,60 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
 
 
-    final PreparedStatement                  stmt;
 
-    boolean                                  declareFields;
-    boolean                                  declareTables;
-    boolean                                  declareAliases;
-    boolean                                  declareWindows;
-    boolean                                  declareCTE;
-    int                                      subquery;
-    BitSet                                   subqueryScopedNestedSetOperations;
-    int                                      stringLiteral;
-    String                                   stringLiteralEscapedApos    = "'";
-    int                                      index;
-    int                                      scopeLevel                  = -1;
-    int                                      scopeMarking;
-    final ScopeStack                         scopeStack;
+    final PreparedStatement                        stmt;
+
+    boolean                                        declareFields;
+    boolean                                        declareTables;
+    boolean                                        declareAliases;
+    boolean                                        declareWindows;
+    boolean                                        declareCTE;
+    int                                            subquery;
+    BitSet                                         subqueryScopedNestedSetOperations;
+    int                                            stringLiteral;
+    String                                         stringLiteralEscapedApos    = "'";
+    int                                            index;
+    int                                            scopeMarking;
+    final ScopeStack<QueryPart, ScopeStackElement> scopeStack;
 
     // [#2665] VisitListener API
-    final VisitListener[]                    visitListeners;
-    private final Deque<Clause>              visitClauses;
-    private final DefaultVisitContext        visitContext;
-    private final Deque<QueryPart>           visitParts;
+    private final VisitListener[]                  visitListenersStart;
+    private final VisitListener[]                  visitListenersEnd;
+    private final Deque<Clause>                    visitClauses;
+    private final DefaultVisitContext              visitContext;
+    private final Deque<QueryPart>                 visitParts;
 
     // [#2694] Unified RenderContext and BindContext traversal
-    final ParamType                          forcedParamType;
-    final boolean                            castModeOverride;
-    CastMode                                 castMode;
-    ParamType                                paramType                   = ParamType.INDEXED;
-    boolean                                  quote                       = true;
-    boolean                                  qualifySchema               = true;
-    boolean                                  qualifyCatalog              = true;
+    final ParamType                                forcedParamType;
+    final boolean                                  castModeOverride;
+    CastMode                                       castMode;
+    ParamType                                      paramType                   = ParamType.INDEXED;
+    boolean                                        quote                       = true;
+    boolean                                        qualifySchema               = true;
+    boolean                                        qualifyCatalog              = true;
 
     AbstractContext(Configuration configuration, PreparedStatement stmt) {
         super(configuration);
         this.stmt = stmt;
 
         VisitListenerProvider[] providers = configuration.visitListenerProviders();
+
+        // [#2080] [#3935] Currently, the InternalVisitListener is not used everywhere
         boolean useInternalVisitListener =
             false
-
-
 
 
 
             ;
 
         // [#6758] Avoid this allocation if unneeded
-        this.visitListeners = providers.length > 0 || useInternalVisitListener
+        VisitListener[] visitListeners = providers.length > 0 || useInternalVisitListener
             ? new VisitListener[providers.length + (useInternalVisitListener ? 1 : 0)]
             : null;
 
-        if (this.visitListeners != null) {
+        if (visitListeners != null) {
             for (int i = 0; i < providers.length; i++)
-                this.visitListeners[i] = providers[i].provide();
+                visitListeners[i] = providers[i].provide();
 
 
 
@@ -155,13 +153,22 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
 
             this.visitContext = new DefaultVisitContext();
-            this.visitParts = new ArrayDeque<QueryPart>();
-            this.visitClauses = new ArrayDeque<Clause>();
+            this.visitParts = new ArrayDeque<>();
+            this.visitClauses = new ArrayDeque<>();
+
+            this.visitListenersStart = configuration.settings().getVisitListenerStartInvocationOrder() != REVERSE
+                ? visitListeners
+                : Tools.reverse(visitListeners.clone());
+            this.visitListenersEnd = configuration.settings().getVisitListenerEndInvocationOrder() != REVERSE
+                ? visitListeners
+                : Tools.reverse(visitListeners.clone());
         }
         else {
             this.visitContext = null;
             this.visitParts = null;
             this.visitClauses = null;
+            this.visitListenersStart = null;
+            this.visitListenersEnd = null;
         }
 
         this.forcedParamType = SettingsTools.getStatementType(settings()) == StatementType.STATIC_STATEMENT
@@ -179,8 +186,12 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
             : m == ParamCastMode.NEVER
             ? CastMode.NEVER
             : CastMode.DEFAULT;
-        this.quote = settings().getRenderNameStyle() == RenderNameStyle.QUOTED;
-        this.scopeStack = new ScopeStack();
+        this.scopeStack = new ScopeStack<QueryPart, ScopeStackElement>(new ScopeStack.Constructor<ScopeStackElement>() {
+            @Override
+            public ScopeStackElement create() {
+                return new ScopeStackElement();
+            }
+        });
     }
 
     // ------------------------------------------------------------------------
@@ -193,7 +204,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
             // Issue start clause events
             // -----------------------------------------------------------------
-            Clause[] clauses = Tools.isNotEmpty(visitListeners) ? clause(part) : null;
+            Clause[] clauses = Tools.isNotEmpty(visitListenersStart) ? clause(part) : null;
             if (clauses != null)
                 for (int i = 0; i < clauses.length; i++)
                     start(clauses[i]);
@@ -237,7 +248,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
      * <code>AbstractContext</code>.
      */
     private final Clause[] clause(QueryPart part) {
-        if (part instanceof QueryPartInternal && data(DATA_OMIT_CLAUSE_EVENT_EMISSION) == null)
+        if (part instanceof QueryPartInternal && !TRUE.equals(data(DATA_OMIT_CLAUSE_EVENT_EMISSION)))
             return ((QueryPartInternal) part).clauses(this);
 
         return null;
@@ -248,7 +259,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
         if (clause != null && visitClauses != null) {
             visitClauses.addLast(clause);
 
-            for (VisitListener listener : visitListeners)
+            for (VisitListener listener : visitListenersStart)
                 listener.clauseStart(visitContext);
         }
 
@@ -258,7 +269,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
     @Override
     public final C end(Clause clause) {
         if (clause != null && visitClauses != null) {
-            for (VisitListener listener : visitListeners)
+            for (VisitListener listener : visitListenersEnd)
                 listener.clauseEnd(visitContext);
 
             if (visitClauses.removeLast() != clause)
@@ -272,7 +283,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
         if (visitParts != null) {
             visitParts.addLast(part);
 
-            for (VisitListener listener : visitListeners)
+            for (VisitListener listener : visitListenersStart)
                 listener.visitStart(visitContext);
 
             return visitParts.peekLast();
@@ -284,7 +295,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
     private final void end(QueryPart part) {
         if (visitParts != null) {
-            for (VisitListener listener : visitListeners)
+            for (VisitListener listener : visitListenersEnd)
                 listener.visitEnd(visitContext);
 
             if (visitParts.removeLast() != part)
@@ -510,6 +521,11 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
     }
 
     @Override
+    public final int subqueryLevel() {
+        return subquery;
+    }
+
+    @Override
     public final boolean subquery() {
         return subquery > 0;
     }
@@ -547,7 +563,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
     @Override
     public final C scopeStart() {
-        scopeLevel++;
+        scopeStack.scopeStart();
         scopeStart0();
 
         return (C) this;
@@ -560,7 +576,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
     @Override
     public final C scopeMarkStart(QueryPart part) {
-        if (scopeLevel >= 0 && scopeMarking++ == 0)
+        if (scopeStack.inScope() && scopeMarking++ == 0)
             scopeMarkStart0(part);
 
         return (C) this;
@@ -568,7 +584,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
     @Override
     public final C scopeMarkEnd(QueryPart part) {
-        if (scopeLevel >= 0 && --scopeMarking == 0)
+        if (scopeStack.inScope() && --scopeMarking == 0)
             scopeMarkEnd0(part);
 
         return (C) this;
@@ -577,15 +593,14 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
     @Override
     public final C scopeEnd() {
         scopeEnd0();
-        scopeLevel--;
-        scopeStack.trim();
+        scopeStack.scopeEnd();
 
         return (C) this;
     }
 
     void scopeStart0() {}
-    void scopeMarkStart0(QueryPart part) {}
-    void scopeMarkEnd0(QueryPart part) {}
+    void scopeMarkStart0(@SuppressWarnings("unused") QueryPart part) {}
+    void scopeMarkEnd0(@SuppressWarnings("unused") QueryPart part) {}
     void scopeEnd0() {}
 
     @Override
@@ -760,7 +775,7 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
 
         JoinNode(Table<?> table) {
             this.table = table;
-            this.children = new LinkedHashMap<ForeignKey<?, ?>, JoinNode>();
+            this.children = new LinkedHashMap<>();
         }
 
         public Table<?> joinTree() {
@@ -782,89 +797,5 @@ abstract class AbstractContext<C extends Context<C>> extends AbstractScope imple
         int[]    positions;
         int      indent;
         JoinNode joinNode;
-    }
-
-    class ScopeStack implements Iterable<ScopeStackElement> {
-        private Map<QueryPart, List<ScopeStackElement>> stack;
-
-        private Map<QueryPart, List<ScopeStackElement>> stack() {
-            if (stack == null)
-                stack = new LinkedHashMap<QueryPart, List<ScopeStackElement>>();
-
-            return stack;
-        }
-
-        final void trim() {
-            if (scopeLevel > 0)
-                for (List<ScopeStackElement> list : stack.values())
-                    while (list.size() > scopeLevel || list.size() > 0 && list.get(list.size() - 1) == null)
-                        list.remove(list.size() - 1);
-        }
-
-        @Override
-        public final Iterator<ScopeStackElement> iterator() {
-            return new Iterator<ScopeStackElement>() {
-                Iterator<List<ScopeStackElement>> it = stack().values().iterator();
-                ScopeStackElement next;
-
-                @Override
-                public boolean hasNext() {
-                    return move() != null;
-                }
-
-                @Override
-                public ScopeStackElement next() {
-                    if (next == null) {
-                        return move();
-                    }
-                    else {
-                        ScopeStackElement result = next;
-                        next = null;
-                        return result;
-                    }
-                }
-
-                private ScopeStackElement move() {
-                    while (it.hasNext()) {
-                        List<ScopeStackElement> list = it.next();
-
-                        int size = scopeLevel + 1;
-                        if (list.size() >= size && (next = list.get(scopeLevel)) != null)
-                            break;
-                    }
-
-                    return next;
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException("remove");
-                }
-            };
-        }
-
-        ScopeStackElement get(QueryPart key) {
-            List<ScopeStackElement> list = stack().get(key);
-
-            if (list == null) {
-                list = new ArrayList<ScopeStackElement>();
-                stack().put(key, list);
-            }
-
-            int size = scopeLevel + 1;
-            if (list.size() < size)
-                list.addAll(Collections.<ScopeStackElement>nCopies(size - list.size(), null));
-
-            ScopeStackElement result = null;
-            for (int i = scopeLevel; i >= 0 && result == null; i--)
-                result = list.get(i);
-
-            if (result == null) {
-                result = new ScopeStackElement();
-                list.set(scopeLevel, result);
-            }
-
-            return result;
-        }
     }
 }

@@ -780,14 +780,14 @@ public final class StringUtils {
         increase *= (max < 0 ? 16 : (max > 64 ? 64 : max));
         StringBuilder buf = new StringBuilder(text.length() + increase);
         while (end != INDEX_NOT_FOUND) {
-            buf.append(text.substring(start, end)).append(replacement);
+            buf.append(text, start, end).append(replacement);
             start = end + replLength;
             if (--max == 0) {
                 break;
             }
             end = text.indexOf(searchString, start);
         }
-        buf.append(text.substring(start));
+        buf.append(text, start, text.length());
         return buf.toString();
     }
 
@@ -1302,6 +1302,22 @@ public final class StringUtils {
         return object != null ? object : defaultValue;
     }
 
+    /**
+     * <p>Returns the first non-{@code null} argument.</p>
+     *
+     * @param <T> the type of the objects
+     * @param objects  the elements to test, may not be {@code null} but empty
+     * @return first non-{@code null} element in {@code objects}, otherwise {@code null}
+     */
+     @SafeVarargs
+    public static <T> T firstNonNull(T... objects) {
+        for (T object : objects) {
+            if (object != null)
+                return object;
+        }
+        return null;
+    }
+
     // -------------------------------------------------------------------------
     // XXX: The following methods are not part of Apache's commons-lang library
     // -------------------------------------------------------------------------
@@ -1349,11 +1365,20 @@ public final class StringUtils {
      * Change a string's first letter to lower case
      */
     public static String toLC(String string) {
-        if (string == null || string.isEmpty()) {
+        if (string == null || string.isEmpty())
             return string;
-        }
 
         return Character.toLowerCase(string.charAt(0)) + string.substring(1);
+    }
+
+    /**
+     * Change a string's first letter to lower case
+     */
+    public static String toUC(String string) {
+        if (string == null || string.isEmpty())
+            return string;
+
+        return Character.toUpperCase(string.charAt(0)) + string.substring(1);
     }
 
     /**
@@ -1370,7 +1395,7 @@ public final class StringUtils {
      */
     public static String[] split(String regex, CharSequence input) {
         int index = 0;
-        ArrayList<String> matchList = new ArrayList<String>();
+        ArrayList<String> matchList = new ArrayList<>();
         Matcher m = Pattern.compile(regex).matcher(input);
 
         // Add segments before each match found
@@ -1399,4 +1424,5 @@ public final class StringUtils {
         String[] result = new String[matchList.size()];
         return matchList.toArray(result);
     }
+
 }

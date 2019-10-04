@@ -38,7 +38,8 @@
 package org.jooq;
 
 // ...
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+import static org.jooq.SQLDialect.POSTGRES;
+import static org.jooq.SQLDialect.SQLITE;
 
 import org.jooq.impl.DSL;
 
@@ -53,7 +54,8 @@ import org.jooq.impl.DSL;
  *       .values(value3, value4)
  *       .onDuplicateKeyUpdate()
  *       .set(field1, value1)
- *       .set(field2, value2)
+ *       .where(field2.eq(value5))
+ *       .or(field2.eq(value6))
  *       .execute();
  * </pre></code>
  * <p>
@@ -77,20 +79,20 @@ import org.jooq.impl.DSL;
  *
  * @author Lukas Eder
  */
-public interface InsertOnConflictConditionStep<R extends Record> extends InsertFinalStep<R> {
+public interface InsertOnConflictConditionStep<R extends Record> extends InsertReturningStep<R> {
 
     /**
      * Combine the currently assembled conditions with another one using the
      * {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> and(Condition condition);
 
     /**
      * Combine the currently assembled conditions with another one using the
      * {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> and(Field<Boolean> condition);
 
     /**
@@ -105,7 +107,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#condition(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> and(SQL sql);
 
@@ -121,7 +123,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#condition(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> and(String sql);
 
@@ -138,7 +140,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> and(String sql, Object... bindings);
 
@@ -155,7 +157,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> and(String sql, QueryPart... parts);
 
@@ -163,42 +165,42 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * Combine the currently assembled conditions with a negated other one using
      * the {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> andNot(Condition condition);
 
     /**
      * Combine the currently assembled conditions with a negated other one using
      * the {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> andNot(Field<Boolean> condition);
 
     /**
      * Combine the currently assembled conditions with an EXISTS clause using
      * the {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> andExists(Select<?> select);
 
     /**
      * Combine the currently assembled conditions with a NOT EXISTS clause using
      * the {@link Operator#AND} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> andNotExists(Select<?> select);
 
     /**
      * Combine the currently assembled conditions with another one using the
      * {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> or(Condition condition);
 
     /**
      * Combine the currently assembled conditions with another one using the
      * {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> or(Field<Boolean> condition);
 
     /**
@@ -213,7 +215,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#condition(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> or(SQL sql);
 
@@ -229,7 +231,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#condition(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> or(String sql);
 
@@ -246,7 +248,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> or(String sql, Object... bindings);
 
@@ -263,7 +265,7 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     @PlainSQL
     InsertOnConflictConditionStep<R> or(String sql, QueryPart... parts);
 
@@ -271,27 +273,27 @@ public interface InsertOnConflictConditionStep<R extends Record> extends InsertF
      * Combine the currently assembled conditions with a negated other one using
      * the {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> orNot(Condition condition);
 
     /**
      * Combine the currently assembled conditions with a negated other one using
      * the {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> orNot(Field<Boolean> condition);
 
     /**
      * Combine the currently assembled conditions with an EXISTS clause using
      * the {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> orExists(Select<?> select);
 
     /**
      * Combine the currently assembled conditions with a NOT EXISTS clause using
      * the {@link Operator#OR} operator and proceed to the next step.
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES, SQLITE })
     InsertOnConflictConditionStep<R> orNotExists(Select<?> select);
 }

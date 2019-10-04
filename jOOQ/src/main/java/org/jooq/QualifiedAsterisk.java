@@ -37,10 +37,28 @@
  */
 package org.jooq;
 
-
 /**
- * A <code>QueryPart</code> to be used exclusively in <code>SELECT</code>
- * clauses.
+ * A qualified asterisk.
+ * <p>
+ * Asterisks (qualified and unqualified) are expressions that can be used
+ * exclusively in <code>SELECT</code> clauses and a few other clauses that
+ * explicitly allow for asterisks, including <code>RETURNING</code> on DML
+ * statements. Asterisks are syntax sugar in SQL, which are expanded to a column
+ * list by the parser once all the columns in the <code>FROM</code> clause are
+ * known.
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select(ACTOR.asterisk())
+ *    .from(ACTOR)
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link Table#asterisk()}.
  *
  * @author Lukas Eder
  */
@@ -50,4 +68,38 @@ public interface QualifiedAsterisk extends SelectFieldOrAsterisk {
      * The qualifier.
      */
     Table<?> qualifier();
+
+    /**
+     * The qualified asterisk (<code>t.* EXCEPT (fields)</code>) expression to
+     * be used in <code>SELECT</code> clauses.
+     * <p>
+     * This expression is a convenient way to select "all but some fields". Some
+     * dialects (e.g. {@link SQLDialect#H2}) implement this feature natively. In
+     * other dialects, jOOQ expands the asterisk if possible.
+     */
+    @Support
+    QualifiedAsterisk except(String... fieldNames);
+
+    /**
+     * The qualified asterisk (<code>t.* EXCEPT (fields)</code>) expression to
+     * be used in <code>SELECT</code> clauses.
+     * <p>
+     * This expression is a convenient way to select "all but some fields". Some
+     * dialects (e.g. {@link SQLDialect#H2}) implement this feature natively. In
+     * other dialects, jOOQ expands the asterisk if possible.
+     */
+    @Support
+    QualifiedAsterisk except(Name... fieldNames);
+
+    /**
+     * The qualified asterisk (<code>t.* EXCEPT (fields)</code>) expression to
+     * be used in <code>SELECT</code> clauses.
+     * <p>
+     * This expression is a convenient way to select "all but some fields". Some
+     * dialects (e.g. {@link SQLDialect#H2}) implement this feature natively. In
+     * other dialects, jOOQ expands the asterisk if possible.
+     */
+    @Support
+    QualifiedAsterisk except(Field<?>... fields);
+
 }

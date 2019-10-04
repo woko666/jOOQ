@@ -45,7 +45,6 @@ import java.sql.SQLWarning;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.DataType;
 import org.jooq.Field;
@@ -84,46 +83,62 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
     @Override
     @SuppressWarnings("unchecked")
     public final <T> Field<T> field(Field<T> field) {
+        return (Field<T>) field0(field, RETURN_FIELD);
+    }
+
+    private final <U> U field0(Field<?> field, FieldOrIndex<U> result) {
         if (field == null)
-            return null;
+            return result.resultNull();
 
         // [#4540] Try finding a match by identity
-        for (Field<?> f : fields)
+        for (int i = 0; i < fields.length; i++) {
+            Field<?> f = fields[i];
+
             if (f == field)
-                return (Field<T>) f;
+                return result.result(f, i);
+        }
 
         // [#1802] Try finding an exact match (e.g. exact matching qualified name)
-        for (Field<?> f : fields)
+        for (int i = 0; i < fields.length; i++) {
+            Field<?> f = fields[i];
+
             if (f.equals(field))
-                return (Field<T>) f;
+                return result.result(f, i);
+        }
 
         // [#4283] table / column matches are better than only column matches
         Field<?> columnMatch = null;
         Field<?> columnMatch2 = null;
+        int indexMatch = -1;
 
         String tableName = tableName(field);
         String fieldName = field.getName();
 
-        for (Field<?> f : fields) {
+        for (int i = 0; i < fields.length; i++) {
+            Field<?> f = fields[i];
             String fName = f.getName();
 
             if (tableName != null) {
                 String tName = tableName(f);
 
                 if (tName != null && tableName.equals(tName) && fName.equals(fieldName))
-                    return (Field<T>) f;
+                    return result.result(f, i);
             }
 
             // In case no exact match was found, return the first field with matching name
             if (fName.equals(fieldName)) {
-                if (columnMatch == null)
+                if (columnMatch == null) {
                     columnMatch = f;
-                else
-                    // [#4476] [#4477] This might be unintentional from a user
-                    //                 perspective, e.g. when ambiguous ID columns are present.
-                    // [#5578] Finish the loop, though, as we might have an exact match
-                    //         despite some ambiguity
+                    indexMatch = i;
+                }
+
+                // [#4476] [#4477] This might be unintentional from a user
+                //                 perspective, e.g. when ambiguous ID columns are present.
+                // [#5578] Finish the loop, though, as we might have an exact match
+                //         despite some ambiguity
+                else {
                     columnMatch2 = f;
+                }
             }
         }
 
@@ -131,16 +146,15 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
             if (log.isInfoEnabled())
                 log.info("Ambiguous match found for " + fieldName + ". Both " + columnMatch + " and " + columnMatch2 + " match.", new SQLWarning());
 
-        return (Field<T>) columnMatch;
+        return result.result(columnMatch, indexMatch);
     }
 
     private final String tableName(Field<?> field) {
         if (field instanceof TableField) {
             Table<?> table = ((TableField<?, ?>) field).getTable();
 
-            if (table != null) {
+            if (table != null)
                 return table.getName();
-            }
         }
 
         return null;
@@ -148,21 +162,34 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
     @Override
     public final Field<?> field(String fieldName) {
+        return field0(fieldName, RETURN_FIELD);
+    }
+
+    private final <U> U field0(String fieldName, FieldOrIndex<U> result) {
         if (fieldName == null)
-            return null;
+            return result.resultNull();
 
         Field<?> columnMatch = null;
+        int indexMatch = -1;
 
-        for (Field<?> f : fields)
-            if (f.getName().equals(fieldName))
-                if (columnMatch == null)
+        for (int i = 0; i < fields.length; i++) {
+            Field<?> f = fields[i];
+
+            if (f.getName().equals(fieldName)) {
+                if (columnMatch == null) {
                     columnMatch = f;
-                else
-                    // [#4476] [#4477] [#5046] This might be unintentional from a user
-                    // perspective, e.g. when ambiguous ID columns are present.
-                    log.info("Ambiguous match found for " + fieldName + ". Both " + columnMatch + " and " + f + " match.", new SQLWarning());
+                    indexMatch = i;
+                }
 
-        return columnMatch;
+                // [#4476] [#4477] [#5046] This might be unintentional from a user
+                // perspective, e.g. when ambiguous ID columns are present.
+                else {
+                    log.info("Ambiguous match found for " + fieldName + ". Both " + columnMatch + " and " + f + " match.", new SQLWarning());
+                }
+            }
+        }
+
+        return result.result(columnMatch, indexMatch);
     }
 
     @Override
@@ -179,10 +206,14 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
     @Override
     public final Field<?> field(Name name) {
-        if (name == null)
-            return null;
+        return field0(name, RETURN_FIELD);
+    }
 
-        return field(DSL.field(name));
+    private final <U> U field0(Name name, FieldOrIndex<U> result) {
+        if (name == null)
+            return result.resultNull();
+
+        return field0(DSL.field(name), result);
     }
 
     @Override
@@ -199,9 +230,8 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
     @Override
     public final Field<?> field(int index) {
-        if (index >= 0 && index < fields.length) {
+        if (index >= 0 && index < fields.length)
             return fields[index];
-        }
 
         return null;
     }
@@ -265,34 +295,17 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
     @Override
     public final int indexOf(Field<?> field) {
-
-        // Get an exact match, or a field with a similar name
-        Field<?> compareWith = field(field);
-
-        if (compareWith != null) {
-            int size = fields.length;
-
-            // [#4540] Match by identity first
-            for (int i = 0; i < size; i++)
-                if (fields[i] == compareWith)
-                    return i;
-
-            for (int i = 0; i < size; i++)
-                if (fields[i].equals(compareWith))
-                    return i;
-        }
-
-        return -1;
+        return field0(field, RETURN_INDEX);
     }
 
     @Override
     public final int indexOf(String fieldName) {
-        return indexOf(field(fieldName));
+        return field0(fieldName, RETURN_INDEX);
     }
 
     @Override
     public final int indexOf(Name fieldName) {
-        return indexOf(field(fieldName));
+        return field0(fieldName, RETURN_INDEX);
     }
 
     @Override
@@ -300,9 +313,8 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
         int size = fields.length;
         Class<?>[] result = new Class[size];
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
             result[i] = field(i).getType();
-        }
 
         return result;
     }
@@ -327,9 +339,8 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
         int size = fields.length;
         DataType<?>[] result = new DataType[size];
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++)
             result[i] = field(i).getDataType();
-        }
 
         return result;
     }
@@ -352,9 +363,8 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
     final int[] indexesOf(Field<?>... f) {
         int[] result = new int[f.length];
 
-        for (int i = 0; i < f.length; i++) {
+        for (int i = 0; i < f.length; i++)
             result[i] = indexOrFail(this, f[i]);
-        }
 
         return result;
     }
@@ -372,9 +382,8 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
     final int[] indexesOf(Name... fieldNames) {
         int[] result = new int[fieldNames.length];
 
-        for (int i = 0; i < fieldNames.length; i++) {
+        for (int i = 0; i < fieldNames.length; i++)
             result[i] = indexOrFail(this, fieldNames[i]);
-        }
 
         return result;
     }
@@ -382,12 +391,7 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
     @Override
     public final void accept(Context<?> ctx) {
-        ctx.visit(new QueryPartList<Field<?>>(fields));
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+        ctx.visit(new QueryPartList<>(fields));
     }
 
     // -------------------------------------------------------------------------
@@ -402,6 +406,39 @@ final class Fields<R extends Record> extends AbstractQueryPart implements Record
 
         fields = result;
     }
+
+    // -------------------------------------------------------------------------
+    // XXX: [#8040] An abstraction over two possible return types.
+    // -------------------------------------------------------------------------
+
+    private static interface FieldOrIndex<U> {
+        U result(Field<?> field, int index);
+        U resultNull();
+    }
+
+    private static final FieldOrIndex<Field<?>> RETURN_FIELD = new FieldOrIndex<Field<?>>() {
+        @Override
+        public Field<?> result(Field<?> field, int index) {
+            return field;
+        }
+
+        @Override
+        public Field<?> resultNull() {
+            return null;
+        }
+    };
+
+    private static final FieldOrIndex<Integer> RETURN_INDEX = new FieldOrIndex<Integer>() {
+        @Override
+        public Integer result(Field<?> field, int index) {
+            return index;
+        }
+
+        @Override
+        public Integer resultNull() {
+            return -1;
+        }
+    };
 
     // -------------------------------------------------------------------------
     // XXX: Object API

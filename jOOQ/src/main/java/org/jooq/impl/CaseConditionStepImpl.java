@@ -49,19 +49,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jooq.CaseConditionStep;
-import org.jooq.Clause;
 import org.jooq.Condition;
-import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Field;
-import org.jooq.QueryPart;
+// ...
 import org.jooq.Record1;
 import org.jooq.Select;
 
 /**
  * @author Lukas Eder
  */
-final class CaseConditionStepImpl<T> extends AbstractFunction<T> implements CaseConditionStep<T> {
+final class CaseConditionStepImpl<T> extends AbstractField<T> implements CaseConditionStep<T> {
 
     /**
      * Generated UID
@@ -70,13 +68,13 @@ final class CaseConditionStepImpl<T> extends AbstractFunction<T> implements Case
 
     private final List<Condition> conditions;
     private final List<Field<T>>  results;
-    private Field<T>              otherwise;
+    private Field<T>              else_;
 
     CaseConditionStepImpl(Condition condition, Field<T> result) {
-        super("case", result.getDataType());
+        super(DSL.name("case"), result.getDataType());
 
-        this.conditions = new ArrayList<Condition>();
-        this.results = new ArrayList<Field<T>>();
+        this.conditions = new ArrayList<>();
+        this.results = new ArrayList<>();
 
         when(condition, result);
     }
@@ -101,44 +99,48 @@ final class CaseConditionStepImpl<T> extends AbstractFunction<T> implements Case
 
     @Override
     public final Field<T> otherwise(T result) {
-        return otherwise(Tools.field(result));
+        return else_(result);
     }
 
     @Override
     public final Field<T> otherwise(Field<T> result) {
-        this.otherwise = result;
+        return else_(result);
+    }
+
+    @Override
+    public final Field<T> otherwise(Select<? extends Record1<T>> result) {
+        return else_(result);
+    }
+
+    @Override
+    public final Field<T> else_(T result) {
+        return else_(Tools.field(result));
+    }
+
+    @Override
+    public final Field<T> else_(Field<T> result) {
+        this.else_ = result;
 
         return this;
     }
 
     @Override
-    public final Field<T> otherwise(Select<? extends Record1<T>> result) {
-        return otherwise(DSL.field(result));
+    public final Field<T> else_(Select<? extends Record1<T>> result) {
+        return else_(DSL.field(result));
     }
 
     @Override
-    final QueryPart getFunction0(Configuration configuration) {
-        switch (configuration.dialect().family()) {
+    public final void accept(Context<?> ctx) {
+        switch (ctx.family()) {
+
 
 
 
 
 
             default:
-                return new Native();
-        }
-    }
-
-    private abstract class Base extends AbstractQueryPart {
-
-        /**
-         * Generated UID
-         */
-        private static final long serialVersionUID = 6146002888421945901L;
-
-        @Override
-        public final Clause[] clauses(Context<?> ctx) {
-            return null;
+                ctx.visit(new Native());
+                break;
         }
     }
 
@@ -179,7 +181,8 @@ final class CaseConditionStepImpl<T> extends AbstractFunction<T> implements Case
 
 
 
-    private class Native extends Base {
+
+    private class Native extends AbstractQueryPart {
 
         /**
          * Generated UID
@@ -201,9 +204,9 @@ final class CaseConditionStepImpl<T> extends AbstractFunction<T> implements Case
                    .visit(K_THEN).sql(' ').visit(results.get(i));
             }
 
-            if (otherwise != null)
+            if (else_ != null)
                 ctx.formatSeparator()
-                   .visit(K_ELSE).sql(' ').visit(otherwise);
+                   .visit(K_ELSE).sql(' ').visit(else_);
 
             ctx.formatIndentEnd()
                .formatSeparator()

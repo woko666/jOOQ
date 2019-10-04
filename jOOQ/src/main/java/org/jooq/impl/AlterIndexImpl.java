@@ -49,6 +49,7 @@ import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 // ...
 // ...
+// ...
 import static org.jooq.impl.DSL.index;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.name;
@@ -63,7 +64,7 @@ import static org.jooq.impl.Keywords.K_TO;
 import static org.jooq.impl.Tools.beginTryCatch;
 import static org.jooq.impl.Tools.endTryCatch;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.AlterIndexFinalStep;
 import org.jooq.AlterIndexOnStep;
@@ -78,7 +79,7 @@ import org.jooq.Table;
 /**
  * @author Lukas Eder
  */
-final class AlterIndexImpl extends AbstractQuery implements
+final class AlterIndexImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for ALTER INDEX behaviour
     AlterIndexOnStep,
@@ -89,8 +90,8 @@ final class AlterIndexImpl extends AbstractQuery implements
      */
     private static final long                serialVersionUID     = 8904572826501186329L;
     private static final Clause[]            CLAUSES              = { ALTER_INDEX };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS = EnumSet.of(CUBRID, DERBY, FIREBIRD);
-    private static final EnumSet<SQLDialect> SUPPORT_RENAME_INDEX = EnumSet.of(DERBY);
+    private static final Set<SQLDialect>     NO_SUPPORT_IF_EXISTS = SQLDialect.supported(CUBRID, DERBY, FIREBIRD);
+    private static final Set<SQLDialect>     SUPPORT_RENAME_INDEX = SQLDialect.supported(DERBY);
 
     private final Index                      index;
     private final boolean                    ifExists;
@@ -172,6 +173,7 @@ final class AlterIndexImpl extends AbstractQuery implements
 
 
 
+
             case MARIADB:
             case MYSQL: {
                 ctx.visit(K_ALTER_TABLE).sql(' ')
@@ -185,6 +187,8 @@ final class AlterIndexImpl extends AbstractQuery implements
 
                 break;
             }
+
+
 
 
 

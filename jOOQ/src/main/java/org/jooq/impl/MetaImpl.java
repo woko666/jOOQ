@@ -76,10 +76,13 @@ package org.jooq.impl;
 
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.Tools.EMPTY_SORTFIELD;
@@ -92,13 +95,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.jooq.Catalog;
 import org.jooq.Condition;
@@ -112,6 +115,7 @@ import org.jooq.ForeignKey;
 import org.jooq.Index;
 import org.jooq.Meta;
 import org.jooq.Name;
+// ...
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.SQLDialect;
@@ -122,7 +126,9 @@ import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.exception.DataAccessException;
+import org.jooq.exception.DataTypeException;
 import org.jooq.exception.SQLDialectNotSupportedException;
+import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StringUtils;
 
 /**
@@ -135,15 +141,20 @@ import org.jooq.tools.StringUtils;
  */
 final class MetaImpl extends AbstractMeta {
 
-    private static final long                serialVersionUID                 = 3582980783173033809L;
-    private static final EnumSet<SQLDialect> INVERSE_SCHEMA_CATALOG           = EnumSet.of(MYSQL, MARIADB);
-    private static final EnumSet<SQLDialect> CURRENT_TIMESTAMP_COLUMN_DEFAULT = EnumSet.of(MYSQL, MARIADB);
-    private static final EnumSet<SQLDialect> EXPRESSION_COLUMN_DEFAULT        = EnumSet.of(H2);
+    private static final long            serialVersionUID                 = 3582980783173033809L;
+    private static final JooqLogger      log                              = JooqLogger.getLogger(MetaImpl.class);
+    private static final Set<SQLDialect> INVERSE_SCHEMA_CATALOG           = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> CURRENT_TIMESTAMP_COLUMN_DEFAULT = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> EXPRESSION_COLUMN_DEFAULT        = SQLDialect.supported(H2);
 
-    private final DSLContext                 ctx;
-    private final Configuration              configuration;
-    private final DatabaseMetaData           databaseMetaData;
-    private final boolean                    inverseSchemaCatalog;
+
+
+
+
+    private final DSLContext             ctx;
+    private final Configuration          configuration;
+    private final DatabaseMetaData       databaseMetaData;
+    private final boolean                inverseSchemaCatalog;
 
     MetaImpl(Configuration configuration, DatabaseMetaData databaseMetaData) {
         this.ctx = DSL.using(configuration);
@@ -174,24 +185,31 @@ final class MetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Catalog> getCatalogs() {
-        List<Catalog> result = new ArrayList<Catalog>();
+    protected final List<Catalog> getCatalogs0() {
+        List<Catalog> result = new ArrayList<>();
 
-        // [#2760] MySQL JDBC confuses "catalog" and "schema"
-        if (!inverseSchemaCatalog) {
-            Result<Record> catalogs = meta(new MetaFunction() {
-                @Override
-                public Result<Record> run(DatabaseMetaData meta) throws SQLException {
-                    return ctx.fetch(
-                        meta.getCatalogs(),
-                        SQLDataType.VARCHAR // TABLE_CATALOG
-                    );
-                }
-            });
 
-            for (String name : catalogs.getValues(0, String.class))
-                result.add(new MetaCatalog(name));
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // There should always be at least one (empty) catalog in a database
         if (result.isEmpty())
@@ -201,8 +219,8 @@ final class MetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Schema> getSchemas() {
-        List<Schema> result = new ArrayList<Schema>();
+    protected final List<Schema> getSchemas0() {
+        List<Schema> result = new ArrayList<>();
 
         for (Catalog catalog : getCatalogs())
             result.addAll(catalog.getSchemas());
@@ -211,8 +229,8 @@ final class MetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Table<?>> getTables() {
-        List<Table<?>> result = new ArrayList<Table<?>>();
+    protected final List<Table<?>> getTables0() {
+        List<Table<?>> result = new ArrayList<>();
 
         for (Schema schema : getSchemas())
             result.addAll(schema.getTables());
@@ -221,8 +239,8 @@ final class MetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Sequence<?>> getSequences() {
-        List<Sequence<?>> result = new ArrayList<Sequence<?>>();
+    protected final List<Sequence<?>> getSequences0() {
+        List<Sequence<?>> result = new ArrayList<>();
 
         for (Schema schema : getSchemas())
             result.addAll(schema.getSequences());
@@ -231,8 +249,8 @@ final class MetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<UniqueKey<?>> getPrimaryKeys() {
-        List<UniqueKey<?>> result = new ArrayList<UniqueKey<?>>();
+    protected final List<UniqueKey<?>> getPrimaryKeys0() {
+        List<UniqueKey<?>> result = new ArrayList<>();
 
         for (Table<?> table : getTables()) {
             UniqueKey<?> pk = table.getPrimaryKey();
@@ -257,7 +275,7 @@ final class MetaImpl extends AbstractMeta {
 
         @Override
         public final List<Schema> getSchemas() {
-            List<Schema> result = new ArrayList<Schema>();
+            List<Schema> result = new ArrayList<>();
 
 
 
@@ -280,7 +298,6 @@ final class MetaImpl extends AbstractMeta {
                         );
                     }
                 });
-
 
                 for (String name : schemas.getValues(0, String.class))
                     result.add(new MetaSchema(name, MetaCatalog.this));
@@ -385,7 +402,7 @@ final class MetaImpl extends AbstractMeta {
                 }
             });
 
-            List<Table<?>> result = new ArrayList<Table<?>>(tables.size());
+            List<Table<?>> result = new ArrayList<>(tables.size());
             for (Record table : tables) {
                 String catalog = table.get(0, String.class);
                 String schema = table.get(1, String.class);
@@ -412,7 +429,7 @@ final class MetaImpl extends AbstractMeta {
 
             // SQLite JDBC's DatabaseMetaData.getColumns() can only return a single
             // table's columns
-            if (columnCache == null && configuration.dialect() != SQLITE) {
+            if (columnCache == null && configuration.family() != SQLITE) {
                 Result<Record> columns = getColumns0(schema, "%");
 
                 Field<String> tableCat   = (Field<String>) columns.field(0); // TABLE_CAT
@@ -425,7 +442,7 @@ final class MetaImpl extends AbstractMeta {
                     tableName
                 });
 
-                columnCache = new LinkedHashMap<Name, Result<Record>>();
+                columnCache = new LinkedHashMap<>();
 
                 for (Entry<Record, Result<Record>> entry : groups.entrySet()) {
                     Record key = entry.getKey();
@@ -618,11 +635,11 @@ final class MetaImpl extends AbstractMeta {
                 result.field(12),
             });
 
-            Map<String, Schema> schemas = new HashMap<String, Schema>();
+            Map<String, Schema> schemas = new HashMap<>();
             for (Schema schema : getSchemas())
                 schemas.put(schema.getName(), schema);
 
-            List<ForeignKey<Record, ?>> references = new ArrayList<ForeignKey<Record, ?>>(groups.size());
+            List<ForeignKey<Record, ?>> references = new ArrayList<>(groups.size());
             for (Entry<Record, Result<Record>> entry : groups.entrySet()) {
                 Schema schema = schemas.get(entry.getKey().get(1));
 
@@ -638,11 +655,12 @@ final class MetaImpl extends AbstractMeta {
                     fkFields[i] = (TableField<Record, ?>)         field(record.get(7, String.class));
                 }
 
-                references.add(new ReferenceImpl<Record, Record>(new MetaPrimaryKey(pkTable, pkName, pkFields), this, fkName, fkFields));
+                references.add(new ReferenceImpl<>(new MetaPrimaryKey(pkTable, pkName, pkFields), this, fkName, fkFields));
             }
 
             return references;
         }
+
 
 
 
@@ -715,8 +733,8 @@ final class MetaImpl extends AbstractMeta {
         }
 
         private final List<Index> createIndexes(Result<Record> result) {
-            List<Index> indexes = new ArrayList<Index>();
-            List<SortField<?>> sortFields = new ArrayList<SortField<?>>();
+            List<Index> indexes = new ArrayList<>();
+            List<SortField<?>> sortFields = new ArrayList<>();
             String previousIndexName = null;
             Name name = null;
             Condition where = null;
@@ -783,17 +801,26 @@ final class MetaImpl extends AbstractMeta {
                         type = type.nullable(false);
 
                     // [#6883] Default values may be present
-                    if (!StringUtils.isEmpty(defaultValue))
+                    if (!StringUtils.isEmpty(defaultValue)) {
+                        try {
 
-                        // [#7194] Some databases report all default values as expressions, not as values
-                        if (EXPRESSION_COLUMN_DEFAULT.contains(configuration.family()))
-                            type = type.defaultValue(DSL.field(defaultValue, type));
+                            // [#7194] Some databases report all default values as expressions, not as values
+                            if (EXPRESSION_COLUMN_DEFAULT.contains(configuration.family()))
+                                type = type.defaultValue(DSL.field(defaultValue, type));
 
-                        // [#5574] MySQL mixes constant value expressions with other column expressions here
-                        else if (CURRENT_TIMESTAMP_COLUMN_DEFAULT.contains(configuration.family()) && "CURRENT_TIMESTAMP".equalsIgnoreCase(defaultValue))
-                            type = type.defaultValue(DSL.field(defaultValue, type));
-                        else
-                            type = type.defaultValue(DSL.inline(defaultValue, type));
+                            // [#5574] MySQL mixes constant value expressions with other column expressions here
+                            else if (CURRENT_TIMESTAMP_COLUMN_DEFAULT.contains(configuration.family()) && "CURRENT_TIMESTAMP".equalsIgnoreCase(defaultValue))
+                                type = type.defaultValue(DSL.field(defaultValue, type));
+                            else
+                                type = type.defaultValue(DSL.inline(defaultValue, type));
+                        }
+
+                        // [#8469] Rather than catching exceptions after conversions, we should use the
+                        //         parser to parse default values, if they're expressions
+                        catch (DataTypeException e) {
+                            log.warn("Default value", "Could not load default value: " + defaultValue + " for type: " + type, e);
+                        }
+                    }
                 }
                 catch (SQLDialectNotSupportedException e) {
                     type = SQLDataType.OTHER;
@@ -883,23 +910,25 @@ final class MetaImpl extends AbstractMeta {
                 result.field(12),
             });
 
-            Map<String, Schema> schemas = new HashMap<String, Schema>();
+            Map<String, Schema> schemas = new HashMap<>();
             for (Schema schema : getSchemas())
                 schemas.put(schema.getName(), schema);
 
-            List<ForeignKey<?, Record>> references = new ArrayList<ForeignKey<?, Record>>(groups.size());
+            List<ForeignKey<?, Record>> references = new ArrayList<>(groups.size());
             for (Entry<Record, Result<Record>> entry : groups.entrySet()) {
-                Schema schema = schemas.get(entry.getKey().get(1));
+                Record key = entry.getKey();
+                Result<Record> value = entry.getValue();
 
-                Table<Record> fkTable = (Table<Record>) schema.getTable(entry.getKey().get(2, String.class));
-                TableField<Record, ?>[] fkFields = new TableField[entry.getValue().size()];
+                Schema schema = schemas.get(key.get(1));
 
-                for (int i = 0; i < entry.getValue().size(); i++) {
-                    Record record = entry.getValue().get(i);
-                    fkFields[i] = (TableField<Record, ?>) fkTable.field(record.get(7, String.class));
-                }
+                Table<Record> fkTable = (Table<Record>) schema.getTable(key.get(2, String.class));
+                String fkName = key.get(3, String.class);
+                TableField<Record, ?>[] fkFields = new TableField[value.size()];
 
-                references.add(new ReferenceImpl<Record, Record>(this, fkTable, fkFields));
+                for (int i = 0; i < value.size(); i++)
+                    fkFields[i] = (TableField<Record, ?>) fkTable.field(value.get(i).get(7, String.class));
+
+                references.add(new ReferenceImpl<>(this, fkTable, fkName, fkFields));
             }
 
             return references;

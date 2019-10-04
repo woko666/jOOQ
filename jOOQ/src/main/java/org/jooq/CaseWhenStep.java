@@ -108,6 +108,7 @@ public interface CaseWhenStep<V, T> extends Field<T> {
      * This will iterate over the map's entries to create individual
      * <code>WHEN .. THEN</code> expressions for each map entry.
      */
+    @Support
     CaseWhenStep<V, T> mapValues(Map<V, T> values);
 
     /**
@@ -116,6 +117,7 @@ public interface CaseWhenStep<V, T> extends Field<T> {
      * This will iterate over the map's entries to create individual
      * <code>WHEN .. THEN</code> expressions for each map entry.
      */
+    @Support
     CaseWhenStep<V, T> mapFields(Map<? extends Field<V>, ? extends Field<T>> fields);
 
     /**
@@ -135,4 +137,22 @@ public interface CaseWhenStep<V, T> extends Field<T> {
      */
     @Support
     Field<T> otherwise(Field<T> result);
+
+    /**
+     * Add an else clause to the already constructed case statement
+     *
+     * @param result The result value if no other value matches the case
+     * @return The resulting field from case statement construction
+     */
+    @Support
+    Field<T> else_(T result);
+
+    /**
+     * Add an else clause to the already constructed case statement
+     *
+     * @param result The result value if no other value matches the case
+     * @return The resulting field from case statement construction
+     */
+    @Support
+    Field<T> else_(Field<T> result);
 }

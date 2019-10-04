@@ -52,6 +52,8 @@ import static org.jooq.Comparator.NOT_EQUALS;
 import static org.jooq.Comparator.NOT_IN;
 import static org.jooq.Comparator.NOT_LIKE;
 import static org.jooq.Comparator.NOT_LIKE_IGNORE_CASE;
+import static org.jooq.Comparator.NOT_SIMILAR_TO;
+import static org.jooq.Comparator.SIMILAR_TO;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.nullSafe;
 import static org.jooq.impl.DSL.val;
@@ -61,6 +63,7 @@ import static org.jooq.impl.ExpressionOperator.MULTIPLY;
 import static org.jooq.impl.ExpressionOperator.SUBTRACT;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
 import static org.jooq.impl.Tools.EMPTY_STRING;
+import static org.jooq.impl.Tools.castIfNeeded;
 import static org.jooq.tools.Convert.FALSE_VALUES;
 import static org.jooq.tools.Convert.TRUE_VALUES;
 
@@ -91,6 +94,7 @@ import org.jooq.DatePart;
 import org.jooq.Field;
 import org.jooq.LikeEscapeStep;
 import org.jooq.Name;
+// ...
 import org.jooq.QuantifiedSelect;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -191,7 +195,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public Field<T> as(Name alias) {
-        return new FieldAlias<T>(this, alias);
+        return new FieldAlias<>(this, alias);
     }
 
     @Override
@@ -242,26 +246,14 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         return cast(field.getDataType());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public final <Z> Field<Z> cast(DataType<Z> type) {
-
-        // [#473] Prevent unnecessary casts
-        if (getDataType().equals(type))
-            return (Field<Z>) this;
-        else
-            return new Cast<Z>(this, type);
+        return new Cast<>(this, type);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public final <Z> Field<Z> cast(Class<Z> type) {
-
-        // [#2597] Prevent unnecessary casts
-        if (getType() == type)
-            return (Field<Z>) this;
-        else
-            return cast(DefaultDataType.getDataType(null, type));
+        return cast(DefaultDataType.getDataType(null, type));
     }
 
     // ------------------------------------------------------------------------
@@ -273,15 +265,9 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         return coerce(field.getDataType());
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public final <Z> Field<Z> coerce(DataType<Z> type) {
-
-        // [#473] Prevent unnecessary coercions
-        if (getDataType().equals(type))
-            return (Field<Z>) this;
-        else
-            return new Coerce<Z>(this, type);
+        return new Coerce<>(this, type);
     }
 
     @Override
@@ -310,12 +296,12 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final SortField<T> sort(SortOrder order) {
-        return new SortFieldImpl<T>(this, order);
+        return new SortFieldImpl<>(this, order);
     }
 
     @Override
     public final SortField<Integer> sortAsc(Collection<T> sortList) {
-        Map<T, Integer> map = new LinkedHashMap<T, Integer>();
+        Map<T, Integer> map = new LinkedHashMap<>();
 
         int i = 0;
         for (T value : sortList)
@@ -334,7 +320,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final SortField<Integer> sortDesc(Collection<T> sortList) {
-        Map<T, Integer> map = new LinkedHashMap<T, Integer>();
+        Map<T, Integer> map = new LinkedHashMap<>();
 
         int i = 0;
         for (T value : sortList)
@@ -364,7 +350,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
                 result.when(entry.getKey(), inline(entry.getValue()));
 
         if (result == null)
-            return new SortFieldImpl<Z>(new ConstantSortField<Z>((Field) this), SortOrder.DEFAULT);
+            return new SortFieldImpl<>(new ConstantSortField<>((Field) this), SortOrder.DEFAULT);
         else
             return result.asc();
     }
@@ -375,7 +361,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Field<T> neg() {
-        return new Neg<T>(this, ExpressionOperator.SUBTRACT);
+        return new Neg<>(this, ExpressionOperator.SUBTRACT);
     }
 
     @Override
@@ -399,7 +385,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
      */
     @Override
     public Field<T> add(Field<?> value) {
-        return new Expression<T>(ADD, this, nullSafe(value, getDataType()));
+        return new Expression<>(ADD, this, nullSafe(value, getDataType()));
     }
 
     @Override
@@ -409,7 +395,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Field<T> sub(Field<?> value) {
-        return new Expression<T>(SUBTRACT, this, nullSafe(value, getDataType()));
+        return new Expression<>(SUBTRACT, this, nullSafe(value, getDataType()));
     }
 
     @Override
@@ -423,7 +409,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
      */
     @Override
     public Field<T> mul(Field<? extends Number> value) {
-        return new Expression<T>(MULTIPLY, this, nullSafe(value, getDataType()));
+        return new Expression<>(MULTIPLY, this, nullSafe(value, getDataType()));
     }
 
     @Override
@@ -433,7 +419,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Field<T> div(Field<? extends Number> value) {
-        return new Expression<T>(DIVIDE, this, nullSafe(value, getDataType()));
+        return new Expression<>(DIVIDE, this, nullSafe(value, getDataType()));
     }
 
     @Override
@@ -443,7 +429,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Field<T> mod(Field<? extends Number> value) {
-        return new Mod<T>(this, nullSafe(value, getDataType()));
+        return new Mod<>(this, nullSafe(value, getDataType()));
     }
 
     // ------------------------------------------------------------------------
@@ -677,6 +663,16 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
     // ------------------------------------------------------------------------
 
     @Override
+    public final Condition isJson() {
+        return new IsJSON(this, true);
+    }
+
+    @Override
+    public final Condition isNotJson() {
+        return new IsJSON(this, false);
+    }
+
+    @Override
     public final Condition isNull() {
         return new IsNull(this, true);
     }
@@ -716,9 +712,9 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         else if (Number.class.isAssignableFrom(type))
             return ((Field<Number>) this).equal(inline((Number) getDataType().convert(1)));
         else if (Boolean.class.isAssignableFrom(type))
-            return ((Field<Boolean>) this).equal(inline(true));
+            return ((Field<Boolean>) this).equal(inline(true, (DataType<Boolean>) getDataType()));
         else
-            return cast(String.class).in(TRUE_VALUES);
+            return castIfNeeded(this, String.class).in(TRUE_VALUES);
     }
 
     @SuppressWarnings({ "unchecked" })
@@ -731,9 +727,49 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         else if (Number.class.isAssignableFrom(type))
             return ((Field<Number>) this).equal(inline((Number) getDataType().convert(0)));
         else if (Boolean.class.isAssignableFrom(type))
-            return ((Field<Boolean>) this).equal(inline(false));
+            return ((Field<Boolean>) this).equal(inline(false, (DataType<Boolean>) getDataType()));
         else
-            return cast(String.class).in(Tools.inline(FALSE_VALUES.toArray(EMPTY_STRING)));
+            return castIfNeeded(this, String.class).in(Tools.inline(FALSE_VALUES.toArray(EMPTY_STRING)));
+    }
+
+    @Override
+    public final LikeEscapeStep similarTo(String value) {
+        return similarTo(Tools.field(value));
+    }
+
+    @Override
+    public final Condition similarTo(String value, char escape) {
+        return similarTo(Tools.field(value), escape);
+    }
+
+    @Override
+    public final LikeEscapeStep similarTo(Field<String> field) {
+        return new CompareCondition(this, nullSafe(field, getDataType()), SIMILAR_TO);
+    }
+
+    @Override
+    public final Condition similarTo(Field<String> field, char escape) {
+        return similarTo(field).escape(escape);
+    }
+
+    @Override
+    public final LikeEscapeStep notSimilarTo(String value) {
+        return notSimilarTo(Tools.field(value));
+    }
+
+    @Override
+    public final Condition notSimilarTo(String value, char escape) {
+        return notSimilarTo(Tools.field(value), escape);
+    }
+
+    @Override
+    public final LikeEscapeStep notSimilarTo(Field<String> field) {
+        return new CompareCondition(this, nullSafe(field, getDataType()), NOT_SIMILAR_TO);
+    }
+
+    @Override
+    public final Condition notSimilarTo(Field<String> field, char escape) {
+        return notSimilarTo(field).escape(escape);
     }
 
     @Override
@@ -754,6 +790,11 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
     @Override
     public final Condition like(Field<String> field, char escape) {
         return like(field).escape(escape);
+    }
+
+    @Override
+    public LikeEscapeStep like(QuantifiedSelect<Record1<String>> query) {
+        return new QuantifiedComparisonCondition(query, this, LIKE);
     }
 
     @Override
@@ -807,6 +848,11 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
     }
 
     @Override
+    public LikeEscapeStep notLike(QuantifiedSelect<Record1<String>> query) {
+        return new QuantifiedComparisonCondition(query, this, NOT_LIKE);
+    }
+
+    @Override
     public final LikeEscapeStep notLikeIgnoreCase(String value) {
         return notLikeIgnoreCase(Tools.field(value));
     }
@@ -842,12 +888,12 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         if (value instanceof Field)
             return contains((Field) value);
         else
-            return new Contains<T>(this, value);
+            return new Contains<>(this, value);
     }
 
     @Override
     public final Condition contains(Field<T> value) {
-        return new Contains<T>(this, value);
+        return new Contains<>(this, value);
     }
 
     @Override
@@ -860,18 +906,14 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         return contains(value).not();
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public final Condition containsIgnoreCase(T value) {
-        if (value instanceof Field)
-            return containsIgnoreCase((Field) value);
-        else
-            return new ContainsIgnoreCase<T>(this, value);
+        return containsIgnoreCase(Tools.field(value, this));
     }
 
     @Override
     public final Condition containsIgnoreCase(Field<T> value) {
-        return new ContainsIgnoreCase<T>(this, value);
+        return new ContainsIgnoreCase(this, value, true, true);
     }
 
     @Override
@@ -884,14 +926,9 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         return containsIgnoreCase(value).not();
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public final Condition startsWith(T value) {
-        if (value instanceof Field)
-            return startsWith((Field) value);
-
-        Field<String> concat = DSL.concat(Tools.escapeForLike(value), inline("%"));
-        return like(concat, Tools.ESCAPE);
+        return startsWith(Tools.field(value, this));
     }
 
     @Override
@@ -900,20 +937,35 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         return like(concat, Tools.ESCAPE);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Override
+    public final Condition startsWithIgnoreCase(T value) {
+        return startsWithIgnoreCase(Tools.field(value, this));
+    }
+
+    @Override
+    public final Condition startsWithIgnoreCase(Field<T> value) {
+        return new ContainsIgnoreCase(this, value, false, true);
+    }
+
     @Override
     public final Condition endsWith(T value) {
-        if (value instanceof Field)
-            return endsWith((Field) value);
-
-        Field<String> concat = DSL.concat(inline("%"), Tools.escapeForLike(value));
-        return like(concat, Tools.ESCAPE);
+        return endsWith(Tools.field(value, this));
     }
 
     @Override
     public final Condition endsWith(Field<T> value) {
         Field<String> concat = DSL.concat(inline("%"), Tools.escapeForLike(value));
         return like(concat, Tools.ESCAPE);
+    }
+
+    @Override
+    public final Condition endsWithIgnoreCase(T value) {
+        return endsWithIgnoreCase(Tools.field(value, this));
+    }
+
+    @Override
+    public final Condition endsWithIgnoreCase(Field<T> value) {
+        return new ContainsIgnoreCase(this, value, true, false);
     }
 
     private final boolean isAccidentalSelect(T[] values) {
@@ -941,7 +993,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Condition in(Field<?>... values) {
-        return new InCondition<T>(this, nullSafe(values), IN);
+        return new InCondition<>(this, nullSafe(values), IN);
     }
 
     @Override
@@ -982,7 +1034,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Condition notIn(Field<?>... values) {
-        return new InCondition<T>(this, nullSafe(values), NOT_IN);
+        return new InCondition<>(this, nullSafe(values), NOT_IN);
     }
 
     @Override
@@ -1053,7 +1105,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final BetweenAndStep<T> between(Field<T> minValue) {
-        return new BetweenCondition<T>(this, nullSafe(minValue, getDataType()), false, false);
+        return new BetweenCondition<>(this, nullSafe(minValue, getDataType()), false, false);
     }
 
     @Override
@@ -1063,7 +1115,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final BetweenAndStep<T> betweenSymmetric(Field<T> minValue) {
-        return new BetweenCondition<T>(this, nullSafe(minValue, getDataType()), false, true);
+        return new BetweenCondition<>(this, nullSafe(minValue, getDataType()), false, true);
     }
 
     @Override
@@ -1073,7 +1125,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final BetweenAndStep<T> notBetween(Field<T> minValue) {
-        return new BetweenCondition<T>(this, nullSafe(minValue, getDataType()), true, false);
+        return new BetweenCondition<>(this, nullSafe(minValue, getDataType()), true, false);
     }
 
     @Override
@@ -1083,7 +1135,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final BetweenAndStep<T> notBetweenSymmetric(Field<T> minValue) {
-        return new BetweenCondition<T>(this, nullSafe(minValue, getDataType()), true, true);
+        return new BetweenCondition<>(this, nullSafe(minValue, getDataType()), true, true);
     }
 
     @Override
@@ -1223,7 +1275,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Condition equalIgnoreCase(Field<String> value) {
-        return DSL.lower(cast(String.class)).equal(DSL.lower(value));
+        return DSL.lower(castIfNeeded(this, String.class)).equal(DSL.lower(value));
     }
 
     @Override
@@ -1253,7 +1305,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Condition notEqualIgnoreCase(Field<String> value) {
-        return DSL.lower(cast(String.class)).notEqual(DSL.lower(value));
+        return DSL.lower(castIfNeeded(this, String.class)).notEqual(DSL.lower(value));
     }
 
     @Override
@@ -1356,7 +1408,7 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
         switch (comparator) {
             case IS_DISTINCT_FROM:
             case IS_NOT_DISTINCT_FROM:
-                return new IsDistinctFrom<T>(this, nullSafe(field, getDataType()), comparator);
+                return new IsDistinctFrom<>(this, nullSafe(field, getDataType()), comparator);
 
             default:
                 return new CompareCondition(this, nullSafe(field, getDataType()), comparator);
@@ -1365,13 +1417,14 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @Override
     public final Condition compare(Comparator comparator, Select<? extends Record1<T>> query) {
-        return compare(comparator, new ScalarSubquery<T>(query, getDataType()));
+        return compare(comparator, new ScalarSubquery<>(query, getDataType()));
     }
 
     @Override
     public final Condition compare(Comparator comparator, QuantifiedSelect<? extends Record1<T>> query) {
         return new QuantifiedComparisonCondition(query, this, comparator);
     }
+
 
 
 
@@ -1388,32 +1441,26 @@ abstract class AbstractField<T> extends AbstractNamed implements Field<T> {
 
     @SuppressWarnings("unchecked")
     private final <Z extends Number> Field<Z> numeric() {
-        if (getDataType().isNumeric()) {
+        if (getDataType().isNumeric())
             return (Field<Z>) this;
-        }
-        else {
+        else
             return (Field<Z>) cast(BigDecimal.class);
-        }
     }
 
     @SuppressWarnings("unchecked")
     private final Field<String> varchar() {
-        if (getDataType().isString()) {
+        if (getDataType().isString())
             return (Field<String>) this;
-        }
-        else {
+        else
             return cast(String.class);
-        }
     }
 
     @SuppressWarnings("unchecked")
     private final <Z extends java.util.Date> Field<Z> date() {
-        if (getDataType().isTemporal()) {
+        if (getDataType().isTemporal())
             return (Field<Z>) this;
-        }
-        else {
+        else
             return (Field<Z>) cast(Timestamp.class);
-        }
     }
 
     @Override

@@ -37,6 +37,18 @@
  */
 package org.jooq;
 
+// ...
+// ...
+import static org.jooq.SQLDialect.HSQLDB;
+import static org.jooq.SQLDialect.MARIADB;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+import static org.jooq.SQLDialect.SQLITE;
+// ...
+
 import java.io.Serializable;
 import java.sql.Types;
 import java.util.Collection;
@@ -47,9 +59,18 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.tools.Convert;
 import org.jooq.types.DayToSecond;
 import org.jooq.types.YearToMonth;
+import org.jooq.types.YearToSecond;
 
 /**
  * A common interface to all dialect-specific data types.
+ * <p>
+ * jOOQ provides built in data types through {@link SQLDataType}. Users can
+ * define their own data types programmatically by calling
+ * {@link #asConvertedDataType(Converter)} or
+ * {@link #asConvertedDataType(Binding)}, for example. Custom data types can
+ * also be defined on generated code using the <code>&lt;forcedType/&gt;</code>
+ * configuration, see <a href=
+ * "https://www.jooq.org/doc/latest/manual/code-generation/codegen-advanced/codegen-config-database/codegen-database-forced-types/">the manual for more details</a>
  *
  * @param <T> The Java type associated with this SQL data type
  * @author Lukas Eder
@@ -101,6 +122,7 @@ public interface DataType<T> extends Serializable {
      * Retrieve the data type for an ARRAY of this data type.
      */
     DataType<T[]> getArrayDataType();
+
 
 
 
@@ -200,6 +222,7 @@ public interface DataType<T> extends Serializable {
      * @param nullability The new nullability
      * @return The new data type
      */
+    @Support
     DataType<T> nullability(Nullability nullability);
 
     /**
@@ -221,6 +244,7 @@ public interface DataType<T> extends Serializable {
      * @param nullable The new nullability
      * @return The new data type
      */
+    @Support
     DataType<T> nullable(boolean nullable);
 
     /**
@@ -236,6 +260,7 @@ public interface DataType<T> extends Serializable {
     /**
      * Return a new data type like this, with a new collation.
      */
+    @Support({ HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     DataType<T> collation(Collation collation);
 
     /**
@@ -243,6 +268,18 @@ public interface DataType<T> extends Serializable {
      * collation, or if the default collation applies.
      */
     Collation collation();
+
+    /**
+     * Return a new data type like this, with a new character set.
+     */
+    @Support({ MARIADB, MYSQL })
+    DataType<T> characterSet(CharacterSet characterSet);
+
+    /**
+     * Get the character set of this data type, or <code>null</code> if there is
+     * no character set, or if the default character set applies.
+     */
+    CharacterSet characterSet();
 
     /**
      * Return a new data type like this, with a new identity flag.
@@ -253,6 +290,7 @@ public interface DataType<T> extends Serializable {
      * @param identity The new identity flag
      * @return The new data type
      */
+    @Support // TODO: List the correct dialects that support identities
     DataType<T> identity(boolean identity);
 
     /**
@@ -267,9 +305,12 @@ public interface DataType<T> extends Serializable {
      * this data type.
      * <p>
      * [#5709] A <code>defaulted</code> column cannot have an {@link #identity()}.
+     * <p>
+     * This is an alias for {@link #default_(Object)}.
      *
      * @see #defaultValue(Field)
      */
+    @Support
     DataType<T> defaultValue(T defaultValue);
 
     /**
@@ -285,8 +326,50 @@ public interface DataType<T> extends Serializable {
      * The distinct types of possible <code>DEFAULT</code> expressions is
      * defined by the underlying database. Please refer to your database manual
      * to learn what expressions are possible.
+     * <p>
+     * This is an alias for {@link #default_(Field)}.
      */
     DataType<T> defaultValue(Field<T> defaultValue);
+
+    /**
+     * The expression to be applied as the <code>DEFAULT</code> value for this
+     * data type.
+     * <p>
+     * This is an alias for {@link #default_()}.
+     *
+     * @return The default value if present, or <code>null</code> if no default
+     *         value is specified for this data type.
+     * @see #defaultValue(Field)
+     */
+    Field<T> defaultValue();
+
+    /**
+     * Specify an expression to be applied as the <code>DEFAULT</code> value for
+     * this data type.
+     * <p>
+     * [#5709] A <code>defaulted</code> column cannot have an {@link #identity()}.
+     *
+     * @see #defaultValue(Field)
+     */
+    @Support
+    DataType<T> default_(T defaultValue);
+
+    /**
+     * Specify an expression to be applied as the <code>DEFAULT</code> value for
+     * this data type.
+     * <p>
+     * A default value of a data type applies to DDL statements, such as
+     * <ul>
+     * <li><code>CREATE TABLE</code></li>
+     * <li><code>ALTER TABLE</code></li>
+     * </ul>
+     * <p>
+     * The distinct types of possible <code>DEFAULT</code> expressions is
+     * defined by the underlying database. Please refer to your database manual
+     * to learn what expressions are possible.
+     */
+    @Support
+    DataType<T> default_(Field<T> defaultValue);
 
     /**
      * The expression to be applied as the <code>DEFAULT</code> value for this
@@ -296,7 +379,7 @@ public interface DataType<T> extends Serializable {
      *         value is specified for this data type.
      * @see #defaultValue(Field)
      */
-    Field<T> defaultValue();
+    Field<T> default_();
 
     /**
      * Return a new data type like this, with a new defaultability.
@@ -327,19 +410,21 @@ public interface DataType<T> extends Serializable {
      * @param precision The new precision value
      * @return The new data type
      */
+    @Support
     DataType<T> precision(int precision);
 
     /**
      * Return a new data type like this, with a new precision and scale value.
      * <p>
      * This will have no effect if {@link #hasPrecision()} is <code>false</code>
-     * , or if <code>scale > 0</code> and {@link #hasScale()} is
+     * , or if <code>scale &gt; 0</code> and {@link #hasScale()} is
      * <code>false</code>
      *
      * @param precision The new precision value
      * @param scale The new scale value
      * @return The new data type
      */
+    @Support
     DataType<T> precision(int precision, int scale);
 
     /**
@@ -364,6 +449,7 @@ public interface DataType<T> extends Serializable {
      * @param scale The new scale value
      * @return The new data type
      */
+    @Support
     DataType<T> scale(int scale);
 
     /**
@@ -388,6 +474,7 @@ public interface DataType<T> extends Serializable {
      * @param length The new length value
      * @return The new data type
      */
+    @Support
     DataType<T> length(int length);
 
     /**
@@ -453,9 +540,45 @@ public interface DataType<T> extends Serializable {
      * <li> {@link SQLDataType#LOCALDATETIME}</li>
      * <li> {@link SQLDataType#OFFSETTIME}</li>
      * <li> {@link SQLDataType#OFFSETDATETIME}</li>
+     * <li> {@link SQLDataType#INSTANT}</li>
      * </ul>
+     *
+     * @see #isDate()
      */
     boolean isDateTime();
+
+    /**
+     * Whether this data type is any date type.
+     * <p>
+     * This applies to any of these types.
+     * <ul>
+     * <li>{@link SQLDataType#DATE}</li>
+     * <li>{@link SQLDataType#LOCALDATE}</li>
+     * </ul>
+     */
+    boolean isDate();
+
+    /**
+     * Whether this data type is any timestamp type.
+     * <p>
+     * This applies to any of these types.
+     * <ul>
+     * <li>{@link SQLDataType#TIMESTAMP}</li>
+     * <li>{@link SQLDataType#LOCALDATETIME}</li>
+     * </ul>
+     */
+    boolean isTimestamp();
+
+    /**
+     * Whether this data type is any time type.
+     * <p>
+     * This applies to any of these types.
+     * <ul>
+     * <li>{@link SQLDataType#TIME}</li>
+     * <li>{@link SQLDataType#LOCALTIME}</li>
+     * </ul>
+     */
+    boolean isTime();
 
     /**
      * Whether this data type is any date or time type.
@@ -470,6 +593,7 @@ public interface DataType<T> extends Serializable {
      * <li> {@link SQLDataType#LOCALDATETIME}</li>
      * <li> {@link SQLDataType#OFFSETTIME}</li>
      * <li> {@link SQLDataType#OFFSETDATETIME}</li>
+     * <li> {@link YearToSecond}</li>
      * <li> {@link YearToMonth}</li>
      * <li> {@link DayToSecond}</li>
      * </ul>
@@ -483,6 +607,7 @@ public interface DataType<T> extends Serializable {
      * <p>
      * This applies to any of these types.
      * <ul>
+     * <li> {@link YearToSecond}</li>
      * <li> {@link YearToMonth}</li>
      * <li> {@link DayToSecond}</li>
      * </ul>

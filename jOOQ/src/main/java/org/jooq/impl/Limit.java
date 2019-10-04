@@ -37,10 +37,11 @@
  */
 package org.jooq.impl;
 
+import static java.lang.Boolean.TRUE;
 import static org.jooq.RenderContext.CastMode.NEVER;
+import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.conf.ParamType.INLINED;
-import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.one;
 import static org.jooq.impl.DSL.val;
 import static org.jooq.impl.DSL.zero;
@@ -58,15 +59,16 @@ import static org.jooq.impl.Keywords.K_START_AT;
 import static org.jooq.impl.Keywords.K_TO;
 import static org.jooq.impl.Keywords.K_TOP;
 import static org.jooq.impl.Keywords.K_WITH_TIES;
-import static org.jooq.impl.Tools.DataKey.DATA_PREFER_TOP_OVER_FETCH;
+import static org.jooq.impl.SQLDataType.BIGINT;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.Param;
+// ...
 import org.jooq.RenderContext.CastMode;
 import org.jooq.conf.ParamType;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.Tools.BooleanDataKey;
 
 /**
  * @author Lukas Eder
@@ -81,16 +83,14 @@ final class Limit extends AbstractQueryPart {
     private static final Field<Integer> ONE               = one();
     private static final Param<Integer> MAX               = DSL.inline(Integer.MAX_VALUE);
 
-    private Field<Integer>              numberOfRows;
-    private Field<Integer>              numberOfRowsOrMax = MAX;
-    private Field<Integer>              offset;
-    private Field<Integer>              offsetOrZero      = ZERO;
-    private Field<Integer>              offsetPlusOne     = ONE;
+    private Field<?>                    numberOfRows;
+    private Field<?>                    numberOfRowsOrMax = MAX;
+    private Field<?>                    offset;
+    private Field<?>                    offsetOrZero      = ZERO;
+    private Field<?>                    offsetPlusOne     = ONE;
     private boolean                     rendersParams;
     private boolean                     withTies;
-
-
-
+    private boolean                     percent;
 
     @Override
     public final void accept(Context<?> ctx) {
@@ -101,15 +101,6 @@ final class Limit extends AbstractQueryPart {
 
             // True LIMIT / OFFSET support provided by the following dialects
             // -----------------------------------------------------------------
-
-
-
-
-
-
-
-
-
 
 
 
@@ -143,13 +134,15 @@ final class Limit extends AbstractQueryPart {
 
             // ROWS .. TO ..
             // -------------
-            case FIREBIRD:
-            case FIREBIRD_2_5:
-            case FIREBIRD_3_0: {
+
+
+
+
+            case FIREBIRD: {
                 ctx.castMode(NEVER)
                    .formatSeparator()
                    .visit(K_ROWS)
-                   .sql(' ').visit(getLowerRownum().add(inline(1, SQLDataType.INTEGER)))
+                   .sql(' ').visit(getLowerRownum().add(ONE))
                    .sql(' ').visit(K_TO)
                    .sql(' ').visit(getUpperRownum())
                    .castMode(castMode);
@@ -174,34 +167,24 @@ final class Limit extends AbstractQueryPart {
 
 
 
+
+            case H2:
             case DERBY: {
 
-                // Casts are not supported here...
-                ctx.castMode(NEVER);
+                // [#8415] For backwards compatibility reasons, we generate standard
+                //         OFFSET .. FETCH syntax on H2 only when strictly needed
+                if (ctx.family() == H2 && !withTies() && !percent())
+                    acceptDefault(ctx, castMode);
+                else
+                    acceptStandard(ctx, castMode);
 
-
-
-
-                    ctx.formatSeparator()
-                       .visit(K_OFFSET)
-                       .sql(' ').visit(offsetOrZero)
-                       .sql(' ').visit(K_ROWS);
-
-                if (!limitZero()) {
-                    ctx.formatSeparator()
-                       .visit(K_FETCH_NEXT).sql(' ').visit(numberOfRows);
-
-
-
-
-
-
-                    ctx.sql(' ').visit(withTies ? K_ROWS_WITH_TIES : K_ROWS_ONLY);
-                }
-
-                ctx.castMode(castMode);
                 break;
             }
+
+
+
+
+
 
 
 
@@ -290,10 +273,15 @@ final class Limit extends AbstractQueryPart {
 
 
             // [#4785] OFFSET cannot be without LIMIT
-            case H2:
             case MARIADB:
-            case MYSQL_5_7:
-            case MYSQL_8_0:
+
+
+
+
+
+
+
+
             case MYSQL:
             case SQLITE: {
                 ctx.castMode(NEVER)
@@ -315,59 +303,82 @@ final class Limit extends AbstractQueryPart {
 
 
 
+
+
+
+
+
             case HSQLDB:
             case POSTGRES:
-            case POSTGRES_9_3:
-            case POSTGRES_9_4:
-            case POSTGRES_9_5:
-            case POSTGRES_10:
                 // No break
 
             // A default implementation is necessary for hashCode() and toString()
             default: {
-                ctx.castMode(NEVER);
-
-                if (!limitZero())
-                    ctx.formatSeparator()
-                           .visit(K_LIMIT)
-                           .sql(' ').visit(numberOfRows);
-
-                if (!offsetZero())
-                    ctx.formatSeparator()
-                           .visit(K_OFFSET)
-                           .sql(' ').visit(offsetOrZero);
-
-                ctx.castMode(castMode);
+                acceptDefault(ctx, castMode);
                 break;
             }
         }
     }
 
+    private final void acceptStandard(Context<?> ctx, CastMode castMode) {
+        ctx.castMode(NEVER);
 
+        if ( !offsetZero())
+            ctx.formatSeparator()
+               .visit(K_OFFSET)
+               .sql(' ').visit(offsetOrZero)
+               .sql(' ').visit(K_ROWS);
 
+        if (!limitZero()) {
+            ctx.formatSeparator()
+               .visit(K_FETCH_NEXT).sql(' ').visit(numberOfRows);
 
+            if (percent)
+                ctx.sql(' ').visit(K_PERCENT);
 
+            ctx.sql(' ').visit(withTies ? K_ROWS_WITH_TIES : K_ROWS_ONLY);
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+        ctx.castMode(castMode);
     }
+
+    private final void acceptDefault(Context<?> ctx, CastMode castMode) {
+        ctx.castMode(NEVER);
+
+        if (!limitZero())
+            ctx.formatSeparator()
+                   .visit(K_LIMIT)
+                   .sql(' ').visit(numberOfRows);
+
+        if (!offsetZero())
+            ctx.formatSeparator()
+                   .visit(K_OFFSET)
+                   .sql(' ').visit(offsetOrZero);
+
+        ctx.castMode(castMode);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Whether this limit has a limit of zero
@@ -382,9 +393,9 @@ final class Limit extends AbstractQueryPart {
     final boolean limitOne() {
         return !limitZero()
             && !withTies()
-
+            && !percent()
             && numberOfRows instanceof Param
-            && Integer.valueOf(1).equals(((Param<?>) numberOfRows).getValue());
+            && Long.valueOf(1L).equals(((Param<?>) numberOfRows).getValue());
     }
 
     /**
@@ -397,14 +408,14 @@ final class Limit extends AbstractQueryPart {
     /**
      * The lower bound, such that ROW_NUMBER() > getLowerRownum()
      */
-    final Field<Integer> getLowerRownum() {
+    final Field<?> getLowerRownum() {
         return offsetOrZero;
     }
 
     /**
      * The upper bound, such that ROW_NUMBER() &lt;= getUpperRownum()
      */
-    final Field<Integer> getUpperRownum() {
+    final Field<?> getUpperRownum() {
         return offsetOrZero.add(numberOfRowsOrMax);
     }
 
@@ -427,42 +438,38 @@ final class Limit extends AbstractQueryPart {
         return rendersParams;
     }
 
-    final void setOffset(int offset) {
-        if (offset != 0) {
-            this.offset = val(offset, SQLDataType.INTEGER);
+    final void setOffset(Number offset) {
+        if (offset.longValue() != 0L) {
+            this.offset = val(offset.longValue(), BIGINT);
             this.offsetOrZero = this.offset;
-            this.offsetPlusOne = val(offset + 1, SQLDataType.INTEGER);
+            this.offsetPlusOne = val(offset.longValue() + 1L, BIGINT);
         }
     }
 
-    final void setOffset(Param<Integer> offset) {
+    final void setOffset(Param<? extends Number> offset) {
         this.offset = offset;
         this.offsetOrZero = offset;
         this.rendersParams = rendersParams |= offset.isInline();
     }
 
-    final void setNumberOfRows(int numberOfRows) {
-        this.numberOfRows = val(numberOfRows, SQLDataType.INTEGER);
+    final void setNumberOfRows(Number numberOfRows) {
+        this.numberOfRows = val(numberOfRows.longValue(), SQLDataType.BIGINT);
         this.numberOfRowsOrMax = this.numberOfRows;
     }
 
-    final void setNumberOfRows(Param<Integer> numberOfRows) {
+    final void setNumberOfRows(Param<? extends Number> numberOfRows) {
         this.numberOfRows = numberOfRows;
         this.numberOfRowsOrMax = numberOfRows;
         this.rendersParams |= numberOfRows.isInline();
     }
 
+    final void setPercent(boolean percent) {
+        this.percent = percent;
+    }
 
-
-
-
-
-
-
-
-
-
-
+    final boolean percent() {
+        return percent;
+    }
 
     final void setWithTies(boolean withTies) {
         this.withTies = withTies;

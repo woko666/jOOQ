@@ -36,7 +36,7 @@ GOTO end
 IF NOT "%~1"=="" GOTO usage
 IF "%URL%"=="" GOTO usage
 
-set VERSION=3.11.0
+set VERSION=3.13.0-SNAPSHOT
 
 if exist jOOQ-javadoc\jooq-%VERSION%-javadoc.jar (
   set JAVADOC_JOOQ=-Djavadoc=jOOQ-javadoc\jooq-%VERSION%-javadoc.jar
@@ -92,6 +92,7 @@ echo
 echo The different jOOQ editions are released under different Maven groupIds!
 echo ------------------------------------------------------------------------
 echo - org.jooq.pro        : The jOOQ Express, Professional, and Enterprise Editions
+echo - org.jooq.pro-java-8 : The jOOQ Express, Professional, and Enterprise Editions with support for Java 8
 echo - org.jooq.pro-java-6 : The jOOQ Express, Professional, and Enterprise Editions with support for Java 6
 echo - org.jooq.trial      : The jOOQ Trial Edition
 echo - org.jooq            : The jOOQ Open Source Edition

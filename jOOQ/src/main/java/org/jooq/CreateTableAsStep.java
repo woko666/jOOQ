@@ -49,6 +49,7 @@ import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -57,8 +58,7 @@ import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
-
-import java.util.Collection;
+// ...
 
 /**
  * A {@link Query} that can create tables.
@@ -90,52 +90,4 @@ public interface CreateTableAsStep<R extends Record> {
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     CreateTableWithDataStep as(Select<? extends R> select);
-
-    /**
-     * Add a column to the column list of the <code>CREATE TABLE</code>
-     * statement.
-     * <p>
-     * This is the same as calling {@link #column(Field, DataType)} with
-     * {@link Field#getDataType()} as the argument data type.
-     */
-    @Support
-    CreateTableColumnStep column(Field<?> field);
-
-    /**
-     * Add a column to the column list of the <code>CREATE TABLE</code> statement.
-     */
-    @Support
-    <T> CreateTableColumnStep column(Field<T> field, DataType<T> type);
-
-    /**
-     * Add a column to the column list of the <code>CREATE TABLE</code> statement.
-     */
-    @Support
-    CreateTableColumnStep column(Name field, DataType<?> type);
-
-    /**
-     * Add a column to the column list of the <code>CREATE TABLE</code> statement.
-     */
-    @Support
-    CreateTableColumnStep column(String field, DataType<?> type);
-
-    /**
-     * Add several columns to the column list of the <code>CREATE TABLE</code>
-     * statement.
-     * <p>
-     * This is the same as calling {@link #column(Field, DataType)} for each
-     * column, with {@link Field#getDataType()} as the argument data type.
-     */
-    @Support
-    CreateTableColumnStep columns(Field<?>... fields);
-
-    /**
-     * Add several columns to the column list of the <code>CREATE TABLE</code>
-     * statement.
-     * <p>
-     * This is the same as calling {@link #column(Field, DataType)} for each
-     * column, with {@link Field#getDataType()} as the argument data type.
-     */
-    @Support
-    CreateTableColumnStep columns(Collection<? extends Field<?>> fields);
 }

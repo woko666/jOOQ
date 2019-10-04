@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -16,6 +9,8 @@ import javax.xml.bind.annotation.XmlSchemaType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -28,7 +23,7 @@ import org.jooq.util.jaxb.tools.StringAdapter;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;all&gt;
- *         &lt;element name="transform" type="{http://www.jooq.org/xsd/jooq-codegen-3.11.0.xsd}MatcherTransformType" minOccurs="0"/&gt;
+ *         &lt;element name="transform" type="{http://www.jooq.org/xsd/jooq-codegen-3.13.0.xsd}MatcherTransformType" minOccurs="0"/&gt;
  *         &lt;element name="expression" type="{http://www.w3.org/2001/XMLSchema}string"/&gt;
  *       &lt;/all&gt;
  *     &lt;/restriction&gt;
@@ -45,10 +40,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatcherRule implements Serializable
+public class MatcherRule implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlSchemaType(name = "string")
     protected MatcherTransformType transform;
     @XmlElement(required = true)
@@ -58,21 +53,13 @@ public class MatcherRule implements Serializable
     /**
      * A pre-defined transformation type that transforms this rule's output into a specific format.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherTransformType }
-     *
      */
     public MatcherTransformType getTransform() {
         return transform;
     }
 
     /**
-     * Sets the value of the transform property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherTransformType }
+     * A pre-defined transformation type that transforms this rule's output into a specific format.
      *
      */
     public void setTransform(MatcherTransformType value) {
@@ -82,51 +69,48 @@ public class MatcherRule implements Serializable
     /**
      * A replacement expression that transforms the matched expression in a new value.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getExpression() {
         return expression;
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * A replacement expression that transforms the matched expression in a new value.
      *
      */
     public void setExpression(String value) {
         this.expression = value;
     }
 
+    /**
+     * A pre-defined transformation type that transforms this rule's output into a specific format.
+     *
+     */
     public MatcherRule withTransform(MatcherTransformType value) {
         setTransform(value);
         return this;
     }
 
+    /**
+     * A replacement expression that transforms the matched expression in a new value.
+     *
+     */
     public MatcherRule withExpression(String value) {
         setExpression(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("transform", transform);
+        builder.append("expression", expression);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (transform!= null) {
-            sb.append("<transform>");
-            sb.append(transform);
-            sb.append("</transform>");
-        }
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

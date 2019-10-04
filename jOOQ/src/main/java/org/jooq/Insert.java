@@ -37,11 +37,28 @@
  */
 package org.jooq;
 
+import org.jooq.impl.DSL;
+
 /**
- * A {@link Query} that can insert data in the database.
+ * An <code>INSERT</code> statement.
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .insertInto(ACTOR)
+ *    .columns(ACTOR.FIRST_NAME, ACTOR.LAST_NAME)
+ *    .values("John", "Doe")
+ *    .execute();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link DSL#insertInto(Table)}, or
+ * {@link DSLContext#insertQuery(Table)} and overloads.
  *
  * @author Lukas Eder
  */
-public interface Insert<R extends Record> extends Query {
+public interface Insert<R extends Record> extends RowCountQuery {
 
 }

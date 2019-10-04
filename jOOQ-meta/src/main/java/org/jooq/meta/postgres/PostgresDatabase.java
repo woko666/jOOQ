@@ -57,6 +57,7 @@ import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.when;
 import static org.jooq.meta.postgres.information_schema.Tables.ATTRIBUTES;
 import static org.jooq.meta.postgres.information_schema.Tables.CHECK_CONSTRAINTS;
+import static org.jooq.meta.postgres.information_schema.Tables.COLUMNS;
 import static org.jooq.meta.postgres.information_schema.Tables.KEY_COLUMN_USAGE;
 import static org.jooq.meta.postgres.information_schema.Tables.PARAMETERS;
 import static org.jooq.meta.postgres.information_schema.Tables.ROUTINES;
@@ -94,8 +95,11 @@ import org.jooq.Result;
 import org.jooq.SQLDialect;
 import org.jooq.Select;
 import org.jooq.SortOrder;
+import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.jooq.meta.AbstractDatabase;
 import org.jooq.meta.AbstractIndexDefinition;
 import org.jooq.meta.ArrayDefinition;
@@ -144,13 +148,15 @@ public class PostgresDatabase extends AbstractDatabase {
 
     private static Boolean is84;
     private static Boolean is94;
+    private static Boolean is11;
+    private static Boolean canUseRoutines;
     private static Boolean canCastToEnumType;
     private static Boolean canCombineArrays;
     private static Boolean canUseTupleInPredicates;
 
     @Override
     protected List<IndexDefinition> getIndexes0() throws SQLException {
-        List<IndexDefinition> result = new ArrayList<IndexDefinition>();
+        List<IndexDefinition> result = new ArrayList<>();
 
         PgIndex i = PG_INDEX.as("i");
         PgClass trel = PG_CLASS.as("trel");
@@ -198,7 +204,7 @@ public class PostgresDatabase extends AbstractDatabase {
                     continue indexLoop;
 
             result.add(new AbstractIndexDefinition(tableSchema, indexName, table, unique) {
-                List<IndexColumnDefinition> indexColumns = new ArrayList<IndexColumnDefinition>();
+                List<IndexColumnDefinition> indexColumns = new ArrayList<>();
 
                 {
                     for (int ordinal = 0; ordinal < columns.length; ordinal++) {
@@ -236,9 +242,8 @@ public class PostgresDatabase extends AbstractDatabase {
             String columnName = record.get(KEY_COLUMN_USAGE.COLUMN_NAME);
 
             TableDefinition table = getTable(schema, tableName);
-            if (table != null) {
-                relations.addPrimaryKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addPrimaryKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -251,9 +256,8 @@ public class PostgresDatabase extends AbstractDatabase {
             String columnName = record.get(KEY_COLUMN_USAGE.COLUMN_NAME);
 
             TableDefinition table = getTable(schema, tableName);
-            if (table != null) {
-                relations.addUniqueKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addUniqueKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -297,19 +301,25 @@ public class PostgresDatabase extends AbstractDatabase {
             SchemaDefinition uniqueKeySchema = getSchema(record.get("pktable_schem", String.class));
 
             String foreignKey = record.get("fk_name", String.class);
-            String foreignKeyTable = record.get("fktable_name", String.class);
+            String foreignKeyTableName = record.get("fktable_name", String.class);
             String foreignKeyColumn = record.get("fkcolumn_name", String.class);
             String uniqueKey = record.get("pk_name", String.class);
+            String uniqueKeyTableName = record.get("pktable_name", String.class);
 
-            TableDefinition referencingTable = getTable(foreignKeySchema, foreignKeyTable);
+            TableDefinition foreignKeyTable = getTable(foreignKeySchema, foreignKeyTableName);
+            TableDefinition uniqueKeyTable = getTable(uniqueKeySchema, uniqueKeyTableName);
 
-            if (referencingTable != null) {
+            if (foreignKeyTable != null && uniqueKeyTable != null)
 
                 // [#986] Add the table name as a namespace prefix to the key
                 // name. In Postgres, foreign key names are only unique per table
-                ColumnDefinition referencingColumn = referencingTable.getColumn(foreignKeyColumn);
-                relations.addForeignKey(foreignKeyTable + "__" + foreignKey, uniqueKey, referencingColumn, uniqueKeySchema);
-            }
+                relations.addForeignKey(
+                    foreignKeyTableName + "__" + foreignKey,
+                    foreignKeyTable,
+                    foreignKeyTable.getColumn(foreignKeyColumn),
+                    uniqueKey,
+                    uniqueKeyTable
+                );
         }
     }
 
@@ -348,8 +358,8 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<TableDefinition> getTables0() throws SQLException {
-        List<TableDefinition> result = new ArrayList<TableDefinition>();
-        Map<Name, PostgresTableDefinition> map = new HashMap<Name, PostgresTableDefinition>();
+        List<TableDefinition> result = new ArrayList<>();
+        Map<Name, PostgresTableDefinition> map = new HashMap<>();
 
         Select<Record6<String, String, String, Boolean, Boolean, String>> empty =
             select(inline(""), inline(""), inline(""), inline(false), inline(false), inline(""))
@@ -377,7 +387,7 @@ public class PostgresDatabase extends AbstractDatabase {
                     .where(TABLES.TABLE_SCHEMA.in(getInputSchemata()))
 
                     // To stay on the safe side, if the INFORMATION_SCHEMA ever
-                    // includs materialised views, let's exclude them from here
+                    // includes materialised views, let's exclude them from here
                     .and(canUseTupleInPredicates()
                         ? row(TABLES.TABLE_SCHEMA, TABLES.TABLE_NAME).notIn(
                             select(
@@ -392,11 +402,13 @@ public class PostgresDatabase extends AbstractDatabase {
 
                 // [#3254] Materialised views are reported only in PG_CLASS, not
                 //         in INFORMATION_SCHEMA.TABLES
+                // [#8478] CockroachDB cannot compare "sql_identifier" types (varchar)
+                //         from information_schema with "name" types from pg_catalog
                 .unionAll(
                     select(
-                        PG_NAMESPACE.NSPNAME,
-                        PG_CLASS.RELNAME,
-                        PG_CLASS.RELNAME,
+                        field("{0}::varchar", PG_NAMESPACE.NSPNAME.getDataType(), PG_NAMESPACE.NSPNAME),
+                        field("{0}::varchar", PG_CLASS.RELNAME.getDataType(), PG_CLASS.RELNAME),
+                        field("{0}::varchar", PG_CLASS.RELNAME.getDataType(), PG_CLASS.RELNAME),
                         inline(false).as("table_valued_function"),
                         inline(true).as("materialized_view"),
                         PG_DESCRIPTION.DESCRIPTION)
@@ -504,14 +516,14 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<CatalogDefinition> getCatalogs0() throws SQLException {
-        List<CatalogDefinition> result = new ArrayList<CatalogDefinition>();
+        List<CatalogDefinition> result = new ArrayList<>();
         result.add(new CatalogDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
 
         // [#1409] Shouldn't select from INFORMATION_SCHEMA.SCHEMATA, as that
         // would only return schemata of which CURRENT_USER is the owner
@@ -529,7 +541,7 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<SequenceDefinition> getSequences0() throws SQLException {
-        List<SequenceDefinition> result = new ArrayList<SequenceDefinition>();
+        List<SequenceDefinition> result = new ArrayList<>();
 
         for (Record record : create()
                 .select(
@@ -565,7 +577,7 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<EnumDefinition> getEnums0() throws SQLException {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>();
+        List<EnumDefinition> result = new ArrayList<>();
 
         // [#2736] This table is unavailable in Amazon Redshift
         if (exists(PG_ENUM)) {
@@ -608,10 +620,9 @@ public class PostgresDatabase extends AbstractDatabase {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected List<DomainDefinition> getDomains0() throws SQLException {
-        List<DomainDefinition> result = new ArrayList<DomainDefinition>();
+        List<DomainDefinition> result = new ArrayList<>();
 
         if (existAll(PG_CONSTRAINT, PG_TYPE)) {
             PgNamespace n = PG_NAMESPACE.as("n");
@@ -710,7 +721,7 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<UDTDefinition> getUDTs0() throws SQLException {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
 
         // [#2736] This table is unavailable in Amazon Redshift
         if (exists(ATTRIBUTES)) {
@@ -737,15 +748,24 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<ArrayDefinition> getArrays0() throws SQLException {
-        List<ArrayDefinition> result = new ArrayList<ArrayDefinition>();
+        List<ArrayDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<RoutineDefinition> getRoutines0() throws SQLException {
-        List<RoutineDefinition> result = new ArrayList<RoutineDefinition>();
+        List<RoutineDefinition> result = new ArrayList<>();
+
+        if (!canUseRoutines())
+            return result;
 
         Routines r1 = ROUTINES.as("r1");
+
+        // [#7785] The pg_proc.proisagg column has been replaced incompatibly in PostgreSQL 11
+        Field<Boolean> isAgg = (is11()
+            ? field(PG_PROC.PROKIND.eq(inline("a")))
+            : field("{0}.proisagg", SQLDataType.BOOLEAN, PG_PROC)
+        ).as("is_agg");
 
         for (Record record : create().select(
                 r1.ROUTINE_SCHEMA,
@@ -770,7 +790,7 @@ public class PostgresDatabase extends AbstractDatabase {
                     rowNumber().over(partitionBy(r1.ROUTINE_SCHEMA, r1.ROUTINE_NAME).orderBy(r1.SPECIFIC_NAME))
                 ).as("overload"),
 
-                PG_PROC.PROISAGG)
+                isAgg)
             .from(r1)
 
             // [#3375] Exclude table-valued functions as they're already generated as tables
@@ -798,7 +818,7 @@ public class PostgresDatabase extends AbstractDatabase {
 
     @Override
     protected List<PackageDefinition> getPackages0() throws SQLException {
-        List<PackageDefinition> result = new ArrayList<PackageDefinition>();
+        List<PackageDefinition> result = new ArrayList<>();
         return result;
     }
 
@@ -827,25 +847,34 @@ public class PostgresDatabase extends AbstractDatabase {
     }
 
     boolean is94() {
-        if (is94 == null) {
 
-            // [#4254] INFORMATION_SCHEMA.PARAMETERS.PARAMETER_DEFAULT was added
-            // in PostgreSQL 9.4 only
-            try {
-                create(true)
-                    .select(PARAMETERS.PARAMETER_DEFAULT)
-                    .from(PARAMETERS)
-                    .where(falseCondition())
-                    .fetch();
-
-                is94 = true;
-            }
-            catch (DataAccessException e) {
-                is94 = false;
-            }
-        }
+        // [#4254] INFORMATION_SCHEMA.PARAMETERS.PARAMETER_DEFAULT was added
+        // in PostgreSQL 9.4 only
+        if (is94 == null)
+            is94 = exists(PARAMETERS.PARAMETER_DEFAULT);
 
         return is94;
+    }
+
+    boolean is11() {
+
+        // [#7785] pg_proc.prokind was added in PostgreSQL 11 only, and
+        //         pg_proc.proisagg was removed, incompatibly
+        if (is11 == null)
+            is11 = exists(PG_PROC.PROKIND);
+
+        return is11;
+    }
+
+
+    @Override
+    protected boolean exists0(TableField<?, ?> field) {
+        return exists1(field, COLUMNS, COLUMNS.TABLE_SCHEMA, COLUMNS.TABLE_NAME, COLUMNS.COLUMN_NAME);
+    }
+
+    @Override
+    protected boolean exists0(Table<?> table) {
+        return exists1(table, TABLES, TABLES.TABLE_SCHEMA, TABLES.TABLE_NAME);
     }
 
     boolean canCombineArrays() {
@@ -870,8 +899,10 @@ public class PostgresDatabase extends AbstractDatabase {
 
             // [#7270] The tuple in predicate is not implemented in all PostgreSQL
             //         style databases, e.g. CockroachDB
+            // [#8072] Some database versions might support in, but not not in
             try {
                 create(true).select(field("(1, 2) in (select 1, 2)")).fetch();
+                create(true).select(field("(1, 2) not in (select 1, 2)")).fetch();
                 canUseTupleInPredicates = true;
             }
             catch (DataAccessException e) {
@@ -880,6 +911,16 @@ public class PostgresDatabase extends AbstractDatabase {
         }
 
         return canUseTupleInPredicates;
+    }
+
+    boolean canUseRoutines() {
+
+        // [#7892] The information_schema.routines table is not available in all PostgreSQL
+        //         style databases, e.g. CockroachDB
+        if (canUseRoutines == null)
+            canUseRoutines = exists(ROUTINES);
+
+        return canUseRoutines;
     }
 
     private List<String> enumLabels(String nspname, String typname) {

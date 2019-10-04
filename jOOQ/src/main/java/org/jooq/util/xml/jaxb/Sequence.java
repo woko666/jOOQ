@@ -1,22 +1,15 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -52,10 +45,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class Sequence implements Serializable
+public class Sequence implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(name = "sequence_catalog")
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String sequenceCatalog;
@@ -77,194 +70,66 @@ public class Sequence implements Serializable
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String comment;
 
-    /**
-     * Gets the value of the sequenceCatalog property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getSequenceCatalog() {
         return sequenceCatalog;
     }
 
-    /**
-     * Sets the value of the sequenceCatalog property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setSequenceCatalog(String value) {
         this.sequenceCatalog = value;
     }
 
-    /**
-     * Gets the value of the sequenceSchema property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getSequenceSchema() {
         return sequenceSchema;
     }
 
-    /**
-     * Sets the value of the sequenceSchema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setSequenceSchema(String value) {
         this.sequenceSchema = value;
     }
 
-    /**
-     * Gets the value of the sequenceName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getSequenceName() {
         return sequenceName;
     }
 
-    /**
-     * Sets the value of the sequenceName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setSequenceName(String value) {
         this.sequenceName = value;
     }
 
-    /**
-     * Gets the value of the dataType property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getDataType() {
         return dataType;
     }
 
-    /**
-     * Sets the value of the dataType property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setDataType(String value) {
         this.dataType = value;
     }
 
-    /**
-     * Gets the value of the characterMaximumLength property.
-     *
-     * @return
-     *     possible object is
-     *     {@link Integer }
-     *
-     */
     public Integer getCharacterMaximumLength() {
         return characterMaximumLength;
     }
 
-    /**
-     * Sets the value of the characterMaximumLength property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link Integer }
-     *
-     */
     public void setCharacterMaximumLength(Integer value) {
         this.characterMaximumLength = value;
     }
 
-    /**
-     * Gets the value of the numericPrecision property.
-     *
-     * @return
-     *     possible object is
-     *     {@link Integer }
-     *
-     */
     public Integer getNumericPrecision() {
         return numericPrecision;
     }
 
-    /**
-     * Sets the value of the numericPrecision property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link Integer }
-     *
-     */
     public void setNumericPrecision(Integer value) {
         this.numericPrecision = value;
     }
 
-    /**
-     * Gets the value of the numericScale property.
-     *
-     * @return
-     *     possible object is
-     *     {@link Integer }
-     *
-     */
     public Integer getNumericScale() {
         return numericScale;
     }
 
-    /**
-     * Sets the value of the numericScale property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link Integer }
-     *
-     */
     public void setNumericScale(Integer value) {
         this.numericScale = value;
     }
 
-    /**
-     * Gets the value of the comment property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getComment() {
         return comment;
     }
 
-    /**
-     * Sets the value of the comment property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setComment(String value) {
         this.comment = value;
     }
@@ -310,49 +175,22 @@ public class Sequence implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("sequence_catalog", sequenceCatalog);
+        builder.append("sequence_schema", sequenceSchema);
+        builder.append("sequence_name", sequenceName);
+        builder.append("data_type", dataType);
+        builder.append("character_maximum_length", characterMaximumLength);
+        builder.append("numeric_precision", numericPrecision);
+        builder.append("numeric_scale", numericScale);
+        builder.append("comment", comment);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (sequenceCatalog!= null) {
-            sb.append("<sequenceCatalog>");
-            sb.append(sequenceCatalog);
-            sb.append("</sequenceCatalog>");
-        }
-        if (sequenceSchema!= null) {
-            sb.append("<sequenceSchema>");
-            sb.append(sequenceSchema);
-            sb.append("</sequenceSchema>");
-        }
-        if (sequenceName!= null) {
-            sb.append("<sequenceName>");
-            sb.append(sequenceName);
-            sb.append("</sequenceName>");
-        }
-        if (dataType!= null) {
-            sb.append("<dataType>");
-            sb.append(dataType);
-            sb.append("</dataType>");
-        }
-        if (characterMaximumLength!= null) {
-            sb.append("<characterMaximumLength>");
-            sb.append(characterMaximumLength);
-            sb.append("</characterMaximumLength>");
-        }
-        if (numericPrecision!= null) {
-            sb.append("<numericPrecision>");
-            sb.append(numericPrecision);
-            sb.append("</numericPrecision>");
-        }
-        if (numericScale!= null) {
-            sb.append("<numericScale>");
-            sb.append(numericScale);
-            sb.append("</numericScale>");
-        }
-        if (comment!= null) {
-            sb.append("<comment>");
-            sb.append(comment);
-            sb.append("</comment>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

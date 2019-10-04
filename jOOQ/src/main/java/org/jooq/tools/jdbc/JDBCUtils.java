@@ -46,8 +46,8 @@ import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.DEFAULT;
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
-import static org.jooq.SQLDialect.FIREBIRD_2_5;
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+// ...
+// ...
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
@@ -55,17 +55,19 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 import static org.jooq.SQLDialect.MARIADB;
 import static org.jooq.SQLDialect.MYSQL;
-import static org.jooq.SQLDialect.MYSQL_5_7;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
+// ...
+// ...
 // ...
 // ...
 // ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_10;
-import static org.jooq.SQLDialect.POSTGRES_9_3;
-import static org.jooq.SQLDialect.POSTGRES_9_4;
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
+// ...
+// ...
+// ...
+// ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
@@ -78,6 +80,7 @@ import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 
+import java.io.Closeable;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -91,6 +94,7 @@ import java.sql.SQLInput;
 import java.sql.SQLXML;
 import java.sql.Statement;
 
+// ...
 import org.jooq.SQLDialect;
 import org.jooq.tools.JooqLogger;
 
@@ -112,6 +116,9 @@ public class JDBCUtils {
      * the URL (e.g. when using an JDBC-ODBC bridge), further actions may be
      * implemented in the future.
      *
+     * @return The appropriate {@link SQLDialect} or {@link SQLDialect#DEFAULT}
+     *         if no dialect could be derived from the connection. Never
+     *         <code>null</code>.
      * @see #dialect(String)
      */
     public static final SQLDialect dialect(Connection connection) {
@@ -223,46 +230,64 @@ public class JDBCUtils {
 
 
 
+
+
+
+
+
     private static final SQLDialect postgresDialect(int majorVersion, int minorVersion) {
-        if (majorVersion < 9)
-            return POSTGRES_9_3;
 
-        if (majorVersion == 9)
-            if (minorVersion <= 3)
-                return POSTGRES_9_3;
-            else if (minorVersion == 4)
-                return POSTGRES_9_4;
-            else if (minorVersion >= 5)
-                return POSTGRES_9_5;
 
-        if (majorVersion >= 10)
-            return POSTGRES_10;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         return POSTGRES;
     }
 
     private static final SQLDialect mysqlDialect(int majorVersion) {
-        if (majorVersion <= 5)
-            return MYSQL_5_7;
 
-        if (majorVersion >= 8)
-            return MYSQL_8_0;
+
+
+
+
+
+
 
         return MYSQL;
     }
 
     private static final SQLDialect firebirdDialect(int majorVersion) {
-        if (majorVersion <= 2)
-            return FIREBIRD_2_5;
 
-        if (majorVersion >= 3)
-            return FIREBIRD_3_0;
+
+
+
+
+
+
 
         return FIREBIRD;
     }
 
     /**
      * "Guess" the {@link SQLDialect} from a connection URL.
+     *
+     * @return The appropriate {@link SQLDialect} or {@link SQLDialect#DEFAULT}
+     *         if no dialect could be derived from the connection. Never
+     *         <code>null</code>.
      */
     public static final SQLDialect dialect(String url) {
         if (url == null)
@@ -331,11 +356,16 @@ public class JDBCUtils {
 
 
 
+
         return DEFAULT;
     }
 
     /**
      * "Guess" the JDBC driver from a connection URL.
+     *
+     * @return The appropriate JDBC driver class or
+     *         <code>"java.sql.Driver"</code> if no driver class could be
+     *         derived from the URL. Never <code>null</code>.
      */
     public static final String driver(String url) {
         switch (dialect(url).family()) {
@@ -352,7 +382,7 @@ public class JDBCUtils {
             case MARIADB:
                 return "org.mariadb.jdbc.Driver";
             case MYSQL:
-                return "com.mysql.jdbc.Driver";
+                return "com.mysql.cj.jdbc.Driver";
             case POSTGRES:
                 return "org.postgresql.Driver";
             case SQLITE:
@@ -446,6 +476,38 @@ public class JDBCUtils {
         safeClose(resultSet);
         safeClose(statement);
     }
+
+    /**
+     * Safely close a closeable.
+     * <p>
+     * This method will silently ignore if <code>closeable</code> is
+     * <code>null</code>, or if {@link Closeable#close()} throws an exception.
+     */
+    public static final void safeClose(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            }
+            catch (Exception ignore) {}
+        }
+    }
+
+
+    /**
+     * Safely close a closeable.
+     * <p>
+     * This method will silently ignore if <code>closeable</code> is
+     * <code>null</code>, or if {@link AutoCloseable#close()} throws an exception.
+     */
+    public static final void safeClose(AutoCloseable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            }
+            catch (Exception ignore) {}
+        }
+    }
+
 
     /**
      * Safely free a blob.

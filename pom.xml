@@ -12,7 +12,7 @@
 
     <groupId>org.jooq</groupId>
     <artifactId>jooq-parent</artifactId>
-    <version>3.11.0</version>
+    <version>3.13.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>jOOQ Parent</name>
@@ -23,6 +23,19 @@
     </description>
 
     <url>http://www.jooq.org</url>
+
+    <properties>
+
+        <!-- H2 is used by jOOQ-meta-extensions and a variety of integration tests -->
+        <h2.version>1.4.199</h2.version>
+
+        <!-- From JDK 11 onwards, we need to depend on the JAXB API explicitly -->
+        <jaxb.version>2.3.1</jaxb.version>
+        <javax.activation.version>1.2.0</javax.activation.version>
+
+        <!-- DefaultRecordMapper and jOOQ-meta-extensions can read JPA annotations -->
+        <javax.persistence-api.version>2.2</javax.persistence-api.version>
+    </properties>
 
     <licenses>
         <license>
@@ -79,7 +92,7 @@
             </dependency>
             <dependency>
                 <groupId>org.jooq</groupId>
-                <artifactId>jooq-scala_2.12</artifactId>
+                <artifactId>jooq-scala_2.13</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -95,11 +108,19 @@
 
 
 
+
+
+
+
+
+
             <!-- From JDK 9 onwards, the JAXB dependency needs to be made explicit -->
+            <!-- The dependency can cause trouble in older JDKs, so it needs to be
+                 excluded from pre-java-9 builds: https://github.com/jOOQ/jOOQ/issues/7649 -->
             <dependency>
                 <groupId>javax.xml.bind</groupId>
                 <artifactId>jaxb-api</artifactId>
-                <version>2.3.0</version>
+                <version>${jaxb.version}</version>
             </dependency>
 
 
@@ -129,11 +150,110 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+            <!-- Optional logging dependency -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.8.0-beta4</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>
+
+            <!-- Optional JPA dependency -->
+            <dependency>
+                <groupId>javax.persistence</groupId>
+                <artifactId>javax.persistence-api</artifactId>
+                <version>${javax.persistence-api.version}</version>
+                <scope>provided</scope>
+                <optional>true</optional>
+            </dependency>
+
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.12</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_2.10</artifactId>
+                <version>3.0.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_2.11</artifactId>
+                <version>3.0.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_2.12</artifactId>
+                <version>3.0.8</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest_2.13</artifactId>
+                <version>3.0.8</version>
+                <scope>test</scope>
+            </dependency>
+
             <!-- Some projects will need an H2 database for testing, or to create temporary in-memory databases -->
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
-                <version>1.4.197</version>
+                <version>${h2.version}</version>
+            </dependency>
+
+            <!-- jooq-meta-extensions and integration tests have this dependency -->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>5.4.4.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>5.1.9.RELEASE</version>
+            </dependency>
+
+            <!-- checker framework and error prone dependency for use with jOOQ-checker -->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker</artifactId>
+                <version>2.5.6</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_core</artifactId>
+                <version>2.3.3</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotation</artifactId>
+                <version>2.3.3</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.service</groupId>
+                <artifactId>auto-service</artifactId>
+                <version>1.0-rc6</version>
+                <optional>true</optional>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -145,7 +265,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.7.0</version>
+                    <version>3.8.1</version>
 
                     <configuration>
                         <!-- When compilers say false, they mean true ...
@@ -155,8 +275,14 @@
                         <maxmem>512m</maxmem>
                         <meminitial>256m</meminitial>
                         <encoding>UTF-8</encoding>
-                        <source>${java.version}</source>
-                        <target>${java.version}</target>
+
+
+
+
+                        <!-- IntelliJ needs these https://youtrack.jetbrains.com/issue/IDEA-195472 -->
+                        <source>1.8</source>
+                        <target>1.8</target>
+
                         <debug>true</debug>
                         <debuglevel>lines,vars,source</debuglevel>
                         <!-- [#2413] Make compiler warnings a bit more visible
@@ -170,7 +296,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.0</version>
                     <inherited>true</inherited>
                     <executions>
                         <execution>
@@ -189,7 +315,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.10.4</version>
+                    <version>3.1.1</version>
                     <inherited>true</inherited>
                     <executions>
                         <execution>
@@ -208,19 +334,20 @@
 
                         <!-- Avoid running into Java 8's very restrictive doclint issues -->
                         <additionalparam>-Xdoclint:none</additionalparam>
+                        <additionalOptions>-Xdoclint:none</additionalOptions>
                     </configuration>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>4.2.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.5</version>
+                    <version>3.6.0</version>
                 </plugin>
 
                 <plugin>
@@ -230,15 +357,21 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.scala-tools</groupId>
-                    <artifactId>maven-scala-plugin</artifactId>
-                    <version>2.15.2</version>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>4.2.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.2</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
+                    <version>3.1.2</version>
 
                     <configuration>
                         <archive>
@@ -260,7 +393,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.1.0</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
@@ -270,14 +403,25 @@
 
     <modules>
         <module>jOOQ</module>
-        <!-- [java-8] -->
+
+
+
+
+
+
+
         <module>jOOQ-checker</module>
-        <!-- [/java-8] -->
-        <module>jOOQ-codegen</module>
-        <module>jOOQ-codegen-maven</module>
+
         <module>jOOQ-meta</module>
         <module>jOOQ-meta-extensions</module>
-        <module>jOOQ-scala_2.12</module>
+        <module>jOOQ-codegen</module>
+        <module>jOOQ-codegen-maven</module>
+        <!--
+        <module>jOOQ-scala_2.13</module>
+          -->
+
+
+
 
 
 
@@ -302,7 +446,7 @@
         <profile>
             <id>default</id>
             <properties>
-                <java.version>1.8</java.version>
+                <java.version>10</java.version>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -312,7 +456,7 @@
         <profile>
             <id>release-oss</id>
             <properties>
-                <java.version>1.8</java.version>
+                <java.version>10</java.version>
             </properties>
             <build>
                 <plugins>
@@ -344,6 +488,58 @@
                 </plugins>
             </build>
         </profile>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

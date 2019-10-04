@@ -46,19 +46,23 @@ import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+// ...
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
+// ...
+// ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
@@ -75,10 +79,53 @@ import org.jooq.types.Interval;
 // ...
 
 /**
- * A field used in tables and conditions
+ * A column expression.
  * <p>
- * Note that all fields qualify as {@link GroupField}, i.e. they can always be
- * used in <code>GROUP BY</code> clauses
+ * Column expressions or fields can be used in a variety of SQL statements and
+ * clauses, including (non-exhaustive list):
+ * <ul>
+ * <li><code>SELECT</code> clause, e.g. through {@link DSL#select(SelectField)}
+ * (every {@link Field} is a subtype of {@link SelectField})</li>
+ * <li><code>WHERE</code> clause, e.g. through
+ * {@link SelectWhereStep#where(Field)} (<code>Field&lt;Boolean&gt;</code> can
+ * behave like a {@link Condition}, regardless if your RDBMS supports the
+ * <code>BOOLEAN</code> type)</li>
+ * <li><code>GROUP BY</code> clause, e.g. through
+ * {@link SelectGroupByStep#groupBy(GroupField...)} (every {@link Field} is a
+ * subtype of {@link GroupField})</li>
+ * <li><code>HAVING</code> clause, e.g. through
+ * {@link SelectHavingStep#having(Field)}<code></li>
+ * <li><code>ORDER BY</code> clause, e.g. through
+ * {@link SelectOrderByStep#orderBy(OrderField)} (every {@link Field} is a
+ * subtype of {@link OrderField})</li>
+ * <li>When creating a {@link Condition}, e.g. through {@link Field#eq(Field)}</li>
+ * <li>As a function argument, e.g. through {@link DSL#abs(Field)}</li>
+ * <li>Many more...</li>
+ * </ul>
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select(ACTOR.LAST_NAME)  // Field reference
+ *    .from(ACTOR)
+ *    .groupBy(ACTOR.LAST_NAME) // Field reference
+ *    .orderBy(ACTOR.LAST_NAME) // Field reference
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using a variety of ways, including:
+ * <ul>
+ * <li>{@link DSL#field(String)} and overloads for plain SQL field
+ * expression.</li>
+ * <li>{@link DSL#field(Name)} and overloads for field identifier
+ * references.</li>
+ * <li>{@link DSL#field(Condition)} for predicates as fields.</li>
+ * <li>{@link DSL#field(Select)} for correlated subqueries.</li>
+ * <li>Fields referenced from generated tables</li>
+ * </ul>
  *
  * @param <T> The field type
  * @author Lukas Eder
@@ -125,7 +172,7 @@ extends
      * The field's underlying {@link Converter}.
      * <p>
      * By default, all fields reference an identity-converter
-     * <code>Converter&lt;T, T></code>. Custom data types may be obtained by a
+     * <code>Converter&lt;T, T&gt;</code>. Custom data types may be obtained by a
      * custom {@link Converter} placed on the generated {@link TableField}.
      */
     @Override
@@ -159,8 +206,8 @@ extends
      * Create an alias for this field.
      * <p>
      * Note that the case-sensitivity of the returned field depends on
-     * {@link Settings#getRenderNameStyle()}. By default, field aliases are
-     * quoted, and thus case-sensitive!
+     * {@link Settings#getRenderQuotedNames()}. By default, field aliases are
+     * quoted, and thus case-sensitive in many SQL dialects!
      *
      * @param alias The alias name
      * @return The field alias
@@ -172,9 +219,9 @@ extends
      * Create an alias for this field.
      * <p>
      * Note that the case-sensitivity of the returned field depends on
-     * {@link Settings#getRenderNameStyle()} and the {@link Name}. By default,
-     * field aliases are quoted, and thus case-sensitive - use
-     * {@link DSL#unquotedName(String...)} for case-insensitive aliases.
+     * {@link Settings#getRenderQuotedNames()} and the {@link Name}. By default,
+     * field aliases are quoted, and thus case-sensitive in many SQL dialects -
+     * use {@link DSL#unquotedName(String...)} for case-insensitive aliases.
      * <p>
      * If the argument {@link Name#getName()} is qualified, then the
      * {@link Name#last()} part will be used.
@@ -187,10 +234,6 @@ extends
 
     /**
      * Create an alias for this field based on another field's name.
-     * <p>
-     * Note that the case-sensitivity of the returned field depends on
-     * {@link Settings#getRenderNameStyle()}. By default, field aliases are
-     * quoted, and thus case-sensitive!
      *
      * @param otherField The other field whose name this field is aliased with.
      * @return The field alias.
@@ -203,21 +246,21 @@ extends
      * Create an alias for this field.
      * <p>
      * Note that the case-sensitivity of the returned field depends on
-     * {@link Settings#getRenderNameStyle()}. By default, field aliases are
-     * quoted, and thus case-sensitive!
+     * {@link Settings#getRenderQuotedNames()}. By default, field aliases are
+     * quoted, and thus case-sensitive in many SQL dialects!
      * <p>
      * This works like {@link #as(String)}, except that field aliases are
      * provided by a function. This is useful, for instance, to prefix all
      * columns with a common prefix (on {@link Table#as(String, Function)}):
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", f -> "prefix_" + f.getName());
+     * MY_TABLE.as("t1", f -&gt; "prefix_" + f.getName());
      * </pre></code>
      * <p>
      * And then to use the same function also for individual fields:
      * <p>
      * <code><pre>
-     * MY_TABLE.MY_COLUMN.as(f -> "prefix_" + f.getName());
+     * MY_TABLE.MY_COLUMN.as(f -&gt; "prefix_" + f.getName());
      * </pre></code>
      */
     @Support
@@ -1040,6 +1083,22 @@ extends
     Field<T> shr(Field<? extends Number> value);
 
     // ------------------------------------------------------------------------
+    // JSON predicates
+    // ------------------------------------------------------------------------
+
+    /**
+     * Create a condition to check if this field contains JSON data.
+     */
+    @Support({ MYSQL })
+    Condition isJson();
+
+    /**
+     * Create a condition to check if this field does not contain JSON data.
+     */
+    @Support({ MYSQL })
+    Condition isNotJson();
+
+    // ------------------------------------------------------------------------
     // NULL predicates
     // ------------------------------------------------------------------------
 
@@ -1068,7 +1127,7 @@ extends
      * another value.
      * <p>
      * In {@link SQLDialect#MYSQL} and {@link SQLDialect#MARIADB}, this can be
-     * emulated through <code><pre>not([this] &lt;=> [value])</pre></code>
+     * emulated through <code><pre>not([this] &lt;=&gt; [value])</pre></code>
      * <p>
      * In {@link SQLDialect#SQLITE}, this can be emulated through
      * <code><pre>[this] IS NOT [value]</pre></code>
@@ -1097,7 +1156,7 @@ extends
      * another field.
      * <p>
      * In {@link SQLDialect#MYSQL} and {@link SQLDialect#MARIADB}, this can be
-     * emulated through <code><pre>not([this] &lt;=> [value])</pre></code>
+     * emulated through <code><pre>not([this] &lt;=&gt; [value])</pre></code>
      * <p>
      * In {@link SQLDialect#SQLITE}, this can be emulated through
      * <code><pre>[this] IS NOT [value]</pre></code>
@@ -1126,7 +1185,7 @@ extends
      * from another value.
      * <p>
      * In {@link SQLDialect#MYSQL} and {@link SQLDialect#MARIADB}, this can be
-     * emulated through <code><pre>[this] &lt;=> [value]</pre></code>
+     * emulated through <code><pre>[this] &lt;=&gt; [value]</pre></code>
      * <p>
      * In {@link SQLDialect#SQLITE}, this can be emulated through
      * <code><pre>[this] IS [value]</pre></code>
@@ -1155,7 +1214,7 @@ extends
      * from another field.
      * <p>
      * In {@link SQLDialect#MYSQL} and {@link SQLDialect#MARIADB}, this can be
-     * emulated through <code><pre>[this] &lt;=> [value]</pre></code>
+     * emulated through <code><pre>[this] &lt;=&gt; [value]</pre></code>
      * <p>
      * In {@link SQLDialect#SQLITE}, this can be emulated through
      * <code><pre>[this] IS [value]</pre></code>
@@ -1186,13 +1245,13 @@ extends
     /**
      * Create a condition to regex-pattern-check this field against a pattern.
      * <p>
-     * The SQL:2008 standard specifies a <code>&lt;regex like predicate></code>
+     * The SQL:2008 standard specifies a <code>&lt;regex like predicate&gt;</code>
      * of the following form: <code><pre>
-     * &lt;regex like predicate> ::=
-     *   &lt;row value predicand> &lt;regex like predicate part 2>
+     * &lt;regex like predicate&gt; ::=
+     *   &lt;row value predicand&gt; &lt;regex like predicate part 2&gt;
      *
-     * &lt;regex like predicate part 2> ::=
-     *  [ NOT ] LIKE_REGEX &lt;XQuery pattern> [ FLAG &lt;XQuery option flag> ]
+     * &lt;regex like predicate part 2&gt; ::=
+     *  [ NOT ] LIKE_REGEX &lt;XQuery pattern&gt; [ FLAG &lt;XQuery option flag&gt; ]
      * </pre></code>
      * <p>
      * This particular <code>LIKE_REGEX</code> operator comes in several
@@ -1340,6 +1399,82 @@ extends
     Condition notLikeRegex(Field<String> pattern);
 
     // ------------------------------------------------------------------------
+    // SIMILAR TO predicates
+    // ------------------------------------------------------------------------
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this similar to value</code>
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    LikeEscapeStep similarTo(Field<String> value);
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this similar to value escape 'e'</code>
+     *
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    Condition similarTo(Field<String> value, char escape);
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this similar to value</code>
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    LikeEscapeStep similarTo(String value);
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this similar to value escape 'e'</code>
+     *
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    Condition similarTo(String value, char escape);
+
+    /**
+     * Create a condition to pattern-check this field against a field.
+     * <p>
+     * SQL: <code>this not similar to field</code>
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    LikeEscapeStep notSimilarTo(Field<String> field);
+
+    /**
+     * Create a condition to pattern-check this field against a field.
+     * <p>
+     * SQL: <code>this not similar to field escape 'e'</code>
+     *
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    Condition notSimilarTo(Field<String> field, char escape);
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this not similar to value</code>
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    LikeEscapeStep notSimilarTo(String value);
+
+    /**
+     * Create a condition to pattern-check this field against a value.
+     * <p>
+     * SQL: <code>this not similar to value escape 'e'</code>
+     *
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support({ FIREBIRD, POSTGRES })
+    Condition notSimilarTo(String value, char escape);
+
+    // ------------------------------------------------------------------------
     // LIKE predicates
     // ------------------------------------------------------------------------
 
@@ -1358,7 +1493,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition like(Field<String> value, char escape);
 
     /**
@@ -1376,8 +1511,27 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition like(String value, char escape);
+
+    /**
+     * Create a condition to pattern-check this field against a quantified select.
+     * <p>
+     * For example a query like {@code field.like(any("a%", "b%"))} translates into
+     * the SQL {@code (field like 'a%' or field like 'b%')}.
+     *
+     * @see DSL#all(Field)
+     * @see DSL#all(Field...)
+     * @see DSL#all(Select)
+     * @see DSL#all(Object...)
+     * @see DSL#any(Field)
+     * @see DSL#any(Field...)
+     * @see DSL#any(Select)
+     * @see DSL#any(Object...)
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support
+    LikeEscapeStep like(QuantifiedSelect<Record1<String>> query);
 
     /**
      * Create a condition to case-insensitively pattern-check this field against
@@ -1400,7 +1554,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition likeIgnoreCase(Field<String> field, char escape);
 
     /**
@@ -1424,7 +1578,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition likeIgnoreCase(String value, char escape);
 
     /**
@@ -1442,7 +1596,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition notLike(Field<String> field, char escape);
 
     /**
@@ -1460,8 +1614,27 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition notLike(String value, char escape);
+
+    /**
+     * Create a condition to pattern-check this field against a quantified select.
+     * <p>
+     * For example a query like {@code field.notLike(any("a%", "b%"))} translates into
+     * the SQL {@code (field not like 'a%' or field not like 'b%')}.
+     *
+     * @see DSL#all(Field)
+     * @see DSL#all(Field...)
+     * @see DSL#all(Select)
+     * @see DSL#all(Object...)
+     * @see DSL#any(Field)
+     * @see DSL#any(Field...)
+     * @see DSL#any(Select)
+     * @see DSL#any(Object...)
+     * @see LikeEscapeStep#escape(char)
+     */
+    @Support
+    LikeEscapeStep notLike(QuantifiedSelect<Record1<String>> query);
 
     /**
      * Create a condition to case-insensitively pattern-check this field against
@@ -1484,7 +1657,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition notLikeIgnoreCase(Field<String> field, char escape);
 
     /**
@@ -1508,7 +1681,7 @@ extends
      *
      * @see LikeEscapeStep#escape(char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Condition notLikeIgnoreCase(String value, char escape);
 
     /**
@@ -1526,7 +1699,7 @@ extends
      * val(new Integer[] { 1, 2, 3 }).contains(new Integer[] { 1, 2 })
      *
      * // ... to render this SQL
-     * ARRAY[1, 2, 3] @> ARRAY[1, 2]
+     * ARRAY[1, 2, 3] @&gt; ARRAY[1, 2]
      * </pre></code>
      * <p>
      * Note, this does not correspond to the Oracle Text <code>CONTAINS()</code>
@@ -1553,7 +1726,7 @@ extends
      * val(new Integer[] { 1, 2, 3 }).contains(new Integer[] { 1, 2 })
      *
      * // ... to render this SQL
-     * ARRAY[1, 2, 3] @> ARRAY[1, 2]
+     * ARRAY[1, 2, 3] @&gt; ARRAY[1, 2]
      * </pre></code>
      * <p>
      * Note, this does not correspond to the Oracle Text <code>CONTAINS()</code>
@@ -1600,9 +1773,9 @@ extends
      * proper adding of wildcards and escaping.
      * <p>
      * This translates to
-     * <code>this not ilike ('%' || escape(value, '\') || '%') escape '\'</code>
+     * <code>this ilike ('%' || escape(value, '\') || '%') escape '\'</code>
      * in {@link SQLDialect#POSTGRES}, or to
-     * <code>lower(this) not like lower(('%' || escape(value, '\') || '%') escape '\')</code>
+     * <code>lower(this) like lower(('%' || escape(value, '\') || '%') escape '\')</code>
      * in all other dialects.
      * </p>
      *
@@ -1659,6 +1832,36 @@ extends
      * Convenience method for {@link #like(String, char)} including proper
      * adding of wildcards and escaping.
      * <p>
+     * SQL: <code>lower(this) like (lower(escape(value, '\')) || '%') escape '\'</code>
+     * <p>
+     * Note: This also works with numbers, for instance
+     * <code>val(1133).startsWithIgnoreCase(11)</code>
+     *
+     * @see DSL#escape(String, char)
+     * @see #like(String, char)
+     */
+    @Support
+    Condition startsWithIgnoreCase(T value);
+
+    /**
+     * Convenience method for {@link #like(String, char)} including proper
+     * adding of wildcards and escaping.
+     * <p>
+     * SQL: <code>lower(this) like (lower(escape(value, '\')) || '%') escape '\'</code>
+     * <p>
+     * Note: This also works with numbers, for instance
+     * <code>val(1133).startsWithIgnoreCase(11)</code>
+     *
+     * @see DSL#escape(Field, char)
+     * @see #like(Field, char)
+     */
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    Condition startsWithIgnoreCase(Field<T> value);
+
+    /**
+     * Convenience method for {@link #like(String, char)} including proper
+     * adding of wildcards and escaping.
+     * <p>
      * SQL: <code>this like ('%' || escape(value, '\')) escape '\'</code>
      * <p>
      * Note: This also works with numbers, for instance
@@ -1684,6 +1887,36 @@ extends
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     Condition endsWith(Field<T> value);
+
+    /**
+     * Convenience method for {@link #like(String, char)} including proper
+     * adding of wildcards and escaping.
+     * <p>
+     * SQL: <code>lower(this) like ('%' || lower(escape(value, '\'))) escape '\'</code>
+     * <p>
+     * Note: This also works with numbers, for instance
+     * <code>val(1133).endsWithIgnoreCase(33)</code>
+     *
+     * @see DSL#escape(String, char)
+     * @see #like(String, char)
+     */
+    @Support
+    Condition endsWithIgnoreCase(T value);
+
+    /**
+     * Convenience method for {@link #like(String, char)} including proper
+     * adding of wildcards and escaping.
+     * <p>
+     * SQL: <code>this like ('%' || lower(escape(value, '\'))) escape '\'</code>
+     * <p>
+     * Note: This also works with numbers, for instance
+     * <code>val(1133).endsWithIgnoreCase(33)</code>
+     *
+     * @see DSL#escape(Field, char)
+     * @see #like(Field, char)
+     */
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    Condition endsWithIgnoreCase(Field<T> value);
 
     // ------------------------------------------------------------------------
     // IN predicates
@@ -2101,13 +2334,13 @@ extends
     Condition equal(Field<T> field);
 
     /**
-     * <code>this = (Select&lt;?> ...)</code>.
+     * <code>this = (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition equal(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this = [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this = [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2136,7 +2369,7 @@ extends
     Condition eq(Field<T> field);
 
     /**
-     * <code>this = (Select&lt;?> ...)</code>.
+     * <code>this = (Select&lt;?&gt; ...)</code>.
      *
      * @see #equal(Select)
      */
@@ -2144,7 +2377,7 @@ extends
     Condition eq(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this = [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this = [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2169,13 +2402,13 @@ extends
     Condition notEqual(Field<T> field);
 
     /**
-     * <code>this != (Select&lt;?> ...)</code>.
+     * <code>this != (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition notEqual(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this != [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this != [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2204,7 +2437,7 @@ extends
     Condition ne(Field<T> field);
 
     /**
-     * <code>this != (Select&lt;?> ...)</code>.
+     * <code>this != (Select&lt;?&gt; ...)</code>.
      *
      * @see #notEqual(Select)
      */
@@ -2212,7 +2445,7 @@ extends
     Condition ne(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this != [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this != [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2237,13 +2470,13 @@ extends
     Condition lessThan(Field<T> field);
 
     /**
-     * <code>this &lt; (Select&lt;?> ...)</code>.
+     * <code>this &lt; (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition lessThan(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this &lt; [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &lt; [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2272,7 +2505,7 @@ extends
     Condition lt(Field<T> field);
 
     /**
-     * <code>this &lt; (Select&lt;?> ...)</code>.
+     * <code>this &lt; (Select&lt;?&gt; ...)</code>.
      *
      * @see #lessThan(Select)
      */
@@ -2280,7 +2513,7 @@ extends
     Condition lt(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this &lt; [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &lt; [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2305,13 +2538,13 @@ extends
     Condition lessOrEqual(Field<T> field);
 
     /**
-     * <code>this &lt;= (Select&lt;?> ...)</code>.
+     * <code>this &lt;= (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition lessOrEqual(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this &lt;= [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &lt;= [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2340,7 +2573,7 @@ extends
     Condition le(Field<T> field);
 
     /**
-     * <code>this &lt;= (Select&lt;?> ...)</code>.
+     * <code>this &lt;= (Select&lt;?&gt; ...)</code>.
      *
      * @see #lessOrEqual(Select)
      */
@@ -2348,7 +2581,7 @@ extends
     Condition le(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this &lt;= [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &lt;= [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2361,25 +2594,25 @@ extends
     Condition le(QuantifiedSelect<? extends Record1<T>> query);
 
     /**
-     * <code>this > value</code>.
+     * <code>this &gt; value</code>.
      */
     @Support
     Condition greaterThan(T value);
 
     /**
-     * <code>this > field</code>.
+     * <code>this &gt; field</code>.
      */
     @Support
     Condition greaterThan(Field<T> field);
 
     /**
-     * <code>this > (Select&lt;?> ...)</code>.
+     * <code>this &gt; (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition greaterThan(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this > [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &gt; [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2392,7 +2625,7 @@ extends
     Condition greaterThan(QuantifiedSelect<? extends Record1<T>> query);
 
     /**
-     * <code>this > value</code>.
+     * <code>this &gt; value</code>.
      *
      * @see #greaterThan(Object)
      */
@@ -2400,7 +2633,7 @@ extends
     Condition gt(T value);
 
     /**
-     * <code>this > field</code>.
+     * <code>this &gt; field</code>.
      *
      * @see #greaterThan(Field)
      */
@@ -2408,7 +2641,7 @@ extends
     Condition gt(Field<T> field);
 
     /**
-     * <code>this > (Select&lt;?> ...)</code>.
+     * <code>this &gt; (Select&lt;?&gt; ...)</code>.
      *
      * @see #greaterThan(Select)
      */
@@ -2416,7 +2649,7 @@ extends
     Condition gt(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this > [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &gt; [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2429,25 +2662,25 @@ extends
     Condition gt(QuantifiedSelect<? extends Record1<T>> query);
 
     /**
-     * <code>this >= value</code>.
+     * <code>this &gt;= value</code>.
      */
     @Support
     Condition greaterOrEqual(T value);
 
     /**
-     * <code>this >= field</code>.
+     * <code>this &gt;= field</code>.
      */
     @Support
     Condition greaterOrEqual(Field<T> field);
 
     /**
-     * <code>this >= (Select&lt;?> ...)</code>.
+     * <code>this &gt;= (Select&lt;?&gt; ...)</code>.
      */
     @Support
     Condition greaterOrEqual(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this >= [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &gt;= [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2460,7 +2693,7 @@ extends
     Condition greaterOrEqual(QuantifiedSelect<? extends Record1<T>> query);
 
     /**
-     * <code>this >= value</code>.
+     * <code>this &gt;= value</code>.
      *
      * @see #greaterOrEqual(Object)
      */
@@ -2468,7 +2701,7 @@ extends
     Condition ge(T value);
 
     /**
-     * <code>this >= field</code>.
+     * <code>this &gt;= field</code>.
      *
      * @see #greaterOrEqual(Field)
      */
@@ -2476,7 +2709,7 @@ extends
     Condition ge(Field<T> field);
 
     /**
-     * <code>this >= (Select&lt;?> ...)</code>.
+     * <code>this &gt;= (Select&lt;?&gt; ...)</code>.
      *
      * @see #greaterOrEqual(Select)
      */
@@ -2484,7 +2717,7 @@ extends
     Condition ge(Select<? extends Record1<T>> query);
 
     /**
-     * <code>this >= [quantifier] (Select&lt;?> ...)</code>.
+     * <code>this &gt;= [quantifier] (Select&lt;?&gt; ...)</code>.
      *
      * @see DSL#all(Field)
      * @see DSL#all(Select)
@@ -2840,7 +3073,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#count(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowPartitionByStep<Integer> countOver();
 
     /**
@@ -2849,7 +3082,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#max(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowPartitionByStep<T> maxOver();
 
     /**
@@ -2858,7 +3091,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#min(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowPartitionByStep<T> minOver();
 
     /**
@@ -2867,7 +3100,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#sum(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowPartitionByStep<BigDecimal> sumOver();
 
     /**
@@ -2876,7 +3109,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#avg(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowPartitionByStep<BigDecimal> avgOver();
 
     /**
@@ -2885,7 +3118,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#firstValue(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> firstValue();
 
     /**
@@ -2894,7 +3127,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lastValue(Field)} instead.
      */
     @Deprecated
-    @Support({ CUBRID, FIREBIRD_3_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lastValue();
 
     /**
@@ -2903,7 +3136,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lead(Field)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lead();
 
     /**
@@ -2912,7 +3145,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lead(Field, int)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lead(int offset);
 
     /**
@@ -2921,7 +3154,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lead(Field, int, Object)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lead(int offset, T defaultValue);
 
     /**
@@ -2930,7 +3163,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lead(Field, int, Field)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lead(int offset, Field<T> defaultValue);
 
     /**
@@ -2939,7 +3172,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lag(Field)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lag();
 
     /**
@@ -2948,7 +3181,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lag(Field, int)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lag(int offset);
 
     /**
@@ -2957,7 +3190,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lag(Field, int, Object)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lag(int offset, T defaultValue);
 
     /**
@@ -2966,7 +3199,7 @@ extends
      * @deprecated - 3.11 - [#7538] - Use {@link DSL#lag(Field, int, Field)} instead.
      */
     @Deprecated
-    @Support({ FIREBIRD_3_0, POSTGRES })
+    @Support({ FIREBIRD, POSTGRES })
     WindowIgnoreNullsStep<T> lag(int offset, Field<T> defaultValue);
 
     /**
@@ -3359,7 +3592,7 @@ extends
 
     /**
      * @see DSL#extract(Field, DatePart)
-     * @deprecated - 3.11 - [#7538] - Use {@link DSL#extract(DatePart)} instead.
+     * @deprecated - 3.11 - [#7538] - Use {@link DSL#extract(Field, DatePart)} instead.
      */
     @Deprecated
     @Support
@@ -3516,6 +3749,7 @@ extends
      */
     @Support
     Field<T> coalesce(Field<T> option, Field<?>... options);
+
 
 
 

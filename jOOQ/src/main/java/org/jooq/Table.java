@@ -52,12 +52,14 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_3;
+// ...
+// ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
@@ -75,7 +77,37 @@ import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 
 /**
- * A table to be used in queries
+ * A table.
+ * <p>
+ * Like {@link Field}, a {@link Table} is a basic building block of any
+ * {@link Query}, as they all operate on at least one table. There are many
+ * different types of tables, including:
+ * <p>
+ * <ul>
+ * <li>Generated table references</li>
+ * <li>Plain SQL tables created with {@link DSL#table(String)}</li>
+ * <li>Table references created with {@link DSL#table(Name)}</li>
+ * <li>Derived tables created with {@link DSL#table(Select)}</li>
+ * <li>Join expressions created e.g. with {@link Table#join(TableLike)}</li>
+ * <li>Common table expressions ({@link CommonTableExpression})</li>
+ * <li>Unnested arrays referenced through {@link DSL#unnest(Field)} and
+ * overloads</li>
+ * <li>Table valued functions as provided by the code generator</li>
+ * <li>Etc.</li>
+ * </ul>
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select(ACTOR.FIRST_NAME, ACTOR.LAST_NAME)
+ *    .from(ACTOR) // Table reference
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link DSL#table(Name)} and overloads.
  *
  * @param <R> The record type associated with this table
  * @author Lukas Eder
@@ -281,6 +313,9 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
 
 
 
+
+
+
     // -------------------------------------------------------------------------
     // XXX: Expressions based on this table
     // -------------------------------------------------------------------------
@@ -288,9 +323,37 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
     /**
      * Create a qualified asterisk expression from this table
      * (<code>table.*</code>) for use with <code>SELECT</code>.
+     *
+     * @see DSL#asterisk()
      */
     @Support
     QualifiedAsterisk asterisk();
+
+    /**
+     * Get a <code>table.rowid</code> reference from this table.
+     * <p>
+     * A rowid value describes the physical location of a row on the disk, which
+     * can be used as a replacement for a primary key in some situations -
+     * especially within a query, e.g. to self-join a table:
+     * <p>
+     * <code><pre>
+     * -- Emulating this MySQL statement...
+     * DELETE FROM x ORDER BY x.y LIMIT 1
+     *
+     * -- ... in other databases
+     * DELETE FROM x
+     * WHERE x.rowid IN (
+     *   SELECT x.rowid FROM x ORDER BY x.a LIMIT 1
+     * )
+     * </pre></code>
+     * <p>
+     * It is <em>not</em> recommended to use <code>rowid</code> values in client
+     * applications as actual row identifiers as the database system may move a
+     * row to a different physical location at any time, thus changing the rowid
+     * value. In general, use primary keys, instead.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    Field<RowId> rowid();
 
     // -------------------------------------------------------------------------
     // XXX: Aliasing clauses
@@ -300,8 +363,8 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * Create an alias for this table.
      * <p>
      * Note that the case-sensitivity of the returned table depends on
-     * {@link Settings#getRenderNameStyle()}. By default, table aliases are
-     * quoted, and thus case-sensitive!
+     * {@link Settings#getRenderQuotedNames()}. By default, table aliases are
+     * quoted, and thus case-sensitive in many SQL dialects!
      *
      * @param alias The alias name
      * @return The table alias
@@ -313,8 +376,8 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * Create an alias for this table and its fields.
      * <p>
      * Note that the case-sensitivity of the returned table and columns depends
-     * on {@link Settings#getRenderNameStyle()}. By default, table aliases are
-     * quoted, and thus case-sensitive!
+     * on {@link Settings#getRenderQuotedNames()}. By default, table aliases are
+     * quoted, and thus case-sensitive in many SQL dialects!
      * <p>
      * <h5>Derived column lists for table references</h5>
      * <p>
@@ -372,7 +435,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", f -> "prefix_" + f.getName());
+     * MY_TABLE.as("t1", f -&gt;"prefix_" + f.getName());
      * </pre></code>
      *
      * @param alias The alias name
@@ -390,7 +453,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", (f, i) -> "column" + i);
+     * MY_TABLE.as("t1", (f, i) -&gt;"column" + i);
      * </pre></code>
      *
      * @param alias The alias name
@@ -405,9 +468,9 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * Create an alias for this table.
      * <p>
      * Note that the case-sensitivity of the returned table depends on
-     * {@link Settings#getRenderNameStyle()} and the {@link Name}. By default,
-     * table aliases are quoted, and thus case-sensitive - use
-     * {@link DSL#unquotedName(String...)} for case-insensitive aliases.
+     * {@link Settings#getRenderQuotedNames()} and the {@link Name}. By default,
+     * table aliases are quoted, and thus case-sensitive in many SQL dialects -
+     * use {@link DSL#unquotedName(String...)} for case-insensitive aliases.
      * <p>
      * If the argument {@link Name#getName()} is qualified, then the
      * {@link Name#last()} part will be used.
@@ -422,9 +485,9 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * Create an alias for this table and its fields.
      * <p>
      * Note that the case-sensitivity of the returned table depends on
-     * {@link Settings#getRenderNameStyle()} and the {@link Name}. By default,
-     * table aliases are quoted, and thus case-sensitive - use
-     * {@link DSL#unquotedName(String...)} for case-insensitive aliases.
+     * {@link Settings#getRenderQuotedNames()} and the {@link Name}. By default,
+     * table aliases are quoted, and thus case-sensitive in many SQL dialects -
+     * use {@link DSL#unquotedName(String...)} for case-insensitive aliases.
      * <p>
      * If the argument {@link Name#getName()} is qualified, then the
      * {@link Name#last()} part will be used.
@@ -485,7 +548,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", f -> "prefix_" + f.getName());
+     * MY_TABLE.as("t1", f -&gt;"prefix_" + f.getName());
      * </pre></code>
      *
      * @param alias The alias name
@@ -503,7 +566,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", (f, i) -> "column" + i);
+     * MY_TABLE.as("t1", (f, i) -&gt;"column" + i);
      * </pre></code>
      *
      * @param alias The alias name
@@ -516,10 +579,6 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
 
     /**
      * Create an alias for this table based on another table's name.
-     * <p>
-     * Note that the case-sensitivity of the returned table depends on
-     * {@link Settings#getRenderNameStyle()}. By default, table aliases are
-     * quoted, and thus case-sensitive!
      *
      * @param otherTable The other table whose name this table is aliased with.
      * @return The table alias.
@@ -529,10 +588,6 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
 
     /**
      * Create an alias for this table based on another table's name.
-     * <p>
-     * Note that the case-sensitivity of the returned table depends on
-     * {@link Settings#getRenderNameStyle()}. By default, table aliases are
-     * quoted, and thus case-sensitive!
      *
      * @param otherTable The other table whose name this table is aliased with.
      * @param otherFields The other fields whose field name this table's fields
@@ -551,7 +606,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as(MY_OTHER_TABLE, f -> MY_OTHER_TABLE.field(f));
+     * MY_TABLE.as(MY_OTHER_TABLE, f -&gt;MY_OTHER_TABLE.field(f));
      * </pre></code>
      *
      * @param otherTable The other table whose name is used as alias name
@@ -569,7 +624,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * columns with a common prefix:
      * <p>
      * <code><pre>
-     * MY_TABLE.as("t1", (f, i) -> "column" + i);
+     * MY_TABLE.as("t1", (f, i) -&gt;"column" + i);
      * </pre></code>
      *
      * @param otherTable The other table whose name is used as alias name
@@ -579,6 +634,161 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
     @Support
     Table<R> as(Table<?> otherTable, BiFunction<? super Field<?>, ? super Integer, ? extends Field<?>> aliasFunction);
 
+
+    // -------------------------------------------------------------------------
+    // XXX: WHERE clauses on tables
+    // -------------------------------------------------------------------------
+
+    /**
+     * Add a <code>WHERE</code> clause to the table, connecting them with each
+     * other with {@link Operator#AND}.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> where(Condition condition);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table, connecting them with each
+     * other with {@link Operator#AND}.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> where(Condition... conditions);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table, connecting them with each
+     * other with {@link Operator#AND}.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> where(Collection<? extends Condition> conditions);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> where(Field<Boolean> field);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#condition(SQL)
+     * @see SQL
+     */
+    @Support
+    @PlainSQL
+    Table<R> where(SQL sql);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#condition(String)
+     * @see SQL
+     */
+    @Support
+    @PlainSQL
+    Table<R> where(String sql);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#condition(String, Object...)
+     * @see DSL#sql(String, Object...)
+     * @see SQL
+     */
+    @Support
+    @PlainSQL
+    Table<R> where(String sql, Object... bindings);
+
+    /**
+     * Add a <code>WHERE</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#condition(String, QueryPart...)
+     * @see DSL#sql(String, QueryPart...)
+     * @see SQL
+     */
+    @Support
+    @PlainSQL
+    Table<R> where(String sql, QueryPart... parts);
+
+    /**
+     * Add a <code>WHERE EXISTS</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> whereExists(Select<?> select);
+
+    /**
+     * Add a <code>WHERE NOT EXISTS</code> clause to the table.
+     * <p>
+     * The resulting table acts like a derived table that projects all of this
+     * table's columns and filters by the argument {@link Condition}. If
+     * syntactically reasonable, the derived table may be inlined to the query
+     * that selects from the resulting table.
+     */
+    @Support
+    Table<R> whereNotExists(Select<?> select);
 
     // -------------------------------------------------------------------------
     // XXX: JOIN clauses on tables
@@ -767,6 +977,8 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      */
     @Support
     TableOnStep<Record> innerJoin(Name name);
+
+
 
 
 
@@ -1321,7 +1533,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * A join B on 1 = 1
      * </pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Table<Record> crossJoin(TableLike<?> table);
 
     /**
@@ -1342,7 +1554,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(SQL)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     Table<Record> crossJoin(SQL sql);
 
@@ -1364,7 +1576,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(String)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     Table<Record> crossJoin(String sql);
 
@@ -1387,7 +1599,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     Table<Record> crossJoin(String sql, Object... bindings);
 
@@ -1410,7 +1622,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     Table<Record> crossJoin(String sql, QueryPart... parts);
 
@@ -1426,7 +1638,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      *
      * @see DSL#table(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     Table<Record> crossJoin(Name name);
 
     /**
@@ -1712,6 +1924,100 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     Table<Record> naturalRightOuterJoin(Name name);
 
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    Table<Record> naturalFullOuterJoin(TableLike<?> table);
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(SQL)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    Table<Record> naturalFullOuterJoin(SQL sql);
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    Table<Record> naturalFullOuterJoin(String sql);
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String, Object...)
+     * @see DSL#sql(String, Object...)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    Table<Record> naturalFullOuterJoin(String sql, Object... bindings);
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String, QueryPart...)
+     * @see DSL#sql(String, QueryPart...)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    Table<Record> naturalFullOuterJoin(String sql, QueryPart... parts);
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> a table to this table.
+     * <p>
+     * If this is not supported by your RDBMS, then jOOQ will try to emulate
+     * this behaviour using the information provided in this query.
+     *
+     * @see DSL#table(Name)
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    Table<Record> naturalFullOuterJoin(Name name);
+
     // -------------------------------------------------------------------------
     // XXX: APPLY clauses on tables
     // -------------------------------------------------------------------------
@@ -1719,7 +2025,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
     /**
      * <code>CROSS APPLY</code> a table to this table.
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     Table<Record> crossApply(TableLike<?> table);
 
     /**
@@ -1733,7 +2039,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> crossApply(SQL sql);
 
@@ -1748,7 +2054,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> crossApply(String sql);
 
@@ -1764,7 +2070,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> crossApply(String sql, Object... bindings);
 
@@ -1780,7 +2086,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> crossApply(String sql, QueryPart... parts);
 
@@ -1789,13 +2095,13 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      *
      * @see DSL#table(Name)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     Table<Record> crossApply(Name name);
 
     /**
      * <code>OUTER APPLY</code> a table to this table.
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     Table<Record> outerApply(TableLike<?> table);
 
     /**
@@ -1809,7 +2115,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> outerApply(SQL sql);
 
@@ -1824,7 +2130,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> outerApply(String sql);
 
@@ -1840,7 +2146,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> outerApply(String sql, Object... bindings);
 
@@ -1856,7 +2162,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     Table<Record> outerApply(String sql, QueryPart... parts);
 
@@ -1865,13 +2171,13 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      *
      * @see DSL#table(Name)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     Table<Record> outerApply(Name name);
 
     /**
      * <code>STRAIGHT_JOIN</code> a table to this table.
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     TableOnStep<Record> straightJoin(TableLike<?> table);
 
     /**
@@ -1885,7 +2191,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(SQL)
      * @see SQL
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     @PlainSQL
     TableOnStep<Record> straightJoin(SQL sql);
 
@@ -1900,7 +2206,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#table(String)
      * @see SQL
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     @PlainSQL
     TableOnStep<Record> straightJoin(String sql);
 
@@ -1916,7 +2222,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     @PlainSQL
     TableOnStep<Record> straightJoin(String sql, Object... bindings);
 
@@ -1932,7 +2238,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     @PlainSQL
     TableOnStep<Record> straightJoin(String sql, QueryPart... parts);
 
@@ -1941,7 +2247,7 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      *
      * @see DSL#table(Name)
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     @PlainSQL
     TableOnStep<Record> straightJoin(Name name);
 
@@ -2306,6 +2612,9 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
 
 
 
+
+
+
     /**
      * Create a new <code>TABLE</code> reference from this table, applying
      * relational division.
@@ -2402,6 +2711,16 @@ public interface Table<R extends Record> extends TableLike<R>, Named {
      */
     @Support
     TableOnStep<R> leftAntiJoin(TableLike<?> table);
+
+
+
+
+
+
+
+
+
+
 
 
 

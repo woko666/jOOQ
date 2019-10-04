@@ -51,6 +51,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -95,7 +96,7 @@ public interface DropIndexOnStep extends DropIndexFinalStep {
      * index. In all other databases, the <code>ON</code> clause will simply be
      * ignored for compatibility reasons.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     DropIndexFinalStep on(Table<?> table);
 
     /**
@@ -108,7 +109,7 @@ public interface DropIndexOnStep extends DropIndexFinalStep {
      * index. In all other databases, the <code>ON</code> clause will simply be
      * ignored for compatibility reasons.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     DropIndexFinalStep on(String tableName);
 
     /**
@@ -121,6 +122,6 @@ public interface DropIndexOnStep extends DropIndexFinalStep {
      * index. In all other databases, the <code>ON</code> clause will simply be
      * ignored for compatibility reasons.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     DropIndexFinalStep on(Name tableName);
 }

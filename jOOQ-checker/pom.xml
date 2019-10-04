@@ -7,10 +7,9 @@
     <parent>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-parent</artifactId>
-        <version>3.11.0</version>
+        <version>3.13.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.jooq</groupId>
     <artifactId>jooq-checker</artifactId>
     <name>jOOQ Checker</name>
 
@@ -42,6 +41,13 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <!-- [#9099] later versions up to 3.1.1 don't appear to work (to be tested with 3.1.2) -->
+                <version>3.0.1</version>
+            </plugin>
         </plugins>
     </build>
 
@@ -54,7 +60,27 @@
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker</artifactId>
-            <version>2.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+        </dependency>
+
+
+
+
+
+
+
+
     </dependencies>
 </project>

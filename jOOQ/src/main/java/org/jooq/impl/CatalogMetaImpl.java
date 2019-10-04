@@ -39,7 +39,6 @@ package org.jooq.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.jooq.Catalog;
@@ -66,13 +65,13 @@ final class CatalogMetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Catalog> getCatalogs() {
-        return Collections.unmodifiableList(Arrays.asList(catalogs));
+    protected final List<Catalog> getCatalogs0() {
+        return Arrays.asList(catalogs);
     }
 
     @Override
-    public final List<Schema> getSchemas() {
-        List<Schema> result = new ArrayList<Schema>();
+    protected final List<Schema> getSchemas0() {
+        List<Schema> result = new ArrayList<>();
 
         for (Catalog catalog : catalogs)
             result.addAll(catalog.getSchemas());
@@ -81,8 +80,8 @@ final class CatalogMetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Table<?>> getTables() {
-        List<Table<?>> result = new ArrayList<Table<?>>();
+    protected final List<Table<?>> getTables0() {
+        List<Table<?>> result = new ArrayList<>();
 
         for (Catalog catalog : catalogs)
             for (Schema schema : catalog.getSchemas())
@@ -92,8 +91,8 @@ final class CatalogMetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<Sequence<?>> getSequences() {
-        List<Sequence<?>> result = new ArrayList<Sequence<?>>();
+    protected final List<Sequence<?>> getSequences0() {
+        List<Sequence<?>> result = new ArrayList<>();
 
         for (Catalog catalog : catalogs)
             for (Schema schema : catalog.getSchemas())
@@ -103,8 +102,8 @@ final class CatalogMetaImpl extends AbstractMeta {
     }
 
     @Override
-    public final List<UniqueKey<?>> getPrimaryKeys() {
-        List<UniqueKey<?>> result = new ArrayList<UniqueKey<?>>();
+    protected final List<UniqueKey<?>> getPrimaryKeys0() {
+        List<UniqueKey<?>> result = new ArrayList<>();
 
         for (Catalog catalog : catalogs)
             for (Schema schema : catalog.getSchemas())

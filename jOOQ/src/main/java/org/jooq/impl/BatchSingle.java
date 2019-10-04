@@ -60,6 +60,7 @@ import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
 import org.jooq.Param;
 import org.jooq.Query;
+import org.jooq.conf.SettingsTools;
 import org.jooq.exception.ControlFlowSignal;
 import org.jooq.tools.JooqLogger;
 
@@ -90,15 +91,15 @@ final class BatchSingle implements BatchBindStep {
         this.create = DSL.using(configuration);
         this.configuration = configuration;
         this.query = query;
-        this.allBindValues = new ArrayList<Object[]>();
-        this.nameToIndexMapping = new LinkedHashMap<String, List<Integer>>();
+        this.allBindValues = new ArrayList<>();
+        this.nameToIndexMapping = new LinkedHashMap<>();
         this.expectedBindValues = collector.resultList.size();
 
         for (Entry<String, Param<?>> entry : collector.resultList) {
             List<Integer> list = nameToIndexMapping.get(entry.getKey());
 
             if (list == null) {
-                list = new ArrayList<Integer>();
+                list = new ArrayList<>();
                 nameToIndexMapping.put(entry.getKey(), list);
             }
 
@@ -131,7 +132,7 @@ final class BatchSingle implements BatchBindStep {
     @SafeVarargs
 
     public final BatchSingle bind(Map<String, Object>... namedBindValues) {
-        List<Object> defaultValues = query.getBindValues();
+        List<Object> defaultValues = create.extractBindValues(query);
 
         Object[][] bindValues = new Object[namedBindValues.length][];
         for (int row = 0; row < bindValues.length; row++) {
@@ -140,11 +141,9 @@ final class BatchSingle implements BatchBindStep {
             for (Entry<String, Object> entry : namedBindValues[row].entrySet()) {
                 List<Integer> indexes = nameToIndexMapping.get(entry.getKey());
 
-                if (indexes != null) {
-                    for (int index : indexes) {
+                if (indexes != null)
+                    for (int index : indexes)
                         bindValues[row][index] = entry.getValue();
-                    }
-                }
             }
         }
 
@@ -172,12 +171,10 @@ final class BatchSingle implements BatchBindStep {
 
         // [#1180] Run batch queries with BatchMultiple, if no bind variables
         // should be used...
-        if (executeStaticStatements(configuration.settings())) {
+        if (executeStaticStatements(configuration.settings()))
             return executeStatic();
-        }
-        else {
+        else
             return executePrepared();
-        }
     }
 
     private final void checkBindValues() {
@@ -216,6 +213,11 @@ final class BatchSingle implements BatchBindStep {
             listener.prepareStart(ctx);
             ctx.statement(connection.prepareStatement(ctx.sql()));
             listener.prepareEnd(ctx);
+
+            // [#9295] use query timeout from settings
+            int t = SettingsTools.getQueryTimeout(0, ctx.settings());
+            if (t != 0)
+                ctx.statement().setQueryTimeout(t);
 
             for (Object[] bindValues : allBindValues) {
                 listener.bindStart(ctx);
@@ -264,7 +266,7 @@ final class BatchSingle implements BatchBindStep {
     }
 
     private final int[] executeStatic() {
-        List<Query> queries = new ArrayList<Query>(allBindValues.size());
+        List<Query> queries = new ArrayList<>(allBindValues.size());
 
         for (Object[] bindValues : allBindValues) {
             for (int i = 0; i < bindValues.length; i++)

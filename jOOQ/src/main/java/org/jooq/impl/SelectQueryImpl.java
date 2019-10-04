@@ -60,9 +60,7 @@ import static org.jooq.Operator.OR;
 // ...
 // ...
 // ...
-// ...
 import static org.jooq.SQLDialect.CUBRID;
-// ...
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
@@ -72,6 +70,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -92,6 +91,7 @@ import static org.jooq.impl.CombineOperator.INTERSECT;
 import static org.jooq.impl.CombineOperator.INTERSECT_ALL;
 import static org.jooq.impl.CombineOperator.UNION;
 import static org.jooq.impl.CombineOperator.UNION_ALL;
+import static org.jooq.impl.DSL.asterisk;
 import static org.jooq.impl.DSL.falseCondition;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.name;
@@ -103,8 +103,7 @@ import static org.jooq.impl.Keywords.K_BY;
 import static org.jooq.impl.Keywords.K_CONNECT_BY;
 import static org.jooq.impl.Keywords.K_DISTINCT;
 import static org.jooq.impl.Keywords.K_DISTINCT_ON;
-import static org.jooq.impl.Keywords.K_FOR_SHARE;
-import static org.jooq.impl.Keywords.K_FOR_UPDATE;
+import static org.jooq.impl.Keywords.K_FOR;
 import static org.jooq.impl.Keywords.K_FROM;
 import static org.jooq.impl.Keywords.K_GROUP_BY;
 import static org.jooq.impl.Keywords.K_HAVING;
@@ -115,6 +114,7 @@ import static org.jooq.impl.Keywords.K_OF;
 import static org.jooq.impl.Keywords.K_ORDER;
 import static org.jooq.impl.Keywords.K_ORDER_BY;
 import static org.jooq.impl.Keywords.K_PERCENT;
+import static org.jooq.impl.Keywords.K_QUALIFY;
 import static org.jooq.impl.Keywords.K_SELECT;
 import static org.jooq.impl.Keywords.K_SIBLINGS;
 import static org.jooq.impl.Keywords.K_START_WITH;
@@ -124,22 +124,24 @@ import static org.jooq.impl.Keywords.K_WINDOW;
 import static org.jooq.impl.Keywords.K_WITH_CHECK_OPTION;
 import static org.jooq.impl.Keywords.K_WITH_LOCK;
 import static org.jooq.impl.Keywords.K_WITH_READ_ONLY;
+import static org.jooq.impl.ScopeMarkers.AFTER_LAST_TOP_LEVEL_CTE;
+import static org.jooq.impl.ScopeMarkers.BEFORE_FIRST_TOP_LEVEL_CTE;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
 import static org.jooq.impl.Tools.fieldArray;
 import static org.jooq.impl.Tools.hasAmbiguousNames;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_COLLECT_SEMI_ANTI_JOIN;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_INSERT_SELECT_WITHOUT_INSERT_COLUMN_LIST;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_NESTED_SET_OPERATIONS;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_OMIT_INTO_CLAUSE;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_UNALIAS_ALIASED_EXPRESSIONS;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES;
 import static org.jooq.impl.Tools.DataKey.DATA_COLLECTED_SEMI_ANTI_JOIN;
-import static org.jooq.impl.Tools.DataKey.DATA_COLLECT_SEMI_ANTI_JOIN;
-import static org.jooq.impl.Tools.DataKey.DATA_INSERT_SELECT_WITHOUT_INSERT_COLUMN_LIST;
-import static org.jooq.impl.Tools.DataKey.DATA_NESTED_SET_OPERATIONS;
-import static org.jooq.impl.Tools.DataKey.DATA_OMIT_INTO_CLAUSE;
+import static org.jooq.impl.Tools.DataKey.DATA_DML_TARGET_TABLE;
 import static org.jooq.impl.Tools.DataKey.DATA_OVERRIDE_ALIASES_IN_ORDER_BY;
-import static org.jooq.impl.Tools.DataKey.DATA_PREFER_TOP_OVER_FETCH;
-import static org.jooq.impl.Tools.DataKey.DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE;
-import static org.jooq.impl.Tools.DataKey.DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY;
 import static org.jooq.impl.Tools.DataKey.DATA_SELECT_INTO_TABLE;
-import static org.jooq.impl.Tools.DataKey.DATA_UNALIAS_ALIASES_IN_ORDER_BY;
+import static org.jooq.impl.Tools.DataKey.DATA_TOP_LEVEL_CTE;
 import static org.jooq.impl.Tools.DataKey.DATA_WINDOW_DEFINITIONS;
-import static org.jooq.impl.Tools.DataKey.DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES;
 
 import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
@@ -147,6 +149,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -166,7 +169,9 @@ import org.jooq.Name;
 import org.jooq.Operator;
 import org.jooq.OrderField;
 import org.jooq.Param;
+// ...
 import org.jooq.QualifiedAsterisk;
+import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Row;
 import org.jooq.SQLDialect;
@@ -181,6 +186,7 @@ import org.jooq.TableOptionalOnStep;
 import org.jooq.TablePartitionByStep;
 import org.jooq.WindowDefinition;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.Tools.BooleanDataKey;
 import org.jooq.impl.Tools.DataKey;
 import org.jooq.tools.StringUtils;
 
@@ -196,15 +202,24 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     /**
      * Generated UID
      */
-    private static final long                    serialVersionUID                = 1646393178384872967L;
-    private static final Clause[]                CLAUSES                         = { SELECT };
-    private static final EnumSet<SQLDialect>     EMULATE_SELECT_INTO_AS_CTAS     = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE);
-    private static final EnumSet<SQLDialect>     NO_SUPPORT_FOR_UPDATE           = EnumSet.of(CUBRID);
-    private static final EnumSet<SQLDialect>     NO_SUPPORT_FOR_UPDATE_QUALIFIED = EnumSet.of(DERBY, FIREBIRD, H2, HSQLDB);
-    private static final EnumSet<SQLDialect>     SUPPORT_SELECT_INTO             = EnumSet.of(HSQLDB, POSTGRES);
-    private static final EnumSet<SQLDialect>     SUPPORT_WINDOW_CLAUSE           = EnumSet.of(MYSQL, POSTGRES);
-    private static final EnumSet<SQLDialect>     REQUIRES_FROM_CLAUSE            = EnumSet.of(CUBRID, DERBY, FIREBIRD, HSQLDB, MARIADB, MYSQL);
-    private static final EnumSet<SQLDialect>     EMULATE_EMPTY_GROUP_BY_OTHER    = EnumSet.of(FIREBIRD, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE);
+    private static final long            serialVersionUID                = 1646393178384872967L;
+    private static final Clause[]        CLAUSES                         = { SELECT };
+    private static final Set<SQLDialect> EMULATE_SELECT_INTO_AS_CTAS     = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE);
+    private static final Set<SQLDialect> NO_SUPPORT_FOR_UPDATE           = SQLDialect.supported(CUBRID);
+    private static final Set<SQLDialect> NO_SUPPORT_FOR_UPDATE_QUALIFIED = SQLDialect.supported(DERBY, FIREBIRD, H2, HSQLDB);
+    private static final Set<SQLDialect> SUPPORT_SELECT_INTO_TABLE       = SQLDialect.supported(HSQLDB, POSTGRES);
+    static final Set<SQLDialect>         SUPPORT_WINDOW_CLAUSE           = SQLDialect.supported(H2 /* -- See [#8279] */, MYSQL, POSTGRES /*, SQLITE -- See [#8279] [#8548] */);
+    private static final Set<SQLDialect> REQUIRES_FROM_CLAUSE            = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, HSQLDB, MARIADB, MYSQL);
+    private static final Set<SQLDialect> REQUIRES_DERIVED_TABLE_DML      = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> EMULATE_EMPTY_GROUP_BY_OTHER    = SQLDialect.supported(FIREBIRD, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE);
+    private static final Set<SQLDialect> SUPPORT_FULL_WITH_TIES          = SQLDialect.supported(H2);
+
+
+
+
+
+
+
 
 
 
@@ -226,12 +241,13 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     private String                                       option;
     private boolean                                      distinct;
     private QueryPartList<SelectFieldOrAsterisk>         distinctOn;
-    private boolean                                      forUpdate;
     private QueryPartList<Field<?>>                      forUpdateOf;
     private TableList                                    forUpdateOfTables;
-    private ForUpdateMode                                forUpdateMode;
+    private ForUpdateLockMode                            forUpdateLockMode;
+    private ForUpdateWaitMode                            forUpdateWaitMode;
     private int                                          forUpdateWait;
-    private boolean                                      forShare;
+
+
 
 
 
@@ -245,6 +261,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     private QueryPartList<GroupField>                    groupBy;
     private final ConditionProviderImpl                  having;
     private WindowList                                   window;
+    private final ConditionProviderImpl                  qualify;
     private final SortFieldList                          orderBy;
     private boolean                                      orderBySiblings;
     private final QueryPartList<Field<?>>                seek;
@@ -275,19 +292,20 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         this.with = with;
         this.distinct = distinct;
-        this.select = new SelectFieldList<SelectFieldOrAsterisk>();
+        this.select = new SelectFieldList<>();
         this.from = new TableList();
         this.condition = new ConditionProviderImpl();
         this.connectBy = new ConditionProviderImpl();
         this.connectByStartWith = new ConditionProviderImpl();
         this.having = new ConditionProviderImpl();
+        this.qualify = new ConditionProviderImpl();
         this.orderBy = new SortFieldList();
-        this.seek = new QueryPartList<Field<?>>();
+        this.seek = new QueryPartList<>();
         this.limit = new Limit();
-        this.unionOp = new ArrayList<CombineOperator>();
-        this.union = new ArrayList<QueryPartList<Select<?>>>();
+        this.unionOp = new ArrayList<>();
+        this.union = new ArrayList<>();
         this.unionOrderBy = new SortFieldList();
-        this.unionSeek = new QueryPartList<Field<?>>();
+        this.unionSeek = new QueryPartList<>();
         this.unionLimit = new Limit();
 
         if (from != null)
@@ -304,11 +322,10 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     public final <T> Field<T> asField() {
         List<Field<?>> s = getSelect();
 
-        if (s.size() != 1) {
+        if (s.size() != 1)
             throw new IllegalStateException("Can only use single-column ResultProviderQuery as a field");
-        }
 
-        return new ScalarSubquery<T>(this, (DataType<T>) s.get(0).getDataType());
+        return new ScalarSubquery<>(this, (DataType<T>) s.get(0).getDataType());
     }
 
     @Override
@@ -411,47 +428,62 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     }
 
     @Override
+    public final int indexOf(Field<?> field) {
+        return asTable().indexOf(field);
+    }
+
+    @Override
+    public final int indexOf(String fieldName) {
+        return asTable().indexOf(fieldName);
+    }
+
+    @Override
+    public final int indexOf(Name fieldName) {
+        return asTable().indexOf(fieldName);
+    }
+
+    @Override
     public final Table<R> asTable() {
         // Its usually better to alias nested selects that are used in
         // the FROM clause of a query
-        return new DerivedTable<R>(this).as("alias_" + Tools.hash(this));
+        return new DerivedTable<>(this).as("alias_" + Tools.hash(this));
     }
 
     @Override
     public final Table<R> asTable(String alias) {
-        return new DerivedTable<R>(this).as(alias);
+        return new DerivedTable<>(this).as(alias);
     }
 
     @Override
     public final Table<R> asTable(String alias, String... fieldAliases) {
-        return new DerivedTable<R>(this).as(alias, fieldAliases);
+        return new DerivedTable<>(this).as(alias, fieldAliases);
     }
 
 
     @Override
     public final Table<R> asTable(String alias, Function<? super Field<?>, ? extends String> aliasFunction) {
-        return new DerivedTable<R>(this).as(alias, aliasFunction);
+        return new DerivedTable<>(this).as(alias, aliasFunction);
     }
 
     @Override
     public final Table<R> asTable(String alias, BiFunction<? super Field<?>, ? super Integer, ? extends String> aliasFunction) {
-        return new DerivedTable<R>(this).as(alias, aliasFunction);
+        return new DerivedTable<>(this).as(alias, aliasFunction);
     }
 
 
     @Override
     protected final Field<?>[] getFields(ResultSetMetaData meta) {
+        Collection<? extends Field<?>> fields = coerce();
 
         // [#1808] TODO: Restrict this field list, in case a restricting fetch()
         // method was called to get here
-        List<Field<?>> fields = getSelect();
+        if (fields == null || fields.isEmpty())
+            fields = getSelect();
 
         // If no projection was specified explicitly, create fields from result
         // set meta data instead. This is typically the case for SELECT * ...
-        if (fields.isEmpty()) {
-            Configuration configuration = configuration();
-            return new MetaDataFieldProvider(configuration, meta).getFields();
-        }
+        if (fields.isEmpty())
+            return new MetaDataFieldProvider(configuration(), meta).getFields();
 
         return fieldArray(fields);
     }
@@ -463,9 +495,26 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     public final void accept(Context<?> context) {
+        Table<?> dmlTable;
+
+        // [#6583] Work around MySQL's self-reference-in-DML-subquery restriction
+        if (context.subqueryLevel() == 1
+            && REQUIRES_DERIVED_TABLE_DML.contains(context.family())
+            && (dmlTable = (Table<?>) context.data(DATA_DML_TARGET_TABLE)) != null
+            && containsTable(dmlTable)) {
+            context.visit(DSL.select(asterisk()).from(DSL.table(this).as("t")));
+        }
+        else
+            accept0(context);
+    }
+
+    public final void accept0(Context<?> context) {
         context.scopeStart();
         for (Table<?> table : getFrom())
             registerTable(context, table);
+
+        if (context.subqueryLevel() == 0)
+            context.data(DATA_TOP_LEVEL_CTE, new TopLevelCte());
 
         SQLDialect dialect = context.dialect();
         SQLDialect family = context.family();
@@ -475,7 +524,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         Object renderTrailingLimit = context.data(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE);
         Object localWindowDefinitions = context.data(DATA_WINDOW_DEFINITIONS);
         try {
-            if (renderTrailingLimit != null)
+            if (TRUE.equals(renderTrailingLimit))
                 context.data().remove(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE);
 
             // [#5127] Lazy initialise this map
@@ -483,7 +532,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
                 context.data(DATA_WINDOW_DEFINITIONS, null);
 
             if (into != null
-                    && context.data(DATA_OMIT_INTO_CLAUSE) == null
+                    && !TRUE.equals(context.data(DATA_OMIT_INTO_CLAUSE))
                     && EMULATE_SELECT_INTO_AS_CTAS.contains(family)) {
 
                 context.data(DATA_OMIT_INTO_CLAUSE, true);
@@ -495,6 +544,11 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
             if (with != null)
                 context.visit(with).formatSeparator();
+            else if (context.subqueryLevel() == 0)
+                context.scopeMarkStart(BEFORE_FIRST_TOP_LEVEL_CTE)
+                       .scopeMarkEnd(BEFORE_FIRST_TOP_LEVEL_CTE)
+                       .scopeMarkStart(AFTER_LAST_TOP_LEVEL_CTE)
+                       .scopeMarkEnd(AFTER_LAST_TOP_LEVEL_CTE);
 
             pushWindow(context);
 
@@ -503,7 +557,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
                 context.sql('(')
                        .formatIndentStart()
                        .formatNewLine()
-                       .data(DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES, null);
+                       .data().remove(DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES);
             }
 
             switch (dialect) {
@@ -624,16 +678,29 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 case CUBRID:
-                case FIREBIRD_3_0:
                 case MARIADB:
                 case MYSQL:
-                case MYSQL_8_0:
-                case POSTGRES:
-                case POSTGRES_9_3:
-                case POSTGRES_9_4:
-                case POSTGRES_9_5:
-                case POSTGRES_10: {
+                case POSTGRES: {
                     if (getLimit().isApplicable() && getLimit().withTies())
                         toSQLReferenceLimitWithWindowFunctions(context);
                     else
@@ -652,9 +719,48 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
             }
 
             // [#1296] FOR UPDATE is emulated in some dialects using ResultSet.CONCUR_UPDATABLE
-            if (forUpdate && !NO_SUPPORT_FOR_UPDATE.contains(family)) {
-                context.formatSeparator()
-                       .visit(K_FOR_UPDATE);
+            if (forUpdateLockMode != null && !NO_SUPPORT_FOR_UPDATE.contains(family)) {
+                switch (forUpdateLockMode) {
+                    case UPDATE:
+                        context.formatSeparator()
+                               .visit(K_FOR)
+                               .sql(' ')
+                               .visit(forUpdateLockMode.toKeyword());
+                        break;
+
+                    case SHARE:
+                        switch (family) {
+
+                            // MySQL has a non-standard implementation for the "FOR SHARE" clause
+
+
+
+
+
+                            case MARIADB:
+                            case MYSQL:
+                                context.formatSeparator()
+                                       .visit(K_LOCK_IN_SHARE_MODE);
+                                break;
+
+                            // Postgres is known to implement the "FOR SHARE" clause like this
+                            default:
+                                context.visit(K_FOR)
+                                       .sql(' ')
+                                       .visit(forUpdateLockMode.toKeyword());
+                                break;
+                        }
+
+                        break;
+
+                    case KEY_SHARE:
+                    case NO_KEY_UPDATE:
+                    default:
+                        context.visit(K_FOR)
+                               .sql(' ')
+                               .visit(forUpdateLockMode.toKeyword());
+                        break;
+                }
 
                 if (Tools.isNotEmpty(forUpdateOf)) {
 
@@ -700,39 +806,17 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
                 // [#3186] Firebird's FOR UPDATE clause has a different semantics. To achieve "regular"
                 // FOR UPDATE semantics, we should use FOR UPDATE WITH LOCK
-                if (family == FIREBIRD) {
+                if (family == FIREBIRD)
                     context.sql(' ').visit(K_WITH_LOCK);
-                }
 
-                if (forUpdateMode != null) {
+                if (forUpdateWaitMode != null) {
                     context.sql(' ');
-                    context.visit(forUpdateMode.toKeyword());
+                    context.visit(forUpdateWaitMode.toKeyword());
 
-                    if (forUpdateMode == ForUpdateMode.WAIT) {
+                    if (forUpdateWaitMode == ForUpdateWaitMode.WAIT) {
                         context.sql(' ');
                         context.sql(forUpdateWait);
                     }
-                }
-            }
-            else if (forShare) {
-                switch (family) {
-
-                    // MySQL has a non-standard implementation for the "FOR SHARE" clause
-
-
-
-
-                    case MARIADB:
-                    case MYSQL:
-                        context.formatSeparator()
-                               .visit(K_LOCK_IN_SHARE_MODE);
-                        break;
-
-                    // Postgres is known to implement the "FOR SHARE" clause like this
-                    default:
-                        context.formatSeparator()
-                               .visit(K_FOR_SHARE);
-                        break;
                 }
             }
 
@@ -862,7 +946,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
                     // [#3575] Ensure that no column aliases from the surrounding SELECT clause
                     // are referenced from the below ranking functions' ORDER BY clause.
-                    c.data(DATA_UNALIAS_ALIASES_IN_ORDER_BY, !wrapQueryExpressionBodyInDerivedTable);
+                    c.data(DATA_UNALIAS_ALIASED_EXPRESSIONS, !wrapQueryExpressionBodyInDerivedTable);
 
                     boolean qualify = c.qualify();
 
@@ -888,7 +972,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
                         : DSL.rowNumber().over(orderBy(getNonEmptyOrderBy(c.configuration())))
                     );
 
-                    c.data().remove(DATA_UNALIAS_ALIASES_IN_ORDER_BY);
+                    c.data().remove(DATA_UNALIAS_ALIASED_EXPRESSIONS);
                     c.data().remove(DATA_OVERRIDE_ALIASES_IN_ORDER_BY);
                     if (wrapQueryExpressionBodyInDerivedTable)
                         c.qualify(qualify);
@@ -901,7 +985,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         ctx.visit(K_SELECT).sql(' ')
            .declareFields(true)
-           .visit(new SelectFieldList<Field<?>>(unaliasedFields))
+           .visit(new SelectFieldList<>(unaliasedFields))
            .declareFields(false)
            .formatSeparator()
            .visit(K_FROM).sql(" (")
@@ -932,12 +1016,19 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         // [#5068] Don't rely on nested query's ordering in case an operation
         //         like DISTINCT or JOIN produces hashing.
         // [#7427] Don't order if not strictly required.
-        if (!ctx.subquery() && !getOrderBy().isEmpty())
+        // [#7609] Don't order if users prefer not to
+        if (!ctx.subquery()
+                && !getOrderBy().isEmpty()
+                && !Boolean.FALSE.equals(ctx.settings().isRenderOrderByRownumberForEmulatedPagination()))
             ctx.formatSeparator()
                .visit(K_ORDER_BY)
                .sql(' ')
                .visit(name("rn"));
     }
+
+
+
+
 
 
 
@@ -1034,8 +1125,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
      */
     @SuppressWarnings("unchecked")
     private final void toSQLReference0(Context<?> context, Field<?>[] originalFields, Field<?>[] alternativeFields) {
-        SQLDialect dialect = context.dialect();
-        SQLDialect family = dialect.family();
+        SQLDialect family = context.family();
         boolean qualify = context.qualify();
 
         int unionOpSize = unionOp.size();
@@ -1051,7 +1141,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         // synthetic parentheses
         boolean wrapQueryExpressionInDerivedTable;
         boolean wrapQueryExpressionBodyInDerivedTable = false;
-        boolean applySeekOnDerivedTable = applySeekOnDerivedTable(context);
+        boolean applySeekOnDerivedTable = applySeekOnDerivedTable();
 
 
         wrapQueryExpressionInDerivedTable = false
@@ -1170,31 +1260,14 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         // non-ambiguous column names as ambiguous column names are not allowed in subqueries
         if (alternativeFields != null) {
             if (wrapQueryExpressionBodyInDerivedTable && originalFields.length < alternativeFields.length)
-                context.visit(new SelectFieldList<Field<?>>(Arrays.copyOf(alternativeFields, alternativeFields.length - 1)));
+                context.visit(new SelectFieldList<>(Arrays.copyOf(alternativeFields, alternativeFields.length - 1)));
             else
-                context.visit(new SelectFieldList<Field<?>>(alternativeFields));
-        }
-
-        // [#1905] H2 only knows arrays, no row value expressions. Subqueries
-        // in the context of a row value expression predicate have to render
-        // arrays explicitly, as the subquery doesn't form an implicit RVE
-        else if (context.subquery() && dialect == H2 && context.data(DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY) != null) {
-            Object data = context.data(DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY);
-
-            try {
-                context.data(DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY, null);
-                context.sql('(')
-                       .visit(getSelect1())
-                       .sql(')');
-            }
-            finally {
-                context.data(DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY, data);
-            }
+                context.visit(new SelectFieldList<>(alternativeFields));
         }
 
         // The default behaviour
         else {
-            context.visit(getSelect1());
+            context.visit(getSelectResolveUnsupportedAsterisks(family));
         }
 
 
@@ -1216,13 +1289,17 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         ) {
             context.start(SELECT_INTO);
 
-            Table<?> actualInto = (Table<?>) context.data(DATA_SELECT_INTO_TABLE);
+            QueryPart actualInto = (QueryPart) context.data(DATA_SELECT_INTO_TABLE);
+
+
+
+
             if (actualInto == null)
                 actualInto = into;
 
             if (actualInto != null
-                    && context.data(DATA_OMIT_INTO_CLAUSE) == null
-                    && SUPPORT_SELECT_INTO.contains(family)) {
+                    && !TRUE.equals(context.data(DATA_OMIT_INTO_CLAUSE))
+                    && (SUPPORT_SELECT_INTO_TABLE.contains(family) || !(actualInto instanceof Table))) {
 
                 context.formatSeparator()
                        .visit(K_INTO)
@@ -1249,15 +1326,24 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         ;
 
         List<Condition> semiAntiJoinPredicates = null;
+        ConditionProviderImpl where = getWhere();
 
         if (hasFrom) {
             Object previousCollect = context.data(DATA_COLLECT_SEMI_ANTI_JOIN, true);
             Object previousCollected = context.data(DATA_COLLECTED_SEMI_ANTI_JOIN, null);
 
+            TableList tablelist = getFrom();
+
+
+
+
+
+
+
             context.formatSeparator()
                    .visit(K_FROM)
                    .sql(' ')
-                   .visit(getFrom());
+                   .visit(tablelist);
 
 
 
@@ -1281,9 +1367,8 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         // WHERE clause
         // ------------
         context.start(SELECT_WHERE);
-        ConditionProviderImpl where = getWhere();
 
-        if (TRUE.equals(context.data().get(DataKey.DATA_SELECT_NO_DATA)))
+        if (TRUE.equals(context.data().get(BooleanDataKey.DATA_SELECT_NO_DATA)))
             context.formatSeparator()
                    .visit(K_WHERE)
                    .sql(' ')
@@ -1389,11 +1474,20 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         context.end(SELECT_HAVING);
 
+        // QUALIFY clause
+        // -------------
+
+        if (getQualify().hasWhere())
+            context.formatSeparator()
+                   .visit(K_QUALIFY)
+                   .sql(' ')
+                   .visit(getQualify());
+
         // WINDOW clause
         // -------------
         context.start(SELECT_WINDOW);
 
-        if (Tools.isNotEmpty(window) && SUPPORT_WINDOW_CLAUSE.contains(family)) {
+        if (Tools.isNotEmpty(window) && context.dialect().supports(SUPPORT_WINDOW_CLAUSE)) {
             context.formatSeparator()
                    .visit(K_WINDOW)
                    .sql(' ')
@@ -1423,7 +1517,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
                 for (Select<?> other : union.get(i)) {
                     context.formatSeparator()
-                           .visit(op.toKeyword(dialect))
+                           .visit(op.toKeyword(family))
                            .sql(' ');
 
                     unionParenthesis(context, '(', other.getSelect().toArray(EMPTY_FIELD));
@@ -1481,11 +1575,13 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     }
 
     private final void toSQLOrderBy(
-            Context<?> ctx,
-            Field<?>[] originalFields, Field<?>[] alternativeFields,
-            boolean wrapQueryExpressionInDerivedTable, boolean wrapQueryExpressionBodyInDerivedTable,
-            SortFieldList actualOrderBy,
-            Limit actualLimit
+        Context<?> ctx,
+        Field<?>[] originalFields,
+        Field<?>[] alternativeFields,
+        boolean wrapQueryExpressionInDerivedTable,
+        boolean wrapQueryExpressionBodyInDerivedTable,
+        SortFieldList actualOrderBy,
+        Limit actualLimit
     ) {
 
         ctx.start(SELECT_ORDER_BY);
@@ -1493,8 +1589,8 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         // [#6197] When emulating WITH TIES using RANK() in a subquery, we must avoid rendering the
         //         subquery's ORDER BY clause
         if (!getLimit().withTies()
-
-
+            // Dialects with native support
+            || SUPPORT_FULL_WITH_TIES.contains(ctx.dialect())
 
 
 
@@ -1555,16 +1651,17 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
                .formatNewLine()
                .sql(") x");
 
-        if (ctx.data().containsKey(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE) && actualLimit.isApplicable())
+        if (TRUE.equals(ctx.data().get(DATA_RENDER_TRAILING_LIMIT_IF_APPLICABLE)) && actualLimit.isApplicable())
             ctx.visit(actualLimit);
     }
 
-    private final boolean applySeekOnDerivedTable(Context<?> ctx) {
+    private final boolean applySeekOnDerivedTable() {
         return !getSeek().isEmpty() && !getOrderBy().isEmpty() && !unionOp.isEmpty();
     }
 
     private final boolean wrapQueryExpressionBodyInDerivedTable(Context<?> ctx) {
         return true
+
 
 
 
@@ -1643,8 +1740,10 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
 
-    private static final EnumSet<SQLDialect> NO_SUPPORT_UNION_PARENTHESES = EnumSet.of(SQLITE);
-    private static final EnumSet<SQLDialect> UNION_PARENTHESIS            = EnumSet.of(DERBY, MARIADB, MYSQL);
+
+    private static final Set<SQLDialect> NO_SUPPORT_UNION_PARENTHESES = SQLDialect.supported(SQLITE);
+    private static final Set<SQLDialect> UNION_PARENTHESIS = SQLDialect.supported(DERBY, MARIADB, MYSQL);
+    private static final Set<SQLDialect> UNION_PARENTHESIS_IN_DERIVED_TABLES = SQLDialect.supported(DERBY);
 
     private final boolean unionOpNesting() {
         if (unionOp.size() > 1)
@@ -1676,10 +1775,12 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
             // [#2995] Ambiguity may need to be resolved when parentheses could mean both:
             //         Set op subqueries or insert column lists
-            || ctx.data(DATA_INSERT_SELECT_WITHOUT_INSERT_COLUMN_LIST) != null
+            || TRUE.equals(ctx.data(DATA_INSERT_SELECT_WITHOUT_INSERT_COLUMN_LIST))
 
-            // [#7222] Workaround for https://issues.apache.org/jira/browse/DERBY-6984
-            || (ctx.family() == DERBY && ctx.subquery());
+            // [#7222] [#7711] Workaround for https://issues.apache.org/jira/browse/DERBY-6984
+            || (ctx.subquery() && UNION_PARENTHESIS_IN_DERIVED_TABLES.contains(ctx.family()))
+            /* [/pro] */
+            ;
 
         if (')' == parenthesis) {
             ctx.formatIndentEnd()
@@ -1695,7 +1796,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
                 // [#7222] Workaround for https://issues.apache.org/jira/browse/DERBY-6983
                 if (ctx.family() == DERBY)
-                    ctx.visit(new SelectFieldList<Field<?>>(Tools.unqualified(fields)));
+                    ctx.visit(new SelectFieldList<>(Tools.unqualified(fields)));
                 else
                     ctx.sql('*');
 
@@ -1734,7 +1835,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     public final void addSelect(Collection<? extends SelectFieldOrAsterisk> fields) {
-        getSelect0().addAll(fields);
+        getSelectAsSpecified().addAll(fields);
     }
 
     @Override
@@ -1755,7 +1856,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     @Override
     public final void addDistinctOn(Collection<? extends SelectFieldOrAsterisk> fields) {
         if (distinctOn == null)
-            distinctOn = new QueryPartList<SelectFieldOrAsterisk>();
+            distinctOn = new QueryPartList<>();
 
         distinctOn.addAll(fields);
     }
@@ -1767,56 +1868,77 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     public final void addOffset(int offset) {
+        addOffset((Number) offset);
+    }
+
+    @Override
+    public final void addOffset(Number offset) {
         getLimit().setOffset(offset);
     }
 
     @Override
-    public final void addOffset(Param<Integer> offset) {
+    public final void addOffset(Param<? extends Number> offset) {
         getLimit().setOffset(offset);
     }
 
     @Override
     public final void addLimit(int numberOfRows) {
+        addLimit((Number) numberOfRows);
+    }
+
+    @Override
+    public final void addLimit(Number numberOfRows) {
         getLimit().setNumberOfRows(numberOfRows);
     }
 
     @Override
-    public final void addLimit(Param<Integer> numberOfRows) {
+    public final void addLimit(Param<? extends Number> numberOfRows) {
         getLimit().setNumberOfRows(numberOfRows);
     }
 
     @Override
     public final void addLimit(int offset, int numberOfRows) {
+        addLimit((Number) offset, (Number) numberOfRows);
+    }
+
+    @Override
+    public final void addLimit(Number offset, Number numberOfRows) {
         getLimit().setOffset(offset);
         getLimit().setNumberOfRows(numberOfRows);
     }
 
     @Override
     public final void addLimit(int offset, Param<Integer> numberOfRows) {
+        addLimit((Number) offset, numberOfRows);
+    }
+
+    @Override
+    public final void addLimit(Number offset, Param<? extends Number> numberOfRows) {
         getLimit().setOffset(offset);
         getLimit().setNumberOfRows(numberOfRows);
     }
 
     @Override
     public final void addLimit(Param<Integer> offset, int numberOfRows) {
+        addLimit(offset, (Number) numberOfRows);
+    }
+
+    @Override
+    public final void addLimit(Param<? extends Number> offset, Number numberOfRows) {
         getLimit().setOffset(offset);
         getLimit().setNumberOfRows(numberOfRows);
     }
 
     @Override
-    public final void addLimit(Param<Integer> offset, Param<Integer> numberOfRows) {
+    public final void addLimit(Param<? extends Number> offset, Param<? extends Number> numberOfRows) {
         getLimit().setOffset(offset);
         getLimit().setNumberOfRows(numberOfRows);
     }
 
-
-
-
-
-
-
-
-
+    @Override
+    public final void setLimitPercent(boolean percent) {
+        getLimit().setPercent(percent);
+    }
 
     @Override
     public final void setWithTies(boolean withTies) {
@@ -1825,8 +1947,17 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     public final void setForUpdate(boolean forUpdate) {
-        this.forUpdate = forUpdate;
-        this.forShare = false;
+        this.forUpdateLockMode = ForUpdateLockMode.UPDATE;
+    }
+
+    @Override
+    public final void setForNoKeyUpdate(boolean forNoKeyUpdate) {
+        this.forUpdateLockMode = ForUpdateLockMode.NO_KEY_UPDATE;
+    }
+
+    @Override
+    public final void setForKeyShare(boolean forKeyShare) {
+        this.forUpdateLockMode = ForUpdateLockMode.KEY_SHARE;
     }
 
     @Override
@@ -1837,7 +1968,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     @Override
     public final void setForUpdateOf(Collection<? extends Field<?>> fields) {
         setForUpdate(true);
-        forUpdateOf = new QueryPartList<Field<?>>(fields);
+        forUpdateOf = new QueryPartList<>(fields);
         forUpdateOfTables = null;
     }
 
@@ -1848,36 +1979,33 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         forUpdateOfTables = new TableList(Arrays.asList(tables));
     }
 
-
-
-
-
-
-
-
-
+    @Override
+    public final void setForUpdateWait(int seconds) {
+        setForUpdate(true);
+        forUpdateWaitMode = ForUpdateWaitMode.WAIT;
+        forUpdateWait = seconds;
+    }
 
     @Override
     public final void setForUpdateNoWait() {
         setForUpdate(true);
-        forUpdateMode = ForUpdateMode.NOWAIT;
+        forUpdateWaitMode = ForUpdateWaitMode.NOWAIT;
         forUpdateWait = 0;
     }
 
     @Override
     public final void setForUpdateSkipLocked() {
         setForUpdate(true);
-        forUpdateMode = ForUpdateMode.SKIP_LOCKED;
+        forUpdateWaitMode = ForUpdateWaitMode.SKIP_LOCKED;
         forUpdateWait = 0;
     }
 
     @Override
     public final void setForShare(boolean forShare) {
-        this.forUpdate = false;
-        this.forShare = forShare;
+        this.forUpdateLockMode = ForUpdateLockMode.SHARE;
         this.forUpdateOf = null;
         this.forUpdateOfTables = null;
-        this.forUpdateMode = null;
+        this.forUpdateWaitMode = null;
         this.forUpdateWait = 0;
     }
 
@@ -1895,43 +2023,116 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
 
+
+
     @Override
     public final List<Field<?>> getSelect() {
-        List<Field<?>> result = new ArrayList<Field<?>>();
+        return getSelectResolveAllAsterisks(configuration() != null ? configuration().family() : SQLDialect.DEFAULT);
+    }
 
-        for (SelectFieldOrAsterisk f : getSelect1())
+    private final Collection<? extends Field<?>> subtract(List<Field<?>> left, List<Field<?>> right) {
+
+        // [#7921] TODO Make this functionality more generally reusable
+        Fields<?> e = new Fields<>(right);
+        List<Field<?>> result = new ArrayList<>();
+
+        for (Field<?> f : left)
+            if (e.field(f) == null)
+                result.add(f);
+
+        return result;
+    }
+
+    /**
+     * The select list as specified by the API user.
+     */
+    final SelectFieldList<SelectFieldOrAsterisk> getSelectAsSpecified() {
+        return select;
+    }
+
+    /**
+     * The select list with resolved implicit asterisks.
+     */
+    final SelectFieldList<SelectFieldOrAsterisk> getSelectResolveImplicitAsterisks() {
+        if (getSelectAsSpecified().isEmpty())
+            return resolveAsterisk(new SelectFieldList<>());
+
+        return getSelectAsSpecified();
+    }
+
+    /**
+     * The select list with resolved explicit asterisks (if they contain the
+     * except clause and that is not supported).
+     */
+    final SelectFieldList<SelectFieldOrAsterisk> getSelectResolveUnsupportedAsterisks(SQLDialect family) {
+        return getSelectResolveSomeAsterisks0(family, false);
+    }
+
+    /**
+     * The select list with resolved explicit asterisks (if they contain the
+     * except clause and that is not supported).
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    final SelectFieldList<Field<?>> getSelectResolveAllAsterisks(SQLDialect family) {
+        return (SelectFieldList) getSelectResolveSomeAsterisks0(family, true);
+    }
+
+    private final SelectFieldList<SelectFieldOrAsterisk> getSelectResolveSomeAsterisks0(SQLDialect family, boolean resolveSupported) {
+        SelectFieldList<SelectFieldOrAsterisk> result = new SelectFieldList<>();
+
+        // [#7921] Only H2 supports the * EXCEPT (..) syntax
+        boolean resolveExcept = resolveSupported || family != H2;
+
+        // [#7921] TODO Find a better, more efficient way to resolve asterisks
+        for (SelectFieldOrAsterisk f : getSelectResolveImplicitAsterisks())
             if (f instanceof Field<?>)
-                result.add((Field<?>) f);
+                result.add(f);
             else if (f instanceof QualifiedAsterisk)
-                result.addAll(Arrays.asList(((QualifiedAsterisk) f).qualifier().fields()));
+                if (((QualifiedAsteriskImpl) f).fields.isEmpty())
+                    if (resolveSupported)
+                        result.addAll(Arrays.asList(((QualifiedAsterisk) f).qualifier().fields()));
+                    else
+                        result.add(f);
+                else if (resolveExcept)
+                    result.addAll(subtract(Arrays.asList(((QualifiedAsterisk) f).qualifier().fields()), (((QualifiedAsteriskImpl) f).fields)));
+                else
+                    result.add(f);
             else if (f instanceof Asterisk)
-                result.addAll(resolveAsterisk(new QueryPartList<Field<?>>()));
+                if (((AsteriskImpl) f).fields.isEmpty())
+                    if (resolveSupported)
+                        result.addAll(resolveAsterisk(new QueryPartList<>()));
+                    else
+                        result.add(f);
+                else if (resolveExcept)
+                    result.addAll(resolveAsterisk(new QueryPartList<>(), ((AsteriskImpl) f).fields));
+                else
+                    result.add(f);
             else
                 throw new AssertionError("Type not supported: " + f);
 
         return result;
     }
 
-    final SelectFieldList<SelectFieldOrAsterisk> getSelect0() {
-        return select;
-    }
-
-    final SelectFieldList<SelectFieldOrAsterisk> getSelect1() {
-        if (getSelect0().isEmpty())
-            return resolveAsterisk(new SelectFieldList<SelectFieldOrAsterisk>());
-
-        return getSelect0();
-    }
-
     private final <Q extends QueryPartList<? super Field<?>>> Q resolveAsterisk(Q result) {
+        return resolveAsterisk(result, null);
+    }
+
+    private final <Q extends QueryPartList<? super Field<?>>> Q resolveAsterisk(Q result, QueryPartList<Field<?>> except) {
+        Fields<?> e = except == null ? null : new Fields<>(except);
 
         // [#109] [#489] [#7231]: SELECT * is only applied when at least one
         // table from the table source is "unknown", i.e. not generated from a
         // physical table. Otherwise, the fields are selected explicitly
         if (knownTableSource())
-            for (TableLike<?> table : getFrom())
-                for (Field<?> field : table.asTable().fields())
-                    result.add(field);
+            if (e == null)
+                for (TableLike<?> table : getFrom())
+                    for (Field<?> field : table.asTable().fields())
+                        result.add(field);
+            else
+                for (TableLike<?> table : getFrom())
+                    for (Field<?> field : table.asTable().fields())
+                        if (e.field(field) == null)
+                            result.add(field);
 
         // The default is SELECT 1, when projections and table sources are
         // both empty
@@ -1956,19 +2157,39 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
             return table.fieldsRow().size() > 0;
     }
 
+    private final boolean containsTable(Table<?> table) {
+        for (Table<?> t : getFrom())
+            if (containsTable(t, table))
+                return true;
+
+        return false;
+    }
+
+    private final boolean containsTable(Table<?> table, Table<?> contained) {
+        Table<?> alias;
+
+        if ((alias = Tools.aliased(table)) != null)
+            return containsTable(alias, contained);
+        else if ((alias = Tools.aliased(contained)) != null)
+            return containsTable(table, alias);
+        else if (table instanceof JoinTable)
+            return containsTable(((JoinTable) table).lhs, contained)
+                || containsTable(((JoinTable) table).rhs, contained);
+        else
+            return contained.equals(table);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    public final Class<? extends R> getRecordType() {
+    final Class<? extends R> getRecordType0() {
         // Generated record classes only come into play, when the select is
         // - on a single table
         // - a select *
 
-        if (getFrom().size() == 1 && getSelect0().isEmpty()) {
+        if (getFrom().size() == 1 && getSelectAsSpecified().isEmpty())
             return (Class<? extends R>) getFrom().get(0).asTable().getRecordType();
-        }
-        else {
+        else
             return (Class<? extends R>) RecordImpl.class;
-        }
     }
 
     final TableList getFrom() {
@@ -2056,6 +2277,10 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         return having;
     }
 
+    final ConditionProviderImpl getQualify() {
+        return qualify;
+    }
+
     final SortFieldList getOrderBy() {
         return (unionOp.size() == 0) ? orderBy : unionOrderBy;
     }
@@ -2117,13 +2342,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     public final void addOrderBy(int... fieldIndexes) {
-        Field<?>[] fields = new Field[fieldIndexes.length];
-
-        for (int i = 0; i < fieldIndexes.length; i++) {
-            fields[i] = inline(fieldIndexes[i]);
-        }
-
-        addOrderBy(fields);
+        addOrderBy(Tools.inline(fieldIndexes));
     }
 
     @Override
@@ -2214,7 +2433,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
     @Override
     final boolean isForUpdate() {
-        return forUpdate;
+        return forUpdateLockMode == ForUpdateLockMode.UPDATE;
     }
 
     @Override
@@ -2255,7 +2474,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         setGrouping();
 
         if (groupBy == null)
-            groupBy = new QueryPartList<GroupField>();
+            groupBy = new QueryPartList<>();
 
         groupBy.addAll(fields);
     }
@@ -2308,12 +2527,49 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
         window.addAll(definitions);
     }
 
+    @Override
+    public final void addQualify(Condition conditions) {
+        getQualify().addConditions(conditions);
+    }
+
+    @Override
+    public final void addQualify(Condition... conditions) {
+        getQualify().addConditions(conditions);
+    }
+
+    @Override
+    public final void addQualify(Collection<? extends Condition> conditions) {
+        getQualify().addConditions(conditions);
+    }
+
+    @Override
+    public final void addQualify(Operator operator, Condition conditions) {
+        getQualify().addConditions(operator, conditions);
+    }
+
+    @Override
+    public final void addQualify(Operator operator, Condition... conditions) {
+        getQualify().addConditions(operator, conditions);
+    }
+
+    @Override
+    public final void addQualify(Operator operator, Collection<? extends Condition> conditions) {
+        getQualify().addConditions(operator, conditions);
+    }
+
+    @SuppressWarnings("rawtypes")
     private final Select<R> combine(CombineOperator op, Select<? extends R> other) {
+
+        // [#8557] Prevent StackOverflowError when using same query instance on
+        //         both sides of a set operation
+        if (this == other || (other instanceof SelectImpl && this == ((SelectImpl) other).getDelegate()))
+            throw new IllegalArgumentException("In jOOQ 3.x's mutable DSL API, it is not possible to use the same instance of a Select query on both sides of a set operation like s.union(s)");
+
         int index = unionOp.size() - 1;
 
         if (index == -1 || unionOp.get(index) != op || op == EXCEPT || op == EXCEPT_ALL) {
             unionOp.add(op);
-            union.add(new QueryPartList<Select<?>>());
+            union.add(new QueryPartList<>());
 
             index++;
         }
@@ -2384,6 +2640,8 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
 
 
+
+
     private final void addJoin0(TableLike<?> table, JoinType type, Object conditions, Field<?>[] partitionBy) {
 
         // TODO: This and similar methods should be refactored, patterns extracted...
@@ -2427,6 +2685,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
             case NATURAL_JOIN:
             case NATURAL_LEFT_OUTER_JOIN:
             case NATURAL_RIGHT_OUTER_JOIN:
+            case NATURAL_FULL_OUTER_JOIN:
 
 
 
@@ -2558,7 +2817,29 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
     /**
      * The lock mode for the <code>FOR UPDATE</code> clause, if set.
      */
-    private static enum ForUpdateMode {
+    private static enum ForUpdateLockMode {
+        UPDATE("update"),
+        NO_KEY_UPDATE("no key update"),
+        SHARE("share"),
+        KEY_SHARE("key share"),
+
+        ;
+
+        private final Keyword keyword;
+
+        private ForUpdateLockMode(String sql) {
+            this.keyword = DSL.keyword(sql);
+        }
+
+        public final Keyword toKeyword() {
+            return keyword;
+        }
+    }
+
+    /**
+     * The wait mode for the <code>FOR UPDATE</code> clause, if set.
+     */
+    private static enum ForUpdateWaitMode {
         WAIT("wait"),
         NOWAIT("nowait"),
         SKIP_LOCKED("skip locked"),
@@ -2567,7 +2848,7 @@ final class SelectQueryImpl<R extends Record> extends AbstractResultQuery<R> imp
 
         private final Keyword keyword;
 
-        private ForUpdateMode(String sql) {
+        private ForUpdateWaitMode(String sql) {
             this.keyword = DSL.keyword(sql);
         }
 

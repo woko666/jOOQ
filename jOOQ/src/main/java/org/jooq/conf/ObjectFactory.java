@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import javax.xml.bind.JAXBElement;
@@ -31,7 +24,7 @@ import javax.xml.namespace.QName;
 @XmlRegistry
 public class ObjectFactory {
 
-    private final static QName _Settings_QNAME = new QName("http://www.jooq.org/xsd/jooq-runtime-3.11.0.xsd", "settings");
+    private final static QName _Settings_QNAME = new QName("http://www.jooq.org/xsd/jooq-runtime-3.13.0.xsd", "settings");
 
     /**
      * Create a new ObjectFactory that can be used to create new instances of schema derived classes for package: org.jooq.conf
@@ -46,6 +39,14 @@ public class ObjectFactory {
      */
     public Settings createSettings() {
         return new Settings();
+    }
+
+    /**
+     * Create an instance of {@link ParseSearchSchema }
+     *
+     */
+    public ParseSearchSchema createParseSearchSchema() {
+        return new ParseSearchSchema();
     }
 
     /**
@@ -81,10 +82,14 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link JAXBElement }{@code <}{@link Settings }{@code >}}
+     * Create an instance of {@link JAXBElement }{@code <}{@link Settings }{@code >}
      *
+     * @param value
+     *     Java instance representing xml element's value.
+     * @return
+     *     the new instance of {@link JAXBElement }{@code <}{@link Settings }{@code >}
      */
-    @XmlElementDecl(namespace = "http://www.jooq.org/xsd/jooq-runtime-3.11.0.xsd", name = "settings")
+    @XmlElementDecl(namespace = "http://www.jooq.org/xsd/jooq-runtime-3.13.0.xsd", name = "settings")
     public JAXBElement<Settings> createSettings(Settings value) {
         return new JAXBElement<Settings>(_Settings_QNAME, Settings.class, null, value);
     }

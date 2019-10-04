@@ -37,29 +37,58 @@
  */
 package org.jooq.impl;
 
-import static org.jooq.impl.DSL.function;
+// ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+import static org.jooq.SQLDialect.DERBY;
+// ...
+// ...
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.SQLITE;
+// ...
+// ...
+import static org.jooq.impl.Keywords.F_CURRENT_BIGDATETIME;
+import static org.jooq.impl.Keywords.F_CURRENT_TIMESTAMP;
+import static org.jooq.impl.Keywords.F_NOW;
+import static org.jooq.impl.Keywords.K_CURRENT;
+import static org.jooq.impl.Keywords.K_TIMESTAMP;
 
-import org.jooq.Configuration;
+import java.util.Set;
+
+import org.jooq.Context;
 import org.jooq.DataType;
 import org.jooq.Field;
+import org.jooq.SQLDialect;
 
 /**
  * @author Lukas Eder
  */
-final class CurrentTimestamp<T> extends AbstractFunction<T> {
+final class CurrentTimestamp<T> extends AbstractField<T> {
 
     /**
      * Generated UID
      */
-    private static final long serialVersionUID = -7273879239726265322L;
+    private static final long            serialVersionUID     = -7273879239726265322L;
+    private static final Set<SQLDialect> NO_SUPPORT_PRECISION = SQLDialect.supported(CUBRID, DERBY, SQLITE);
+
+    private final Field<Integer>         precision;
 
     CurrentTimestamp(DataType<T> type) {
-        super("current_timestamp", type);
+        this(type, null);
+    }
+
+    CurrentTimestamp(DataType<T> type, Field<Integer> precision) {
+        super(DSL.name("current_timestamp"), type);
+        this.precision = precision;
     }
 
     @Override
-    final Field<T> getFunction0(Configuration configuration) {
-        switch (configuration.family()) {
+    public final void accept(Context<?> ctx) {
+        switch (ctx.family()) {
+
+
 
 
 
@@ -91,9 +120,17 @@ final class CurrentTimestamp<T> extends AbstractFunction<T> {
             case HSQLDB:
             case POSTGRES:
             case SQLITE:
-                return DSL.field("{current_timestamp}", getDataType());
+                if (precision != null && !NO_SUPPORT_PRECISION.contains(ctx.family()))
+                    ctx.visit(F_CURRENT_TIMESTAMP).sql('(').visit(precision).sql(')');
+                else
+                    ctx.visit(F_CURRENT_TIMESTAMP);
+                break;
+            default:
+                if (precision != null && !NO_SUPPORT_PRECISION.contains(ctx.family()))
+                    ctx.visit(F_CURRENT_TIMESTAMP).sql('(').visit(precision).sql(')');
+                else
+                    ctx.visit(F_CURRENT_TIMESTAMP).sql("()");
+                break;
         }
-
-        return function("current_timestamp", getDataType());
     }
 }

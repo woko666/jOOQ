@@ -52,7 +52,10 @@ import org.jooq.exception.DataTypeException;
 import org.jooq.impl.DSL;
 
 /**
- * Any query
+ * Any query.
+ * <p>
+ * Instances can be created using {@link DSL#query(String)} and overloads,
+ * or by creating a subtype.
  *
  * @author Lukas Eder
  */
@@ -289,6 +292,17 @@ public interface Query extends Statement, Attachable , AutoCloseable  {
     // ------------------------------------------------------------------------
     // JDBC methods
     // ------------------------------------------------------------------------
+
+    /**
+     * Specify whether any JDBC {@link java.sql.Statement} created by this query
+     * should be {@link java.sql.Statement#setPoolable(boolean)}.
+     * <p>
+     * If this method is not called on jOOQ types, then jOOQ will not specify
+     * the flag on JDBC either, resulting in JDBC's default behaviour.
+     *
+     * @see java.sql.Statement#setPoolable(boolean)
+     */
+    Query poolable(boolean poolable);
 
     /**
      * Specify the query timeout in number of seconds for the underlying JDBC

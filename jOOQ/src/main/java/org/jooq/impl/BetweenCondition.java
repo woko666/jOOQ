@@ -54,6 +54,7 @@ import static org.jooq.SQLDialect.H2;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -64,13 +65,16 @@ import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 import static org.jooq.impl.DSL.nullSafe;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.val;
 import static org.jooq.impl.Keywords.K_AND;
 import static org.jooq.impl.Keywords.K_BETWEEN;
 import static org.jooq.impl.Keywords.K_NOT;
 import static org.jooq.impl.Keywords.K_SYMMETRIC;
+import static org.jooq.impl.Tools.embeddedFields;
+import static org.jooq.impl.Tools.isEmbeddable;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.BetweenAndStep;
 import org.jooq.Clause;
@@ -79,6 +83,7 @@ import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.QueryPartInternal;
+import org.jooq.RowN;
 import org.jooq.SQLDialect;
 
 /**
@@ -91,7 +96,7 @@ final class BetweenCondition<T> extends AbstractCondition implements BetweenAndS
     private static final Clause[]            CLAUSES_BETWEEN_SYMMETRIC     = { CONDITION, CONDITION_BETWEEN_SYMMETRIC };
     private static final Clause[]            CLAUSES_NOT_BETWEEN           = { CONDITION, CONDITION_NOT_BETWEEN };
     private static final Clause[]            CLAUSES_NOT_BETWEEN_SYMMETRIC = { CONDITION, CONDITION_NOT_BETWEEN_SYMMETRIC };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_SYMMETRIC          = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
+    private static final Set<SQLDialect>     NO_SUPPORT_SYMMETRIC          = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
 
     private final boolean                    symmetric;
     private final boolean                    not;
@@ -127,16 +132,29 @@ final class BetweenCondition<T> extends AbstractCondition implements BetweenAndS
         ctx.visit(delegate(ctx.configuration()));
     }
 
-    @Override
+    @Override // Avoid AbstractCondition implementation
     public final Clause[] clauses(Context<?> ctx) {
         return null;
     }
 
     private final QueryPartInternal delegate(Configuration configuration) {
-        if (symmetric && NO_SUPPORT_SYMMETRIC.contains(configuration.family()))
-            return not
-                ? (QueryPartInternal) field.notBetween(minValue, maxValue).and(field.notBetween(maxValue, minValue))
-                : (QueryPartInternal) field.between(minValue, maxValue).or(field.between(maxValue, minValue));
+        if (isEmbeddable(field) && isEmbeddable(minValue) && isEmbeddable(maxValue)) {
+            RowN f = row(embeddedFields(field));
+            RowN min = row(embeddedFields(minValue));
+            RowN max = row(embeddedFields(maxValue));
+
+            return (QueryPartInternal) (not
+                 ? symmetric
+                     ? f.notBetweenSymmetric(min).and(max)
+                     : f.notBetween(min).and(max)
+                 : symmetric
+                     ? f.betweenSymmetric(min).and(max)
+                     : f.between(min).and(max));
+        }
+        else if (symmetric && NO_SUPPORT_SYMMETRIC.contains(configuration.family()))
+            return (QueryPartInternal) (not
+                ? field.notBetween(minValue, maxValue).and(field.notBetween(maxValue, minValue))
+                : field.between(minValue, maxValue).or(field.between(maxValue, minValue)));
         else
             return new Native();
     }

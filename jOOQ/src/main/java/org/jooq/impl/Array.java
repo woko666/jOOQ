@@ -64,7 +64,7 @@ final class Array<T> extends AbstractField<T[]> {
     Array(Collection<? extends Field<T>> fields) {
         super(DSL.name("array"), type(fields));
 
-        this.fields = new Fields<Record>(fields);
+        this.fields = new Fields<>(fields);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -78,14 +78,12 @@ final class Array<T> extends AbstractField<T[]> {
     @Override
     public final void accept(Context<?> ctx) {
         switch (ctx.family()) {
+
+
+
+
+
             case H2:
-                ctx.sql('(').visit(fields).sql(')');
-                break;
-
-
-
-
-
             case HSQLDB:
             case POSTGRES:
             default:
@@ -94,7 +92,7 @@ final class Array<T> extends AbstractField<T[]> {
                    .visit(fields)
                    .sql(']');
 
-                if (fields.fields.length == 0 && (                                                            ctx.family() == POSTGRES))
+                if (fields.fields.length == 0 && ( ctx.family() == POSTGRES))
                     ctx.sql("::").visit(K_INT).sql("[]");
 
                 break;

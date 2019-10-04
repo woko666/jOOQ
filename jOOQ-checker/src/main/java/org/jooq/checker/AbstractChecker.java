@@ -41,6 +41,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.jooq.checker.Tools.Printer;
+
 import org.checkerframework.framework.source.Result;
 import org.checkerframework.framework.source.SourceChecker;
 
@@ -51,26 +53,21 @@ import org.checkerframework.framework.source.SourceChecker;
  */
 abstract class AbstractChecker extends SourceChecker {
 
-    void error(Object node, String message) {
+    Void error(Object node, String message) {
         getChecker().report(Result.failure(message, node), node);
+        return null;
     }
 
-    void warn(Object node, String message) {
-        getChecker().report(Result.warning(message, node), node);
-    }
-
-    void print(Printer printer) {
+    static Void print(Printer printer) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("error.txt"))){
             writer.println("This is probably a bug in jOOQ-checker.");
-            writer.println("Please report this bug here: https://github.com/jOOQ/jOOQ/issues/new");
+            writer.println("If you think this is a bug in jOOQ, please report it here: https://github.com/jOOQ/jOOQ/issues/new");
             writer.println("---------------------------------------------------------------------");
 
             printer.print(writer);
         }
         catch (IOException ignore) {}
-    }
 
-    interface Printer {
-        void print(PrintWriter writer);
+        return null;
     }
 }

@@ -48,7 +48,9 @@ import java.util.concurrent.ForkJoinPool;
 import javax.sql.DataSource;
 
 import org.jooq.conf.Settings;
+import org.jooq.impl.DSL;
 import org.jooq.impl.DataSourceConnectionProvider;
+import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.DefaultConnectionProvider;
 import org.jooq.impl.DefaultDiagnosticsListenerProvider;
 import org.jooq.impl.DefaultExecuteListenerProvider;
@@ -177,6 +179,10 @@ public interface Configuration extends Serializable {
      * Wrap this <code>Configuration</code> in a {@link DSLContext}, providing
      * access to the configuration-contextual DSL to construct executable
      * queries.
+     * <p>
+     * In the {@link DefaultConfiguration} implementation, this is just
+     * convenience for {@link DSL#using(Configuration)}. There's no functional
+     * difference between the two methods.
      */
     DSLContext dsl();
 
@@ -272,7 +278,7 @@ public interface Configuration extends Serializable {
      * <code>null</code>, then {@link ExecutorProvider#provide()} is called to
      * obtain an <code>Executor</code> for the asynchronous task.</li>
      * <li>In the jOOQ Java 8 distribution, {@link ForkJoinPool#commonPool()} is
-     * used if <code>{@link ForkJoinPool#getCommonPoolParallelism()} > 1</code>
+     * used if <code>{@link ForkJoinPool#getCommonPoolParallelism()} &gt; 1</code>
      * </li>
      * <li>A new "one thread per call" <code>Executor</code> is used in any
      * other case.</li>
@@ -304,6 +310,12 @@ public interface Configuration extends Serializable {
      * configuration.
      */
     DiagnosticsListenerProvider[] diagnosticsListenerProviders();
+
+    /**
+     * Get the configured <code>UnwrapperProvider</code> from this
+     * configuration.
+     */
+    UnwrapperProvider unwrapperProvider();
 
     /**
      * Get this configuration's underlying record mapper provider.
@@ -370,7 +382,27 @@ public interface Configuration extends Serializable {
     ExecuteListenerProvider[] executeListenerProviders();
 
     /**
-     * TODO [#2667]
+     * Get the configured <code>VisitListenerProvider</code> instances from this
+     * configuration.
+     * <p>
+     * This method allows for retrieving the configured
+     * <code>VisitListenerProvider</code> instances from this configuration. The
+     * providers will provide jOOQ with {@link VisitListener} instances. These
+     * instances receive query rendering lifecycle notification events every
+     * time jOOQ renders queries. jOOQ makes no assumptions about the internal
+     * state of these listeners, i.e. listener instances may
+     * <ul>
+     * <li>share this <code>Configuration</code>'s lifecycle (i.e. that of a
+     * JDBC <code>Connection</code>, or that of a transaction)</li>
+     * <li>share the lifecycle of an <code>ExecuteContext</code> (i.e. that of a
+     * single query execution)</li>
+     * <li>follow an entirely different lifecycle.</li>
+     * </ul>
+     *
+     * @return The configured set of visit listeners.
+     * @see VisitListenerProvider
+     * @see VisitListener
+     * @see VisitContext
      */
     VisitListenerProvider[] visitListenerProviders();
 
@@ -691,7 +723,7 @@ public interface Configuration extends Serializable {
     Configuration set(DiagnosticsListener... newDiagnosticsListeners);
 
     /**
-     * Change this configuration to hold a new diagnostics listener providers.
+     * Change this configuration to hold new diagnostics listener providers.
      * <p>
      * This method is not thread-safe and should not be used in globally
      * available <code>Configuration</code> objects.
@@ -701,6 +733,30 @@ public interface Configuration extends Serializable {
      * @return The changed configuration.
      */
     Configuration set(DiagnosticsListenerProvider... newDiagnosticsListenerProviders);
+
+    /**
+     * Change this configuration to hold a new unwrapper.
+     * <p>
+     * This method is not thread-safe and should not be used in globally
+     * available <code>Configuration</code> objects.
+     *
+     * @param newUnwrapper The new unwrapper to be contained in the changed
+     *            configuration.
+     * @return The changed configuration.
+     */
+    Configuration set(Unwrapper newUnwrapper);
+
+    /**
+     * Change this configuration to hold a new unwrapper provider.
+     * <p>
+     * This method is not thread-safe and should not be used in globally
+     * available <code>Configuration</code> objects.
+     *
+     * @param newUnwrapperProvider The new unwrapper provider to be contained in
+     *            the changed configuration.
+     * @return The changed configuration.
+     */
+    Configuration set(UnwrapperProvider newUnwrapperProvider);
 
     /**
      * Change this configuration to hold a new converter provider.
@@ -986,6 +1042,25 @@ public interface Configuration extends Serializable {
      * @return The derived configuration.
      */
     Configuration derive(DiagnosticsListenerProvider... newDiagnosticsListenerProviders);
+
+    /**
+     * Create a derived configuration from this one, with a new unwrapper.
+     *
+     * @param newUnwrapper The new unwrapper to be contained in the derived
+     *            configuration.
+     * @return The derived configuration.
+     */
+    Configuration derive(Unwrapper newUnwrapper);
+
+    /**
+     * Create a derived configuration from this one, with a new unwrapper
+     * provider.
+     *
+     * @param newUnwrapperProvider The new unwrapper provider to be contained in
+     *            the derived configuration.
+     * @return The derived configuration.
+     */
+    Configuration derive(UnwrapperProvider newUnwrapperProvider);
 
     /**
      * Create a derived configuration from this one, with new converter

@@ -37,6 +37,7 @@
  */
 package org.jooq.impl;
 
+import static java.lang.Boolean.FALSE;
 import static org.jooq.Clause.MERGE;
 import static org.jooq.Clause.MERGE_DELETE_WHERE;
 import static org.jooq.Clause.MERGE_MERGE_INTO;
@@ -48,6 +49,7 @@ import static org.jooq.Clause.MERGE_VALUES;
 import static org.jooq.Clause.MERGE_WHEN_MATCHED_THEN_UPDATE;
 import static org.jooq.Clause.MERGE_WHEN_NOT_MATCHED_THEN_INSERT;
 import static org.jooq.Clause.MERGE_WHERE;
+import static org.jooq.SQLDialect.DERBY;
 // ...
 // ...
 // ...
@@ -75,20 +77,17 @@ import static org.jooq.impl.Keywords.K_WHEN;
 import static org.jooq.impl.Keywords.K_WHERE;
 import static org.jooq.impl.Keywords.K_WITH_PRIMARY_KEY;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
-import static org.jooq.impl.Tools.DataKey.DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.annotation.Generated;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -147,6 +146,7 @@ import org.jooq.MergeOnConditionStep;
 import org.jooq.MergeOnStep;
 import org.jooq.MergeUsingStep;
 import org.jooq.Operator;
+// ...
 import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.Record1;
@@ -157,6 +157,7 @@ import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.TableLike;
 import org.jooq.UniqueKey;
+import org.jooq.impl.Tools.DataExtendedKey;
 import org.jooq.tools.StringUtils;
 
 /**
@@ -165,13 +166,13 @@ import org.jooq.tools.StringUtils;
  * @author Lukas Eder
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-final class MergeImpl<R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> extends AbstractQuery
+final class MergeImpl<R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> extends AbstractRowCountQuery
 implements
 
     // Cascading interface implementations for Merge behaviour
     MergeUsingStep<R>,
 
-// [jooq-tools] START [implementsKeyStep]
+
 
     MergeKeyStep1<R, T1>,
     MergeKeyStep2<R, T1, T2>,
@@ -196,7 +197,7 @@ implements
     MergeKeyStep21<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>,
     MergeKeyStep22<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>,
 
-// [jooq-tools] END [implementsKeyStep]
+
 
     MergeOnStep<R>,
     MergeOnConditionStep<R>,
@@ -204,7 +205,7 @@ implements
     MergeMatchedDeleteStep<R>,
     MergeNotMatchedSetMoreStep<R>,
 
-// [jooq-tools] START [implementsNotMatchedValuesStep]
+
 
     MergeNotMatchedValuesStep1<R, T1>,
     MergeNotMatchedValuesStep2<R, T1, T2>,
@@ -229,42 +230,40 @@ implements
     MergeNotMatchedValuesStep21<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>,
     MergeNotMatchedValuesStep22<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>,
 
-// [jooq-tools] END [implementsNotMatchedValuesStep]
+
 
     MergeNotMatchedValuesStepN<R> {
 
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID = -8835479296876774391L;
-    private static final Clause[]            CLAUSES          = { MERGE };
+    private static final long            serialVersionUID = -8835479296876774391L;
+    private static final Clause[]        CLAUSES          = { MERGE };
+    private static final Set<SQLDialect> NO_SUPPORT_WHERE = SQLDialect.supported(DERBY);
 
-
-
-
-
-    private final WithImpl                   with;
-    private final Table<R>                   table;
-    private final ConditionProviderImpl      on;
-    private TableLike<?>                     using;
+    private final WithImpl               with;
+    private final Table<R>               table;
+    private final ConditionProviderImpl  on;
+    private TableLike<?>                 using;
+    private boolean                      usingDual;
 
     // [#998] Oracle extensions to the MERGE statement
-    private Condition                        matchedWhere;
-    private Condition                        matchedDeleteWhere;
-    private Condition                        notMatchedWhere;
+    private Condition                    matchedWhere;
+    private Condition                    matchedDeleteWhere;
+    private Condition                    notMatchedWhere;
 
     // Flags to keep track of DSL object creation state
-    private boolean                          matchedClause;
-    private FieldMapForUpdate                matchedUpdate;
-    private boolean                          notMatchedClause;
-    private FieldMapsForInsert               notMatchedInsert;
+    private boolean                      matchedClause;
+    private FieldMapForUpdate            matchedUpdate;
+    private boolean                      notMatchedClause;
+    private FieldMapsForInsert           notMatchedInsert;
 
     // Objects for the UPSERT syntax (including H2 MERGE, HANA UPSERT, etc.)
-    private boolean                          upsertStyle;
-    private QueryPartList<Field<?>>          upsertFields;
-    private QueryPartList<Field<?>>          upsertKeys;
-    private QueryPartList<Field<?>>          upsertValues;
-    private Select<?>                        upsertSelect;
+    private boolean                      upsertStyle;
+    private QueryPartList<Field<?>>      upsertFields;
+    private QueryPartList<Field<?>>      upsertKeys;
+    private QueryPartList<Field<?>>      upsertValues;
+    private Select<?>                    upsertSelect;
 
     MergeImpl(Configuration configuration, WithImpl with, Table<R> table) {
         this(configuration, with, table, null);
@@ -287,21 +286,21 @@ implements
 
     QueryPartList<Field<?>> getUpsertFields() {
         if (upsertFields == null)
-            upsertFields = new QueryPartList<Field<?>>(table.fields());
+            upsertFields = new QueryPartList<>(table.fields());
 
         return upsertFields;
     }
 
     QueryPartList<Field<?>> getUpsertKeys() {
         if (upsertKeys == null)
-            upsertKeys = new QueryPartList<Field<?>>();
+            upsertKeys = new QueryPartList<>();
 
         return upsertKeys;
     }
 
     QueryPartList<Field<?>> getUpsertValues() {
         if (upsertValues == null)
-            upsertValues = new QueryPartList<Field<?>>();
+            upsertValues = new QueryPartList<>();
 
         return upsertValues;
     }
@@ -314,168 +313,146 @@ implements
     @Override
     public final MergeImpl columns(Collection<? extends Field<?>> fields) {
         upsertStyle = true;
-        upsertFields = new QueryPartList<Field<?>>(fields);
+        upsertFields = new QueryPartList<>(fields);
 
         return this;
     }
 
-    // [jooq-tools] START [columns]
 
-    @Generated("This method was generated using jOOQ-tools")
+
     @Override
     @SuppressWarnings("hiding")
     public <T1> MergeImpl columns(Field<T1> field1) {
         return columns(Arrays.asList(field1));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2> MergeImpl columns(Field<T1> field1, Field<T2> field2) {
         return columns(Arrays.asList(field1, field2));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3) {
         return columns(Arrays.asList(field1, field2, field3));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
         return columns(Arrays.asList(field1, field2, field3, field4));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21));
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     @SuppressWarnings("hiding")
     public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> MergeImpl columns(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
         return columns(Arrays.asList(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22));
     }
 
-// [jooq-tools] END [columns]
+
 
     @Override
     public final MergeImpl select(Select select) {
@@ -500,7 +477,7 @@ implements
     // Shared MERGE API
     // -------------------------------------------------------------------------
 
-// [jooq-tools] START [values]
+
 
     @Override
     public final MergeImpl values(T1 value1) {
@@ -723,14 +700,14 @@ implements
         return values(new Field[] { value1, value2, value3, value4, value5, value6, value7, value8, value9, value10, value11, value12, value13, value14, value15, value16, value17, value18, value19, value20, value21, value22 });
     }
 
-// [jooq-tools] END [values]
+
 
     @Override
     public final MergeImpl values(Object... values) {
 
         // [#1541] The VALUES() clause is also supported in the H2-specific
         // syntax, in case of which, the USING() was not added
-        if (using == null) {
+        if (using == null && !usingDual) {
             upsertStyle = true;
             getUpsertValues().addAll(Tools.fields(values, getUpsertFields().toArray(EMPTY_FIELD)));
         }
@@ -764,7 +741,7 @@ implements
 
     @Override
     public final MergeImpl usingDual() {
-        this.using = create().selectOne();
+        this.usingDual = true;
         return this;
     }
 
@@ -953,17 +930,19 @@ implements
 
     @Override
     public final <T> MergeImpl set(Field<T> field, Field<T> value) {
-        if (matchedClause) {
+        if (matchedClause)
             matchedUpdate.put(field, nullSafe(value));
-        }
-        else if (notMatchedClause) {
+        else if (notMatchedClause)
             notMatchedInsert.set(field, nullSafe(value));
-        }
-        else {
+        else
             throw new IllegalStateException("Cannot call where() on the current state of the MERGE statement");
-        }
 
         return this;
+    }
+
+    @Override
+    public final <T> MergeImpl setNull(Field<T> field) {
+        return set(field, (T) null);
     }
 
     @Override
@@ -976,15 +955,12 @@ implements
 
     @Override
     public final MergeImpl set(Map<?, ?> map) {
-        if (matchedClause) {
+        if (matchedClause)
             matchedUpdate.set(map);
-        }
-        else if (notMatchedClause) {
+        else if (notMatchedClause)
             notMatchedInsert.set(map);
-        }
-        else {
+        else
             throw new IllegalStateException("Cannot call where() on the current state of the MERGE statement");
-        }
 
         return this;
     }
@@ -999,7 +975,7 @@ implements
         return whenNotMatchedThenInsert(Collections.<Field<?>>emptyList());
     }
 
-// [jooq-tools] START [whenNotMatchedThenInsert]
+
 
     @Override
     @SuppressWarnings("hiding")
@@ -1134,7 +1110,7 @@ implements
     }
 
 
-// [jooq-tools] END [whenNotMatchedThenInsert]
+
 
     @Override
     public final MergeImpl whenNotMatchedThenInsert(Field<?>... fields) {
@@ -1201,14 +1177,17 @@ implements
     /**
      * Return a standard MERGE statement emulating the H2-specific syntax
      */
-    private final QueryPart getStandardMerge() {
+    private final QueryPart getStandardMerge(boolean usingSubqueries) {
 
         // The SRC for the USING() clause:
         // ------------------------------
         Table<?> src;
+        List<Field<?>> srcFields;
+
+        // [#5110] This is not yet supported by Derby
         if (upsertSelect != null) {
             Row row = upsertSelect.fieldsRow();
-            List<Field<?>> v = new ArrayList<Field<?>>(row.size());
+            List<Field<?>> v = new ArrayList<>(row.size());
 
             for (int i = 0; i < row.size(); i++)
                 v.add(row.field(i).as("s" + (i + 1)));
@@ -1216,19 +1195,28 @@ implements
             // [#579] TODO: Currently, this syntax may require aliasing
             // on the call-site
             src = DSL.select(v).from(upsertSelect).asTable("src");
+            srcFields = Arrays.asList(src.fields());
         }
-        else {
-            List<Field<?>> v = new ArrayList<Field<?>>(getUpsertValues().size());
+        else if (usingSubqueries) {
+            List<Field<?>> v = new ArrayList<>(getUpsertValues().size());
 
             for (int i = 0; i < getUpsertValues().size(); i++)
                 v.add(getUpsertValues().get(i).as("s" + (i + 1)));
 
             src = DSL.select(v).asTable("src");
+            srcFields = Arrays.asList(src.fields());
+        }
+        else {
+            src = new Dual();
+            srcFields = new ArrayList<>(getUpsertValues().size());
+
+            for (int i = 0; i < getUpsertValues().size(); i++)
+                srcFields.add(getUpsertValues().get(i));
         }
 
         // The condition for the ON clause:
         // --------------------------------
-        Set<Field<?>> onFields = new HashSet<Field<?>>();
+        Set<Field<?>> onFields = new HashSet<>();
         Condition condition = null;
         if (getUpsertKeys().isEmpty()) {
             UniqueKey<?> key = table.getPrimaryKey();
@@ -1237,7 +1225,7 @@ implements
                 onFields.addAll(key.getFields());
 
                 for (int i = 0; i < key.getFields().size(); i++) {
-                    Condition rhs = key.getFields().get(i).equal((Field) src.field(i));
+                    Condition rhs = key.getFields().get(i).equal((Field) srcFields.get(i));
 
                     if (condition == null) {
                         condition = rhs;
@@ -1256,35 +1244,31 @@ implements
         else {
             for (int i = 0; i < getUpsertKeys().size(); i++) {
                 int matchIndex = getUpsertFields().indexOf(getUpsertKeys().get(i));
-                if (matchIndex == -1) {
+                if (matchIndex == -1)
                     throw new IllegalStateException("Fields in KEY() clause must be part of the fields specified in MERGE INTO table (...)");
-                }
 
                 onFields.addAll(getUpsertKeys());
-                Condition rhs = getUpsertKeys().get(i).equal((Field) src.field(matchIndex));
+                Condition rhs = getUpsertKeys().get(i).equal((Field) srcFields.get(matchIndex));
 
-                if (condition == null) {
+                if (condition == null)
                     condition = rhs;
-                }
-                else {
+                else
                     condition = condition.and(rhs);
-                }
             }
         }
 
         // INSERT and UPDATE clauses
         // -------------------------
-        Map<Field<?>, Field<?>> update = new LinkedHashMap<Field<?>, Field<?>>();
-        Map<Field<?>, Field<?>> insert = new LinkedHashMap<Field<?>, Field<?>>();
+        Map<Field<?>, Field<?>> update = new LinkedHashMap<>();
+        Map<Field<?>, Field<?>> insert = new LinkedHashMap<>();
 
-        for (int i = 0; i < src.fieldsRow().size(); i++) {
+        for (int i = 0; i < srcFields.size(); i++) {
 
             // Oracle does not allow to update fields from the ON clause
-            if (!onFields.contains(getUpsertFields().get(i))) {
-                update.put(getUpsertFields().get(i), src.field(i));
-            }
+            if (!onFields.contains(getUpsertFields().get(i)))
+                update.put(getUpsertFields().get(i), srcFields.get(i));
 
-            insert.put(getUpsertFields().get(i), src.field(i));
+            insert.put(getUpsertFields().get(i), srcFields.get(i));
         }
 
         return DSL.mergeInto(table)
@@ -1310,6 +1294,7 @@ implements
 
 
 
+
                 case MARIADB:
                 case MYSQL:
                     toSQLMySQLOnDuplicateKeyUpdate(ctx);
@@ -1328,8 +1313,12 @@ implements
 
 
 
+                case DERBY:
+                    ctx.visit(getStandardMerge(false));
+                    break;
+
                 default:
-                    ctx.visit(getStandardMerge());
+                    ctx.visit(getStandardMerge(true));
                     break;
             }
         }
@@ -1339,8 +1328,8 @@ implements
     }
 
     private final void toSQLMySQLOnDuplicateKeyUpdate(Context<?> ctx) {
-        Fields<?> fields = new Fields<Record>(getUpsertFields());
-        Map<Field<?>, Field<?>> map = new LinkedHashMap<Field<?>, Field<?>>();
+        Fields<?> fields = new Fields<>(getUpsertFields());
+        Map<Field<?>, Field<?>> map = new LinkedHashMap<>();
         for (Field<?> field : fields.fields)
             map.put(field, getUpsertValues().get(fields.indexOf(field)));
 
@@ -1360,8 +1349,8 @@ implements
             ctx.sql("[ merge with select is not supported in PostgreSQL ]");
         }
         else {
-            Fields<?> fields = new Fields<Record>(getUpsertFields());
-            Map<Field<?>, Field<?>> map = new LinkedHashMap<Field<?>, Field<?>>();
+            Fields<?> fields = new Fields<>(getUpsertFields());
+            Map<Field<?>, Field<?>> map = new LinkedHashMap<>();
 
             for (Field<?> field : fields.fields) {
                 int i = fields.indexOf(field);
@@ -1448,6 +1437,7 @@ implements
 
 
 
+
     private final void toSQLStandard(Context<?> ctx) {
         ctx.start(MERGE_MERGE_INTO)
            .visit(K_MERGE_INTO).sql(' ')
@@ -1458,14 +1448,28 @@ implements
            .formatSeparator()
            .start(MERGE_USING)
            .declareTables(true)
-           .visit(K_USING).sql(' ')
-           .formatIndentStart()
-           .formatNewLine();
+           .visit(K_USING).sql(' ');
+
         ctx.data(DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES, true);
-        ctx.visit(using);
-        ctx.data(DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES, null);
-        ctx.formatIndentEnd()
-           .declareTables(false);
+
+        // [#5110] As of version 10.14, Derby only supports direct table references
+        //         in its MERGE statement.
+        if (usingDual) {
+            switch (ctx.family()) {
+                case DERBY:
+                    ctx.visit(new Dual());
+                    break;
+                default:
+                    ctx.visit(DSL.selectOne());
+                    break;
+            }
+        }
+        else {
+            ctx.visit(using);
+        }
+
+        ctx.data().remove(DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES);
+        ctx.declareTables(false);
 
 
 
@@ -1501,7 +1505,11 @@ implements
 
 
 
-        boolean onParentheses = false                                                 ;
+
+
+
+
+        boolean onParentheses = false;
         ctx.end(MERGE_USING)
            .formatSeparator()
            .start(MERGE_ON)
@@ -1518,10 +1526,9 @@ implements
             ctx.formatSeparator()
                .visit(K_WHEN).sql(' ').visit(K_MATCHED);
 
-
-
-
-
+            // [#5110] Standard SQL "WHERE" clause in updates
+            if (matchedWhere != null && NO_SUPPORT_WHERE.contains(ctx.family()))
+                ctx.sql(' ').visit(K_AND).sql(' ').visit(matchedWhere);
 
             ctx.sql(' ').visit(K_THEN).sql(' ').visit(K_UPDATE).sql(' ').visit(K_SET)
                .formatIndentStart()
@@ -1535,12 +1542,10 @@ implements
 
         // [#998] Oracle MERGE extension: WHEN MATCHED THEN UPDATE .. WHERE
         if (matchedWhere != null)
-
-
-
-            ctx.formatSeparator()
-               .visit(K_WHERE).sql(' ')
-               .visit(matchedWhere);
+            if (!NO_SUPPORT_WHERE.contains(ctx.family()))
+                ctx.formatSeparator()
+                   .visit(K_WHERE).sql(' ')
+                   .visit(matchedWhere);
 
         ctx.end(MERGE_WHERE)
            .start(MERGE_DELETE_WHERE);
@@ -1560,8 +1565,12 @@ implements
             ctx.formatSeparator()
                .visit(K_WHEN).sql(' ')
                .visit(K_NOT).sql(' ')
-               .visit(K_MATCHED).sql(' ')
-               .visit(K_THEN).sql(' ')
+               .visit(K_MATCHED).sql(' ');
+
+            if (notMatchedWhere != null && NO_SUPPORT_WHERE.contains(ctx.family()))
+                ctx.visit(K_AND).sql(' ').visit(notMatchedWhere).sql(' ');
+
+            ctx.visit(K_THEN).sql(' ')
                .visit(K_INSERT);
             notMatchedInsert.toSQLReferenceKeys(ctx);
             ctx.formatSeparator()
@@ -1574,14 +1583,25 @@ implements
         ctx.start(MERGE_WHERE);
 
         // [#998] Oracle MERGE extension: WHEN NOT MATCHED THEN INSERT .. WHERE
-        if (notMatchedWhere != null) {
+        if (notMatchedWhere != null && !NO_SUPPORT_WHERE.contains(ctx.family()))
             ctx.formatSeparator()
                .visit(K_WHERE).sql(' ')
                .visit(notMatchedWhere);
-        }
 
         ctx.end(MERGE_WHERE)
            .end(MERGE_WHEN_NOT_MATCHED_THEN_INSERT);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

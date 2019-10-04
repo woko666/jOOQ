@@ -42,6 +42,7 @@ package org.jooq;
 import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
+// ...
 
 import java.util.Optional;
 
@@ -54,7 +55,7 @@ import org.jooq.exception.TooManyRowsException;
  * Example: <code><pre>
  * DSLContext create = DSL.using(configuration);
  *
- * TableRecord&lt;?> record =
+ * TableRecord&lt;?&gt; record =
  * create.update(table)
  *       .set(field1, value1)
  *       .set(field2, value2)

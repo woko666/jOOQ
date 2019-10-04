@@ -59,13 +59,13 @@ import java.util.Map.Entry;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
-import org.jooq.Record4;
 import org.jooq.Record5;
 import org.jooq.Record6;
 import org.jooq.Result;
 import org.jooq.SQLDialect;
 import org.jooq.SortOrder;
-import org.jooq.exception.DataAccessException;
+import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.impl.DSL;
 import org.jooq.meta.AbstractDatabase;
 import org.jooq.meta.AbstractIndexDefinition;
@@ -94,7 +94,6 @@ import org.jooq.meta.mysql.information_schema.tables.Statistics;
 import org.jooq.meta.mysql.information_schema.tables.Tables;
 import org.jooq.meta.mysql.mysql.enums.ProcType;
 import org.jooq.meta.mysql.mysql.tables.Proc;
-import org.jooq.tools.JooqLogger;
 import org.jooq.tools.csv.CSVReader;
 
 /**
@@ -102,16 +101,17 @@ import org.jooq.tools.csv.CSVReader;
  */
 public class MySQLDatabase extends AbstractDatabase {
 
-    private static final JooqLogger log = JooqLogger.getLogger(MySQLDatabase.class);
     private static Boolean          is8;
 
     @Override
     protected List<IndexDefinition> getIndexes0() throws SQLException {
-        List<IndexDefinition> result = new ArrayList<IndexDefinition>();
+        List<IndexDefinition> result = new ArrayList<>();
 
         // Same implementation as in H2Database and HSQLDBDatabase
         Map<Record, Result<Record>> indexes = create()
-            .select(
+            // [#2059] In MemSQL primary key indexes are typically duplicated
+            // (once with INDEX_TYPE = 'SHARD' and once with INDEX_TYPE = 'BTREE)
+            .selectDistinct(
                 Statistics.TABLE_SCHEMA,
                 Statistics.TABLE_NAME,
                 Statistics.INDEX_NAME,
@@ -164,7 +164,7 @@ public class MySQLDatabase extends AbstractDatabase {
                     continue indexLoop;
 
             result.add(new AbstractIndexDefinition(tableSchema, indexName, table, unique) {
-                List<IndexColumnDefinition> indexColumns = new ArrayList<IndexColumnDefinition>();
+                List<IndexColumnDefinition> indexColumns = new ArrayList<>();
 
                 {
                     for (Record column : columns) {
@@ -198,9 +198,8 @@ public class MySQLDatabase extends AbstractDatabase {
             String key = getKeyName(tableName, constraintName);
             TableDefinition table = getTable(schema, tableName);
 
-            if (table != null) {
-                relations.addPrimaryKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addPrimaryKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -215,9 +214,8 @@ public class MySQLDatabase extends AbstractDatabase {
             String key = getKeyName(tableName, constraintName);
             TableDefinition table = getTable(schema, tableName);
 
-            if (table != null) {
-                relations.addUniqueKey(key, table.getColumn(columnName));
-            }
+            if (table != null)
+                relations.addUniqueKey(key, table, table.getColumn(columnName));
         }
     }
 
@@ -225,31 +223,27 @@ public class MySQLDatabase extends AbstractDatabase {
         return "KEY_" + tableName + "_" + keyName;
     }
 
-    private boolean is8() {
-        if (is8 == null) {
+    protected boolean is8() {
 
-            // [#6602] The mysql.proc table got removed in MySQL 8.0
-            try {
-                create(true).fetchExists(PROC);
-                is8 = false;
-            }
-            catch (DataAccessException ignore) {
-                is8 = true;
-            }
-        }
+        // [#6602] The mysql.proc table got removed in MySQL 8.0
+        if (is8 == null)
+            is8 = !exists(PROC);
 
         return is8;
     }
 
-    private Result<Record4<String, String, String, String>> fetchKeys(boolean primary) {
+    private Result<?> fetchKeys(boolean primary) {
 
         // [#3560] It has been shown that querying the STATISTICS table is much faster on
         // very large databases than going through TABLE_CONSTRAINTS and KEY_COLUMN_USAGE
-        return create().select(
+        // [#2059] In MemSQL primary key indexes are typically duplicated
+        // (once with INDEX_TYPE = 'SHARD' and once with INDEX_TYPE = 'BTREE)
+        return create().selectDistinct(
                            Statistics.TABLE_SCHEMA,
                            Statistics.TABLE_NAME,
                            Statistics.COLUMN_NAME,
-                           Statistics.INDEX_NAME)
+                           Statistics.INDEX_NAME,
+                           Statistics.SEQ_IN_INDEX)
                        .from(STATISTICS)
                        // [#5213] Duplicate schema value to work around MySQL issue https://bugs.mysql.com/bug.php?id=86022
                        .where(Statistics.TABLE_SCHEMA.in(getInputSchemata()).or(
@@ -281,6 +275,7 @@ public class MySQLDatabase extends AbstractDatabase {
                 .join(KEY_COLUMN_USAGE)
                 .on(ReferentialConstraints.CONSTRAINT_SCHEMA.equal(KeyColumnUsage.CONSTRAINT_SCHEMA))
                 .and(ReferentialConstraints.CONSTRAINT_NAME.equal(KeyColumnUsage.CONSTRAINT_NAME))
+                .and(ReferentialConstraints.TABLE_NAME.equal(KeyColumnUsage.TABLE_NAME))
                 // [#5213] Duplicate schema value to work around MySQL issue https://bugs.mysql.com/bug.php?id=86022
                 .where(ReferentialConstraints.CONSTRAINT_SCHEMA.in(getInputSchemata()).or(
                       getInputSchemata().size() == 1
@@ -298,17 +293,20 @@ public class MySQLDatabase extends AbstractDatabase {
             String foreignKey = record.get(ReferentialConstraints.CONSTRAINT_NAME);
             String foreignKeyColumn = record.get(KeyColumnUsage.COLUMN_NAME);
             String foreignKeyTableName = record.get(ReferentialConstraints.TABLE_NAME);
-            String referencedKey = record.get(ReferentialConstraints.UNIQUE_CONSTRAINT_NAME);
-            String referencedTableName = record.get(ReferentialConstraints.REFERENCED_TABLE_NAME);
+            String uniqueKey = record.get(ReferentialConstraints.UNIQUE_CONSTRAINT_NAME);
+            String uniqueKeyTableName = record.get(ReferentialConstraints.REFERENCED_TABLE_NAME);
 
             TableDefinition foreignKeyTable = getTable(foreignKeySchema, foreignKeyTableName);
+            TableDefinition uniqueKeyTable = getTable(uniqueKeySchema, uniqueKeyTableName);
 
-            if (foreignKeyTable != null) {
-                ColumnDefinition column = foreignKeyTable.getColumn(foreignKeyColumn);
-
-                String key = getKeyName(referencedTableName, referencedKey);
-                relations.addForeignKey(foreignKey, key, column, uniqueKeySchema);
-            }
+            if (foreignKeyTable != null)
+                relations.addForeignKey(
+                    foreignKey,
+                    foreignKeyTable,
+                    foreignKeyTable.getColumn(foreignKeyColumn),
+                    getKeyName(uniqueKeyTableName, uniqueKey),
+                    uniqueKeyTable
+                );
         }
     }
 
@@ -319,14 +317,14 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     protected List<CatalogDefinition> getCatalogs0() throws SQLException {
-        List<CatalogDefinition> result = new ArrayList<CatalogDefinition>();
+        List<CatalogDefinition> result = new ArrayList<>();
         result.add(new CatalogDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
 
         for (String name : create()
                 .select(Schemata.SCHEMA_NAME)
@@ -341,28 +339,31 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     protected List<SequenceDefinition> getSequences0() throws SQLException {
-        List<SequenceDefinition> result = new ArrayList<SequenceDefinition>();
+        List<SequenceDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<TableDefinition> getTables0() throws SQLException {
-        List<TableDefinition> result = new ArrayList<TableDefinition>();
+        List<TableDefinition> result = new ArrayList<>();
 
         for (Record record : create().select(
                 Tables.TABLE_SCHEMA,
                 Tables.TABLE_NAME,
                 Tables.TABLE_COMMENT)
             .from(TABLES)
+
             // [#5213] Duplicate schema value to work around MySQL issue https://bugs.mysql.com/bug.php?id=86022
             .where(Tables.TABLE_SCHEMA.in(getInputSchemata()).or(
                   getInputSchemata().size() == 1
                 ? Tables.TABLE_SCHEMA.in(getInputSchemata())
                 : falseCondition()))
+
+            // [#9291] MariaDB treats sequences as tables
+            .and(Tables.TABLE_TYPE.ne(inline("SEQUENCE")))
             .orderBy(
                 Tables.TABLE_SCHEMA,
-                Tables.TABLE_NAME)
-            .fetch()) {
+                Tables.TABLE_NAME)) {
 
             SchemaDefinition schema = getSchema(record.get(Tables.TABLE_SCHEMA));
             String name = record.get(Tables.TABLE_NAME);
@@ -377,7 +378,7 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     protected List<EnumDefinition> getEnums0() throws SQLException {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>();
+        List<EnumDefinition> result = new ArrayList<>();
 
         Result<Record5<String, String, String, String, String>> records = create()
             .select(
@@ -444,25 +445,25 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     protected List<DomainDefinition> getDomains0() throws SQLException {
-        List<DomainDefinition> result = new ArrayList<DomainDefinition>();
+        List<DomainDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<UDTDefinition> getUDTs0() throws SQLException {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<ArrayDefinition> getArrays0() throws SQLException {
-        List<ArrayDefinition> result = new ArrayList<ArrayDefinition>();
+        List<ArrayDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<RoutineDefinition> getRoutines0() throws SQLException {
-        List<RoutineDefinition> result = new ArrayList<RoutineDefinition>();
+        List<RoutineDefinition> result = new ArrayList<>();
 
         Result<Record6<String, String, String, byte[], byte[], ProcType>> records = is8()
 
@@ -520,12 +521,22 @@ public class MySQLDatabase extends AbstractDatabase {
 
     @Override
     protected List<PackageDefinition> getPackages0() throws SQLException {
-        List<PackageDefinition> result = new ArrayList<PackageDefinition>();
+        List<PackageDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected DSLContext create0() {
         return DSL.using(getConnection(), SQLDialect.MYSQL);
+    }
+
+    @Override
+    protected boolean exists0(TableField<?, ?> field) {
+        return exists1(field, Columns.COLUMNS, Columns.TABLE_SCHEMA, Columns.TABLE_NAME, Columns.COLUMN_NAME);
+    }
+
+    @Override
+    protected boolean exists0(Table<?> table) {
+        return exists1(table, Tables.TABLES, Tables.TABLE_SCHEMA, Tables.TABLE_NAME);
     }
 }

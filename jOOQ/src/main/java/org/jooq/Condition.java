@@ -42,7 +42,40 @@ import org.jooq.impl.DSL;
 
 
 /**
- * A condition to be used in a query's where part
+ * A condition or predicate.
+ * <p>
+ * Conditions can be used in a variety of SQL clauses. They're mainly used in a
+ * {@link Select} statement's <code>WHERE</code> clause, but can also appear in
+ * (non-exhaustive list):
+ * <ul>
+ * <li><code>SELECT .. WHERE</code>, e.g. via
+ * {@link SelectWhereStep#where(Condition)}</li>
+ * <li><code>SELECT .. HAVING</code>, e.g. via
+ * {@link SelectHavingStep#having(Condition)}</li>
+ * <li>In a <code>CASE</code> expression, e.g. via {@link DSL#case_()} and
+ * {@link Case#when(Condition, Field)}</li>
+ * <li>As an ordinary column expression, e.g. via
+ * {@link DSL#field(Condition)}</li>
+ * <li>In filtered aggregate functions, e.g. via
+ * {@link AggregateFilterStep#filterWhere(Condition)}</li>
+ * <li>... and many more</li>
+ * </ul>
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select()
+ *    .from(ACTOR)
+ *    .where(ACTOR.ACTOR_ID.eq(1)) // The eq operator produces a Condition from two Fields
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link DSL#condition(Field)} and overloads, or
+ * by calling a comparison operator method on {@link Field}, such as
+ * {@link Field#eq(Field)}.
  *
  * @author Lukas Eder
  */
@@ -74,12 +107,14 @@ public interface Condition extends QueryPart {
      *
      * @param other The other condition
      * @return The combined condition
-     *
-     * @deprecated - 3.8.0 - [#4763] - Use {@link #and(Condition)} or
-     *             {@link #and(Field)} instead. Due to ambiguity between calling
-     *             this method using {@link Field#equals(Object)} argument, vs.
-     *             calling the other method via a {@link Field#equal(Object)}
-     *             argument, this method will be removed in the future.
+     * @deprecated - 3.8.0 - [#4763] - Use {@link #and(Condition)} (typically
+     *             with {@link DSL#trueCondition()},
+     *             {@link DSL#falseCondition()}, or {@link DSL#noCondition()} as
+     *             the parameter) or {@link #and(Field)} instead. Due to
+     *             ambiguity between calling this method using
+     *             {@link Field#equals(Object)} argument, vs. calling the other
+     *             method via a {@link Field#equal(Object)} argument, this
+     *             method will be removed in the future.
      */
     @Deprecated
     @Support
@@ -189,13 +224,14 @@ public interface Condition extends QueryPart {
      *
      * @param other The other condition
      * @return The combined condition
-     *
-     * @deprecated - 3.8.0 - [#4763] - Use {@link #andNot(Condition)} or
-     *             {@link #andNot(Field)} instead. Due to ambiguity between
-     *             calling this method using {@link Field#equals(Object)}
-     *             argument, vs. calling the other method via a
-     *             {@link Field#equal(Object)} argument, this method will be
-     *             removed in the future.
+     * @deprecated - 3.8.0 - [#4763] - Use {@link #andNot(Condition)} (typically
+     *             with {@link DSL#trueCondition()},
+     *             {@link DSL#falseCondition()}, or {@link DSL#noCondition()} as
+     *             the parameter) or {@link #andNot(Field)} instead. Due to
+     *             ambiguity between calling this method using
+     *             {@link Field#equals(Object)} argument, vs. calling the other
+     *             method via a {@link Field#equal(Object)} argument, this
+     *             method will be removed in the future.
      */
     @Deprecated
     @Support
@@ -247,12 +283,14 @@ public interface Condition extends QueryPart {
      *
      * @param other The other condition
      * @return The combined condition
-     *
-     * @deprecated - 3.8.0 - [#4763] - Use {@link #or(Condition)} or
-     *             {@link #or(Field)} instead. Due to ambiguity between calling
-     *             this method using {@link Field#equals(Object)} argument, vs.
-     *             calling the other method via a {@link Field#equal(Object)}
-     *             argument, this method will be removed in the future.
+     * @deprecated - 3.8.0 - [#4763] - Use {@link #or(Condition)} (typically
+     *             with {@link DSL#trueCondition()},
+     *             {@link DSL#falseCondition()}, or {@link DSL#noCondition()} as
+     *             the parameter) or {@link #or(Field)} instead. Due to
+     *             ambiguity between calling this method using
+     *             {@link Field#equals(Object)} argument, vs. calling the other
+     *             method via a {@link Field#equal(Object)} argument, this
+     *             method will be removed in the future.
      */
     @Deprecated
     @Support
@@ -362,13 +400,14 @@ public interface Condition extends QueryPart {
      *
      * @param other The other condition
      * @return The combined condition
-     *
-     * @deprecated - 3.8.0 - [#4763] - Use {@link #orNot(Condition)} or
-     *             {@link #orNot(Boolean)} instead. Due to ambiguity between
-     *             calling this method using {@link Field#equals(Object)}
-     *             argument, vs. calling the other method via a
-     *             {@link Field#equal(Object)} argument, this method will be
-     *             removed in the future.
+     * @deprecated - 3.8.0 - [#4763] - Use {@link #orNot(Condition)} (typically
+     *             with {@link DSL#trueCondition()},
+     *             {@link DSL#falseCondition()}, or {@link DSL#noCondition()} as
+     *             the parameter) or {@link #orNot(Boolean)} instead. Due to
+     *             ambiguity between calling this method using
+     *             {@link Field#equals(Object)} argument, vs. calling the other
+     *             method via a {@link Field#equal(Object)} argument, this
+     *             method will be removed in the future.
      */
     @Deprecated
     @Support

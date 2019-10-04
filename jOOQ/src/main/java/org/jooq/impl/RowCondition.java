@@ -57,15 +57,15 @@ import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 // ...
 // ...
-import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
 import static org.jooq.impl.Keywords.K_NOT;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Comparator;
@@ -86,14 +86,14 @@ final class RowCondition extends AbstractCondition {
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID  = -1806139685201770706L;
-    private static final Clause[]            CLAUSES           = { CONDITION, CONDITION_COMPARISON };
-    private static final EnumSet<SQLDialect> EMULATE_EQ_AND_NE = EnumSet.of(DERBY, FIREBIRD, SQLITE);
-    private static final EnumSet<SQLDialect> EMULATE_RANGES    = EnumSet.of(DERBY, CUBRID, FIREBIRD, SQLITE);
+    private static final long            serialVersionUID  = -1806139685201770706L;
+    private static final Clause[]        CLAUSES           = { CONDITION, CONDITION_COMPARISON };
+    private static final Set<SQLDialect> EMULATE_EQ_AND_NE = SQLDialect.supported(DERBY, FIREBIRD);
+    private static final Set<SQLDialect> EMULATE_RANGES    = SQLDialect.supported(DERBY, CUBRID, FIREBIRD);
 
-    private final Row                        left;
-    private final Row                        right;
-    private final Comparator                 comparator;
+    private final Row                    left;
+    private final Row                    right;
+    private final Comparator             comparator;
 
     RowCondition(Row left, Row right, Comparator comparator) {
         this.left = left;
@@ -106,22 +106,20 @@ final class RowCondition extends AbstractCondition {
         ctx.visit(delegate(ctx.configuration()));
     }
 
-    @Override
+    @Override // Avoid AbstractCondition implementation
     public final Clause[] clauses(Context<?> ctx) {
         return null;
     }
 
     private final QueryPartInternal delegate(Configuration configuration) {
-        SQLDialect dialect = configuration.dialect();
-
         // Regular comparison predicate emulation
         if ((comparator == EQUALS || comparator == NOT_EQUALS) &&
-            EMULATE_EQ_AND_NE.contains(dialect.family())) {
+            EMULATE_EQ_AND_NE.contains(configuration.family())) {
 
             Field<?>[] leftFields = left.fields();
             Field<?>[] rightFields = right.fields();
 
-            List<Condition> conditions = new ArrayList<Condition>(leftFields.length);
+            List<Condition> conditions = new ArrayList<>(leftFields.length);
             for (int i = 0; i < leftFields.length; i++)
                 conditions.add(leftFields[i].equal((Field) rightFields[i]));
 
@@ -135,7 +133,7 @@ final class RowCondition extends AbstractCondition {
 
         // Ordering comparison predicate emulation
         else if ((comparator == GREATER || comparator == GREATER_OR_EQUAL || comparator == LESS || comparator == LESS_OR_EQUAL) &&
-                 EMULATE_RANGES.contains(dialect.family())) {
+                 EMULATE_RANGES.contains(configuration.family())) {
 
             // The order component of the comparator (stripping the equal component)
             Comparator order
@@ -164,10 +162,10 @@ final class RowCondition extends AbstractCondition {
             // The following algorithm emulates the equivalency of these expressions:
             // (A, B, C) > (X, Y, Z)
             // (A > X) OR (A = X AND B > Y) OR (A = X AND B = Y AND C > Z)
-            List<Condition> outer = new ArrayList<Condition>(1 + leftFields.length);
+            List<Condition> outer = new ArrayList<>(1 + leftFields.length);
 
             for (int i = 0; i < leftFields.length; i++) {
-                List<Condition> inner = new ArrayList<Condition>(1 + i);
+                List<Condition> inner = new ArrayList<>(1 + i);
 
                 for (int j = 0; j < i; j++)
                     inner.add(leftFields[j].equal((Field) rightFields[j]));

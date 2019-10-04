@@ -38,9 +38,7 @@
 package org.jooq.impl;
 
 import static org.jooq.conf.ParamType.INLINED;
-import static org.jooq.impl.DSL.sql;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
@@ -56,10 +54,10 @@ final class SQLInline extends AbstractQueryPart implements SQL {
      */
     private static final long serialVersionUID = 5352233054249655126L;
 
-    private SQL sql;
+    private QueryPart sql;
 
     SQLInline(QueryPart part) {
-        this(sql("{0}", part));
+        this.sql = part;
     }
 
     SQLInline(SQL sql) {
@@ -73,11 +71,6 @@ final class SQLInline extends AbstractQueryPart implements SQL {
         ctx.paramType(INLINED)
            .visit(sql)
            .paramType(paramType);
-    }
-
-    @Override
-    public Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 
     @Override

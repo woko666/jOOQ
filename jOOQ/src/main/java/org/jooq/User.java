@@ -37,8 +37,24 @@
  */
 package org.jooq;
 
+import org.jooq.impl.DSL;
+
 /**
- * The User to be used by GRANT statement.
+ * A privilege for use in <code>GRANT</code> and <code>REVOKE</code> statements.
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .grant(privilege("SELECT"))
+ *    .on(ACTOR)
+ *    .to(user("MY_USER"))
+ *    .execute();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link DSL#user(Name)} and overloads.
  *
  * @author Timur Shaidullin
  */

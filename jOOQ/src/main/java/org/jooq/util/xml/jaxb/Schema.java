@@ -1,22 +1,15 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -47,10 +40,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class Schema implements Serializable
+public class Schema implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(name = "catalog_name")
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String catalogName;
@@ -60,74 +53,26 @@ public class Schema implements Serializable
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String comment;
 
-    /**
-     * Gets the value of the catalogName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getCatalogName() {
         return catalogName;
     }
 
-    /**
-     * Sets the value of the catalogName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setCatalogName(String value) {
         this.catalogName = value;
     }
 
-    /**
-     * Gets the value of the schemaName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getSchemaName() {
         return schemaName;
     }
 
-    /**
-     * Sets the value of the schemaName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setSchemaName(String value) {
         this.schemaName = value;
     }
 
-    /**
-     * Gets the value of the comment property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getComment() {
         return comment;
     }
 
-    /**
-     * Sets the value of the comment property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setComment(String value) {
         this.comment = value;
     }
@@ -148,24 +93,17 @@ public class Schema implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("catalog_name", catalogName);
+        builder.append("schema_name", schemaName);
+        builder.append("comment", comment);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (catalogName!= null) {
-            sb.append("<catalogName>");
-            sb.append(catalogName);
-            sb.append("</catalogName>");
-        }
-        if (schemaName!= null) {
-            sb.append("<schemaName>");
-            sb.append(schemaName);
-            sb.append("</schemaName>");
-        }
-        if (comment!= null) {
-            sb.append("<comment>");
-            sb.append(comment);
-            sb.append("</comment>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

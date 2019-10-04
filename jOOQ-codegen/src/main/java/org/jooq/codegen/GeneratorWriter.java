@@ -39,7 +39,6 @@ package org.jooq.codegen;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -76,28 +75,50 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
            "(?:\\[(.*)\\])" +
         "\\]", Pattern.DOTALL);
 
-
+    private final Files          files;
     private final File           file;
     private final String         encoding;
     private final StringBuilder  sb;
     private int                  indentTabs;
-    private String               tabString    = "    ";
-    private boolean              newline      = true;
+    private String               tabString     = "    ";
+    private String               newlineString = "\n";
+    private boolean              newline       = true;
 
     protected GeneratorWriter(File file) {
-        this(file, null);
+        this(file, null, null);
     }
 
     protected GeneratorWriter(File file, String encoding) {
-        file.getParentFile().mkdirs();
+        this(file, encoding, null);
+    }
 
+    protected GeneratorWriter(File file, Files files) {
+        this(file, null, files);
+    }
+
+    protected GeneratorWriter(File file, String encoding, Files files) {
+        this.files = files == null ? new Files() : files;
         this.file = file;
         this.encoding = encoding;
         this.sb = new StringBuilder();
+
+        this.files.mkdirs(file.getParentFile());
+    }
+
+    public String tabString() {
+        return tabString;
     }
 
     public void tabString(String string) {
-        this.tabString = string;
+        this.tabString = string.replace("\\t", "\t");
+    }
+
+    public String newlineString() {
+        return newlineString;
+    }
+
+    public void newlineString(String string) {
+        this.newlineString = string.replace("\\n", "\n").replace("\\r", "\r");
     }
 
     public File file() {
@@ -124,7 +145,7 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
 
     @SuppressWarnings("unchecked")
     public W print(String string, Object... args) {
-        string = string.replaceAll("\t", tabString);
+        string = string.replace("\n", newlineString).replace("\t", tabString);
 
         if (newline && indentTabs > 0) {
             for (int i = 0; i < indentTabs; i++)
@@ -136,7 +157,7 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
 
         if (args.length > 0) {
             List<Object> originals = Arrays.asList(args);
-            List<Object> translated = new ArrayList<Object>();
+            List<Object> translated = new ArrayList<>();
 
             for (;;) {
                 for (Object arg : originals) {
@@ -188,7 +209,7 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
                 }
 
                 originals = translated;
-                translated = new ArrayList<Object>();
+                translated = new ArrayList<>();
             }
 
             sb.append(String.format(string, translated.toArray()));
@@ -205,7 +226,7 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
 
         // Don't add empty lines at the beginning of files
         if (sb.length() > 0) {
-            sb.append("\n");
+            sb.append(newlineString);
             newline = true;
         }
 
@@ -256,42 +277,34 @@ public abstract class GeneratorWriter<W extends GeneratorWriter<W>> {
         try {
             // [#3756] Regenerate files only if there is a difference
             String oldContent = null;
-            if (file.exists()) {
+            if (file.exists() && file.length() == newContent.getBytes(encoding()).length) {
+                RandomAccessFile old = null;
 
-                // [#5892] On Windows FAT or NTFS and other case-insensitive file systems, we must
-                //         explicitly replace files whose case-sensitive file name has changed
-                String[] list = file.getParentFile().list(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File dir, String name) {
-                        return name.equalsIgnoreCase(file.getName()) && !name.equals(file.getName());
-                    }
-                });
-
-                if (list != null && list.length > 0)
-                    file.delete();
-                else {
-                    RandomAccessFile old = null;
-
-                    try {
-                        old = new RandomAccessFile(file, "r");
-                        byte[] oldBytes = new byte[(int) old.length()];
-                        old.readFully(oldBytes);
-                        oldContent = new String(oldBytes, encoding());
-                    }
-                    finally {
-                        if (old != null)
-                            old.close();
-                    }
+                try {
+                    old = new RandomAccessFile(file, "r");
+                    byte[] oldBytes = new byte[(int) old.length()];
+                    old.readFully(oldBytes);
+                    oldContent = new String(oldBytes, encoding());
+                }
+                finally {
+                    if (old != null)
+                        old.close();
                 }
             }
 
             if (oldContent == null || !oldContent.equals(newContent)) {
+
+                // [#5892] [#8363] On Windows FAT or NTFS and other case-insensitive
+                //                 file systems, we must explicitly replace files whose
+                //                 case-sensitive file name has changed
+                if (oldContent != null)
+                    file.delete();
+
                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), encoding()));
 
                 writer.append(newContent);
                 writer.flush();
                 writer.close();
-
             }
 
             return true;

@@ -51,7 +51,7 @@ import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.impl.Keywords.K_DROP_VIEW;
 import static org.jooq.impl.Keywords.K_IF_EXISTS;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
@@ -64,7 +64,7 @@ import org.jooq.Table;
 /**
  * @author Lukas Eder
  */
-final class DropViewImpl extends AbstractQuery implements
+final class DropViewImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for DROP VIEW behaviour
     DropViewFinalStep {
@@ -72,23 +72,26 @@ final class DropViewImpl extends AbstractQuery implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID     = 8904572826501186329L;
-    private static final Clause[]            CLAUSES              = { DROP_VIEW };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS = EnumSet.of(DERBY, FIREBIRD);
+    private static final long            serialVersionUID     = 8904572826501186329L;
+    private static final Clause[]        CLAUSES              = { DROP_VIEW };
+    private static final Set<SQLDialect> NO_SUPPORT_IF_EXISTS = SQLDialect.supported(DERBY, FIREBIRD);
 
-    private final Table<?>                   table;
-    private final boolean                    ifExists;
+    private final Table<?>               view;
+    private final boolean                ifExists;
 
-    DropViewImpl(Configuration configuration, Table<?> table) {
-        this(configuration, table, false);
+    DropViewImpl(Configuration configuration, Table<?> view) {
+        this(configuration, view, false);
     }
 
-    DropViewImpl(Configuration configuration, Table<?> table, boolean ifExists) {
+    DropViewImpl(Configuration configuration, Table<?> view, boolean ifExists) {
         super(configuration);
 
-        this.table = table;
+        this.view = view;
         this.ifExists = ifExists;
     }
+
+    final Table<?> $view()     { return view; }
+    final boolean  $ifExists() { return ifExists; }
 
     // ------------------------------------------------------------------------
     // XXX: QueryPart API
@@ -117,11 +120,10 @@ final class DropViewImpl extends AbstractQuery implements
         if (ifExists && supportsIfExists(ctx))
             ctx.visit(K_IF_EXISTS).sql(' ');
 
-        ctx.visit(table);
+        ctx.visit(view);
 
         ctx.end(DROP_VIEW_TABLE);
     }
-
 
     @Override
     public final Clause[] clauses(Context<?> ctx) {

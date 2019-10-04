@@ -50,6 +50,7 @@ import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.Param;
+// ...
 import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.UDTRecord;
@@ -115,11 +116,11 @@ final class ArrayTable extends AbstractTable<Record> {
         this.array = array;
         this.alias = alias;
         this.fieldAliases = fieldAliases;
-        this.field = init(arrayType, alias, fieldAliases);
+        this.field = init(arrayType, alias);
     }
 
-    private static final Fields<Record> init(Class<?> arrayType, Name alias, Name[] fields) {
-        List<Field<?>> result = new ArrayList<Field<?>>();
+    private static final Fields<Record> init(Class<?> arrayType, Name alias) {
+        List<Field<?>> result = new ArrayList<>();
 
         // [#1114] VARRAY/TABLE of OBJECT have more than one field
         if (UDTRecord.class.isAssignableFrom(arrayType)) {
@@ -139,7 +140,7 @@ final class ArrayTable extends AbstractTable<Record> {
             result.add(DSL.field(name(alias.last(), "COLUMN_VALUE"), DSL.getDataType(arrayType)));
         }
 
-        return new Fields<Record>(result);
+        return new Fields<>(result);
     }
 
     @Override
@@ -261,6 +262,7 @@ final class ArrayTable extends AbstractTable<Record> {
 
 
 
+
     private abstract class DialectArrayTable extends AbstractTable<Record> {
 
         /**
@@ -279,12 +281,12 @@ final class ArrayTable extends AbstractTable<Record> {
 
         @Override
         public final Table<Record> as(Name as) {
-            return new TableAlias<Record>(this, as);
+            return new TableAlias<>(this, as);
         }
 
         @Override
         public final Table<Record> as(Name as, Name... fields) {
-            return new TableAlias<Record>(this, as, fields);
+            return new TableAlias<>(this, as, fields);
         }
 
         @Override

@@ -65,7 +65,6 @@ import org.jooq.impl.DSL;
 import org.jooq.meta.AbstractDatabase;
 import org.jooq.meta.ArrayDefinition;
 import org.jooq.meta.CatalogDefinition;
-import org.jooq.meta.ColumnDefinition;
 import org.jooq.meta.DataTypeDefinition;
 import org.jooq.meta.DefaultDataTypeDefinition;
 import org.jooq.meta.DefaultRelations;
@@ -82,7 +81,7 @@ import org.jooq.meta.firebird.rdb.tables.Rdb$fields;
 import org.jooq.meta.firebird.rdb.tables.Rdb$indexSegments;
 import org.jooq.meta.firebird.rdb.tables.Rdb$refConstraints;
 import org.jooq.meta.firebird.rdb.tables.Rdb$relationConstraints;
-import org.jooq.meta.jaxb.Schema;
+import org.jooq.meta.jaxb.SchemaMappingType;
 import org.jooq.util.firebird.FirebirdDataType;
 
 /**
@@ -93,11 +92,11 @@ public class FirebirdDatabase extends AbstractDatabase {
     public FirebirdDatabase() {
 
         // Firebird doesn't know schemata
-        Schema schema = new Schema();
+        SchemaMappingType schema = new SchemaMappingType();
         schema.setInputSchema("");
         schema.setOutputSchema("");
 
-        List<Schema> schemata = new ArrayList<Schema>();
+        List<SchemaMappingType> schemata = new ArrayList<>();
         schemata.add(schema);
 
         setConfiguredSchemata(schemata);
@@ -111,10 +110,8 @@ public class FirebirdDatabase extends AbstractDatabase {
             String key = record.get(RDB$RELATION_CONSTRAINTS.RDB$CONSTRAINT_NAME.trim());
 
             TableDefinition td = getTable(this.getSchemata().get(0), tableName);
-            if (td != null) {
-                ColumnDefinition cd = td.getColumn(fieldName);
-                r.addPrimaryKey(key, cd);
-            }
+            if (td != null)
+                r.addPrimaryKey(key, td, td.getColumn(fieldName));
         }
     }
 
@@ -126,10 +123,8 @@ public class FirebirdDatabase extends AbstractDatabase {
             String key = record.get(RDB$RELATION_CONSTRAINTS.RDB$CONSTRAINT_NAME.trim());
 
             TableDefinition td = getTable(this.getSchemata().get(0), tableName);
-            if (td != null) {
-                ColumnDefinition cd = td.getColumn(fieldName);
-                r.addUniqueKey(key, cd);
-            }
+            if (td != null)
+                r.addUniqueKey(key, td, td.getColumn(fieldName));
         }
     }
 
@@ -182,13 +177,17 @@ public class FirebirdDatabase extends AbstractDatabase {
             String fkTable = record.get("fkTable", String.class);
             String fkField = record.get("fkField", String.class);
 
-            TableDefinition tdReferencing = getTable(getSchemata().get(0), fkTable, true);
-            TableDefinition tdReferenced = getTable(getSchemata().get(0), pkTable, true);
+            TableDefinition foreignKeyTable = getTable(getSchemata().get(0), fkTable, true);
+            TableDefinition primaryKeyTable = getTable(getSchemata().get(0), pkTable, true);
 
-            if (tdReferenced != null && tdReferencing != null) {
-                ColumnDefinition referencingColumn = tdReferencing.getColumn(fkField);
-                relations.addForeignKey(fkName, pkName, referencingColumn, getSchemata().get(0));
-            }
+            if (primaryKeyTable != null && foreignKeyTable != null)
+                relations.addForeignKey(
+                    fkName,
+                    foreignKeyTable,
+                    foreignKeyTable.getColumn(fkField),
+                    pkName,
+                    primaryKeyTable
+                );
         }
     }
 
@@ -199,21 +198,21 @@ public class FirebirdDatabase extends AbstractDatabase {
 
     @Override
     protected List<CatalogDefinition> getCatalogs0() throws SQLException {
-        List<CatalogDefinition> result = new ArrayList<CatalogDefinition>();
+        List<CatalogDefinition> result = new ArrayList<>();
         result.add(new CatalogDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
         result.add(new SchemaDefinition(this, "", ""));
         return result;
     }
 
     @Override
     protected List<SequenceDefinition> getSequences0() throws SQLException {
-        List<SequenceDefinition> result = new ArrayList<SequenceDefinition>();
+        List<SequenceDefinition> result = new ArrayList<>();
 
         for (String sequenceName : create()
                 .select(RDB$GENERATORS.RDB$GENERATOR_NAME.trim())
@@ -234,7 +233,7 @@ public class FirebirdDatabase extends AbstractDatabase {
 
     @Override
     protected List<TableDefinition> getTables0() throws SQLException {
-        List<TableDefinition> result = new ArrayList<TableDefinition>();
+        List<TableDefinition> result = new ArrayList<>();
 
         for (Record2<String, Boolean> record : create()
                 .select(
@@ -268,7 +267,7 @@ public class FirebirdDatabase extends AbstractDatabase {
 
     @Override
     protected List<RoutineDefinition> getRoutines0() throws SQLException {
-        List<RoutineDefinition> result = new ArrayList<RoutineDefinition>();
+        List<RoutineDefinition> result = new ArrayList<>();
 
         for (String procedureName : create()
                 .select(RDB$PROCEDURES.RDB$PROCEDURE_NAME.trim())
@@ -287,31 +286,31 @@ public class FirebirdDatabase extends AbstractDatabase {
 
     @Override
     protected List<PackageDefinition> getPackages0() throws SQLException {
-        List<PackageDefinition> result = new ArrayList<PackageDefinition>();
+        List<PackageDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<EnumDefinition> getEnums0() throws SQLException {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>();
+        List<EnumDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<DomainDefinition> getDomains0() throws SQLException {
-        List<DomainDefinition> result = new ArrayList<DomainDefinition>();
+        List<DomainDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<UDTDefinition> getUDTs0() throws SQLException {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<ArrayDefinition> getArrays0() throws SQLException {
-        List<ArrayDefinition> result = new ArrayList<ArrayDefinition>();
+        List<ArrayDefinition> result = new ArrayList<>();
         return result;
     }
 

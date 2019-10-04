@@ -39,13 +39,13 @@ package org.jooq.impl;
 
 import static org.jooq.impl.Keywords.K_ALTER;
 import static org.jooq.impl.Keywords.K_CURRENT_SCHEMA;
+import static org.jooq.impl.Keywords.K_DATABASE;
 import static org.jooq.impl.Keywords.K_SCHEMA;
 import static org.jooq.impl.Keywords.K_SEARCH_PATH;
 import static org.jooq.impl.Keywords.K_SESSION;
 import static org.jooq.impl.Keywords.K_SET;
 import static org.jooq.impl.Keywords.K_USE;
 
-import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Schema;
@@ -53,7 +53,7 @@ import org.jooq.Schema;
 /**
  * @author Lukas Eder
  */
-final class SetSchema extends AbstractQuery {
+final class SetSchema extends AbstractRowCountQuery {
 
     private static final long serialVersionUID = -3996953205762741746L;
     private final Schema      schema;
@@ -75,10 +75,16 @@ final class SetSchema extends AbstractQuery {
 
 
 
+
+
+
+
+
             case MARIADB:
             case MYSQL:
                 ctx.visit(K_USE).sql(' ').visit(schema);
                 break;
+
 
 
 
@@ -94,10 +100,5 @@ final class SetSchema extends AbstractQuery {
                 ctx.visit(K_SET).sql(' ').visit(K_SCHEMA).sql(' ').visit(schema);
                 break;
         }
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 }

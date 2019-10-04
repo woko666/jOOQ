@@ -46,7 +46,7 @@ import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.Keywords.K_DEFAULT_VALUES;
 import static org.jooq.impl.Keywords.K_VALUES;
-import static org.jooq.impl.Tools.DataKey.DATA_EMULATE_BULK_INSERT_RETURNING;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_EMULATE_BULK_INSERT_RETURNING;
 
 import java.util.AbstractList;
 import java.util.AbstractMap;
@@ -61,10 +61,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.jooq.Clause;
 import org.jooq.Context;
+import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Param;
+// ...
 import org.jooq.Record;
 import org.jooq.Select;
 import org.jooq.Table;
@@ -88,8 +89,8 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
     FieldMapsForInsert(Table<?> table) {
         this.table = table;
-        this.values = new LinkedHashMap<Field<?>, List<Field<?>>>();
-        this.empty = new LinkedHashMap<Field<?>, Field<?>>();
+        this.values = new LinkedHashMap<>();
+        this.empty = new LinkedHashMap<>();
     }
 
     // -------------------------------------------------------------------------
@@ -106,7 +107,11 @@ final class FieldMapsForInsert extends AbstractQueryPart {
         }
 
         // Single record inserts can use the standard syntax in any dialect
-        else if (rows == 1                                                ) {
+
+
+
+
+        else if (rows == 1) {
             ctx.formatSeparator()
                .start(INSERT_VALUES)
                .visit(K_VALUES)
@@ -120,6 +125,7 @@ final class FieldMapsForInsert extends AbstractQueryPart {
             switch (ctx.family()) {
 
                 // Some dialects don't support multi-record inserts
+
 
 
 
@@ -202,11 +208,22 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
     final Select<Record> insertSelect() {
         Select<Record> select = null;
 
         for (int row = 0; row < rows; row++) {
-            List<Field<?>> fields = new ArrayList<Field<?>>(values.size());
+            List<Field<?>> fields = new ArrayList<>(values.size());
 
             for (List<Field<?>> list : values.values())
                 fields.add(list.get(row));
@@ -228,8 +245,9 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
     final void toSQL92Values(Context<?> ctx, boolean emulateBulkInsertReturning) {
         boolean indent = (values.size() > 1);
+        boolean castFirstRowNumericValues = false;
 
-        for (int row = 0; row < rows                                                                     ; row++) {
+        for (int row = 0; row < rows; row++) {
             if (row > 0)
                 ctx.sql(", ");
 
@@ -252,6 +270,15 @@ final class FieldMapsForInsert extends AbstractQueryPart {
 
 
 
+
+
+
+
+
+
+
+
+
                 ctx.visit(list.get(row));
                 separator = ", ";
             }
@@ -265,15 +292,11 @@ final class FieldMapsForInsert extends AbstractQueryPart {
         }
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
     // -------------------------------------------------------------------------
     // The FieldMapsForInsert API
     // -------------------------------------------------------------------------
 
+    @SuppressWarnings("unchecked")
     final void addFields(Collection<?> fields) {
         if (rows == 0)
             newRecord();
@@ -284,14 +307,14 @@ final class FieldMapsForInsert extends AbstractQueryPart {
             Field<?> e = empty.get(f);
 
             if (e == null) {
-                e = DSL.val(null, f);
+                e = new LazyVal<>(null, (Field<Object>) f);
                 empty.put(f, e);
             }
 
             if (!values.containsKey(f)) {
                 values.put(f, rows > 0
-                    ? new ArrayList<Field<?>>(Collections.nCopies(rows, e))
-                    : new ArrayList<Field<?>>()
+                    ? new ArrayList<>(Collections.nCopies(rows, e))
+                    : new ArrayList<>()
                 );
             }
         }
@@ -438,7 +461,7 @@ final class FieldMapsForInsert extends AbstractQueryPart {
                         @Override
                         public Entry<Field<?>, Field<?>> next() {
                             Entry<Field<?>, List<Field<?>>> entry = delegate.next();
-                            return new SimpleImmutableEntry<Field<?>, Field<?>>(entry.getKey(), entry.getValue().get(index));
+                            return new SimpleImmutableEntry<>(entry.getKey(), entry.getValue().get(index));
                         }
 
                         @Override

@@ -39,16 +39,17 @@ package org.jooq;
 
 import static org.jooq.SQLDialect.CUBRID;
 // ...
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
 // ...
 // ...
 // ...
 // ...
 
 import java.util.Collection;
-
-import javax.annotation.Generated;
 
 /**
  * This type is used for the {@link Merge}'s DSL API.
@@ -69,27 +70,26 @@ import javax.annotation.Generated;
  *
  * @author Lukas Eder
  */
-@Generated("This class was generated using jOOQ-tools")
 public interface MergeNotMatchedValuesStep1<R extends Record, T1> {
 
     /**
      * Set <code>VALUES</code> for <code>INSERT</code> in the <code>MERGE</code>
      * statement's <code>WHEN NOT MATCHED THEN INSERT</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     MergeNotMatchedWhereStep<R> values(T1 value1);
 
     /**
      * Set <code>VALUES</code> for <code>INSERT</code> in the <code>MERGE</code>
      * statement's <code>WHEN NOT MATCHED THEN INSERT</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     MergeNotMatchedWhereStep<R> values(Field<T1> value1);
 
     /**
      * Set <code>VALUES</code> for <code>INSERT</code> in the <code>MERGE</code>
      * statement's <code>WHEN NOT MATCHED THEN INSERT</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     MergeNotMatchedWhereStep<R> values(Collection<?> values);
 }

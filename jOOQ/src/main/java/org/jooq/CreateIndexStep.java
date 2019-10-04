@@ -51,6 +51,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -90,36 +91,36 @@ public interface CreateIndexStep {
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(Table<?> table, OrderField<?>... fields);
 
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(Table<?> table, Collection<? extends OrderField<?>> fields);
 
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(Name tableName, Name... fieldNames);
 
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(Name tableName, Collection<? extends Name> fieldNames);
 
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(String tableName, String... fieldNames);
 
     /**
      * Specify the table and column expressions on which to create an index.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     CreateIndexIncludeStep on(String tableName, Collection<? extends String> fieldNames);
 }

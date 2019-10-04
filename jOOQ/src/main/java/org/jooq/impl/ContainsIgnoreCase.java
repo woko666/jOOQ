@@ -52,7 +52,7 @@ import org.jooq.Field;
  *
  * @author lmarchau
  */
-final class ContainsIgnoreCase<T> extends AbstractCondition {
+final class ContainsIgnoreCase extends AbstractCondition {
 
     /**
      * Generated UID
@@ -61,20 +61,16 @@ final class ContainsIgnoreCase<T> extends AbstractCondition {
 
     private static final Clause[] CLAUSES          = { CONDITION, CONDITION_COMPARISON };
 
-    private final Field<T>        lhs;
-    private final Field<T>        rhs;
-    private final T               value;
+    private final Field<?>        lhs;
+    private final Field<?>        rhs;
+    private final boolean         leftWildcard;
+    private final boolean         rightWildcard;
 
-    ContainsIgnoreCase(Field<T> field, T value) {
-        this.lhs = field;
-        this.rhs = null;
-        this.value = value;
-    }
-
-    ContainsIgnoreCase(Field<T> field, Field<T> rhs) {
+    ContainsIgnoreCase(Field<?> field, Field<?> rhs, boolean leftWildcard, boolean rightWildcard) {
         this.lhs = field;
         this.rhs = rhs;
-        this.value = null;
+        this.leftWildcard = leftWildcard;
+        this.rightWildcard = rightWildcard;
     }
 
     @Override
@@ -88,15 +84,17 @@ final class ContainsIgnoreCase<T> extends AbstractCondition {
     }
 
     private final Condition condition(Configuration configuration) {
-        Field<String> concat;
+        Field<?>[] array = new Field[1 + (leftWildcard ? 1 : 0) + (rightWildcard ? 1 : 0)];
 
-        if (rhs == null) {
-            concat = DSL.concat(inline("%"), Tools.escapeForLike(value, configuration), inline("%"));
-        }
-        else {
-            concat = DSL.concat(inline("%"), Tools.escapeForLike(rhs, configuration), inline("%"));
-        }
+        int i = 0;
+        if (leftWildcard)
+            array[i++] = inline("%");
 
-        return lhs.likeIgnoreCase(concat, Tools.ESCAPE);
+        array[i++] = Tools.escapeForLike(rhs, configuration);
+
+        if (rightWildcard)
+            array[i++] = inline("%");
+
+        return lhs.likeIgnoreCase(DSL.concat(array), Tools.ESCAPE);
     }
 }

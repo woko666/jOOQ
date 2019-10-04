@@ -37,15 +37,17 @@
  */
 package org.jooq.impl;
 
-import static org.jooq.impl.DSL.function;
+import static org.jooq.impl.Keywords.F_TRIM;
+import static org.jooq.impl.Keywords.K_BOTH;
+import static org.jooq.impl.Keywords.K_FROM;
 
-import org.jooq.Configuration;
+import org.jooq.Context;
 import org.jooq.Field;
 
 /**
  * @author Lukas Eder
  */
-final class Trim extends AbstractFunction<String> {
+final class Trim extends AbstractField<String> {
 
     /**
      * Generated UID
@@ -53,15 +55,23 @@ final class Trim extends AbstractFunction<String> {
     private static final long   serialVersionUID = -7273879239726265322L;
 
     private final Field<String> argument;
+    private final Field<String> characters;
 
     Trim(Field<String> argument) {
-        super("trim", SQLDataType.VARCHAR, argument);
+        this(argument, null);
+    }
+
+    Trim(Field<String> argument, Field<String> characters) {
+        super(DSL.name("trim"), SQLDataType.VARCHAR);
 
         this.argument = argument;
+        this.characters = characters;
     }
 
     @Override
-    final Field<String> getFunction0(Configuration configuration) {
+    public final void accept(Context<?> ctx) {
+        if (characters == null) {
+            switch (ctx.dialect()) {
 
 
 
@@ -75,6 +85,33 @@ final class Trim extends AbstractFunction<String> {
 
 
 
-        return function("trim", SQLDataType.VARCHAR, argument);
+
+
+                default:
+                    ctx.visit(F_TRIM).sql('(').visit(argument).sql(')');
+                    break;
+            }
+        }
+        else {
+            switch (ctx.dialect()) {
+
+
+
+
+                case SQLITE:
+                    ctx.visit(F_TRIM).sql('(').visit(argument).sql(", ").visit(characters).sql(')');
+                    break;
+
+
+
+
+
+
+
+                default:
+                    ctx.visit(F_TRIM).sql('(').visit(K_BOTH).sql(' ').visit(characters).sql(' ').visit(K_FROM).sql(' ').visit(argument).sql(')');
+                    break;
+            }
+        }
     }
 }

@@ -42,14 +42,13 @@ import static org.jooq.impl.Keywords.K_SET;
 import static org.jooq.impl.Keywords.K_USE;
 
 import org.jooq.Catalog;
-import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 
 /**
  * @author Lukas Eder
  */
-final class SetCatalog extends AbstractQuery {
+final class SetCatalog extends AbstractRowCountQuery {
 
     private static final long serialVersionUID = -3996953205762741746L;
     private final Catalog     catalog;
@@ -67,19 +66,27 @@ final class SetCatalog extends AbstractQuery {
 
 
 
+
+
+
+
+
+
+
+
+
+            case DERBY:
+            case H2:
+            case HSQLDB:
             case MARIADB:
             case MYSQL:
-                ctx.visit(K_USE).sql(' ').visit(catalog);
+            case POSTGRES:
+                ctx.visit(DSL.setSchema(catalog.getName()));
                 break;
 
             default:
                 ctx.visit(K_SET).sql(' ').visit(K_CATALOG).sql(' ').visit(catalog);
                 break;
         }
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 }

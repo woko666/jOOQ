@@ -38,10 +38,11 @@
 package org.jooq;
 
 // ...
-import static org.jooq.SQLDialect.MYSQL_8_0;
+import static org.jooq.SQLDialect.MARIADB;
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
 
 /**
  * This type is used for the {@link Select}'s DSL API when selecting generic
@@ -58,9 +59,9 @@ import static org.jooq.SQLDialect.POSTGRES_9_5;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -105,18 +106,16 @@ import static org.jooq.SQLDialect.POSTGRES_9_5;
  */
 public interface SelectForUpdateWaitStep<R extends Record> extends SelectOptionStep<R> {
 
-
-
-
-
-
-
-
-
-
-
-
-
+    /**
+     * Add a <code>WAIT</code> clause to the <code>FOR UPDATE</code> clause at
+     * the end of the query.
+     * <p>
+     * Be careful not to confuse this with {@link Object#wait(long)} !
+     *
+     * @see SelectQuery#setForUpdateWait(int) see LockProvider for more details
+     */
+    @Support({ MARIADB })
+    SelectOptionStep<R> wait(int seconds);
 
     /**
      * Add a <code>NOWAIT</code> clause to the <code>FOR UPDATE</code> clause at
@@ -124,7 +123,7 @@ public interface SelectForUpdateWaitStep<R extends Record> extends SelectOptionS
      *
      * @see SelectQuery#setForUpdateNoWait() see LockProvider for more details
      */
-    @Support({ MYSQL_8_0, POSTGRES })
+    @Support({ MARIADB, MYSQL, POSTGRES })
     SelectOptionStep<R> noWait();
 
     /**
@@ -134,6 +133,6 @@ public interface SelectForUpdateWaitStep<R extends Record> extends SelectOptionS
      * @see SelectQuery#setForUpdateSkipLocked() see LockProvider for more
      *      details
      */
-    @Support({ MYSQL_8_0, POSTGRES_9_5 })
+    @Support({ MYSQL, POSTGRES })
     SelectOptionStep<R> skipLocked();
 }

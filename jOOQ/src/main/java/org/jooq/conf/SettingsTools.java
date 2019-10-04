@@ -47,8 +47,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Locale;
 
-import javax.xml.bind.JAXB;
+import org.jooq.tools.JooqLogger;
+import org.jooq.util.jaxb.tools.MiniJAXB;
 
 /**
  * Convenience methods for jOOQ runtime settings.
@@ -57,27 +60,31 @@ import javax.xml.bind.JAXB;
  */
 public final class SettingsTools {
 
-    private static final Settings DEFAULT_SETTINGS;
+    private static final Settings   DEFAULT_SETTINGS;
+    private static final JooqLogger log = JooqLogger.getLogger(SettingsTools.class);
 
     static {
         Settings settings = null;
         String property = System.getProperty("org.jooq.settings");
 
         if (property != null) {
+            log.warn("DEPRECATION", "Loading system wide default settings via org.jooq.settings system properties has been deprecated. Please use explicit Settings in your Configuration references, instead.");
 
             // Check classpath first
             InputStream in = SettingsTools.class.getResourceAsStream(property);
             if (in != null)
-                settings = JAXB.unmarshal(in, Settings.class);
+                settings = MiniJAXB.unmarshal(in, Settings.class);
             else
-                settings = JAXB.unmarshal(new File(property), Settings.class);
+                settings = MiniJAXB.unmarshal(new File(property), Settings.class);
         }
 
         if (settings == null) {
             InputStream in = SettingsTools.class.getResourceAsStream("/jooq-settings.xml");
 
-            if (in != null)
-                settings = JAXB.unmarshal(in, Settings.class);
+            if (in != null) {
+                log.warn("DEPRECATION", "Loading system wide default settings via the classpath /jooq-settings.xml resource has been deprecated. Please use explicit Settings in your Configuration references, instead.");
+                settings = MiniJAXB.unmarshal(in, Settings.class);
+            }
         }
 
         if (settings == null)
@@ -164,6 +171,14 @@ public final class SettingsTools {
     }
 
     /**
+     * The render locale that is applicable, or the default locale if no such
+     * locale is configured.
+     */
+    public static final Locale renderLocale(Settings settings) {
+        return defaultIfNull(settings.getRenderLocale(), Locale.getDefault());
+    }
+
+    /**
      * Lazy access to {@link RenderMapping}.
      */
     public static final RenderMapping getRenderMapping(Settings settings) {
@@ -171,6 +186,74 @@ public final class SettingsTools {
             settings.setRenderMapping(new RenderMapping());
 
         return settings.getRenderMapping();
+    }
+
+    /**
+     * Backwards compatible access to {@link RenderKeywordCase} and/or
+     * {@link RenderKeywordStyle} (the latter being deprecated).
+     */
+    public static final RenderKeywordCase getRenderKeywordCase(Settings settings) {
+        RenderKeywordCase result = settings.getRenderKeywordCase();
+
+        if (result == null || result == RenderKeywordCase.AS_IS) {
+            RenderKeywordStyle style = settings.getRenderKeywordStyle();
+
+            if (style != null) {
+                switch (style) {
+                    case AS_IS:  result = RenderKeywordCase.AS_IS;  break;
+                    case LOWER:  result = RenderKeywordCase.LOWER;  break;
+                    case UPPER:  result = RenderKeywordCase.UPPER;  break;
+                    case PASCAL: result = RenderKeywordCase.PASCAL; break;
+                    default:
+                        throw new UnsupportedOperationException("Unsupported style: " + style);
+                }
+            }
+            else {
+                result = RenderKeywordCase.AS_IS;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Backwards compatible access to {@link RenderNameCase} and/or
+     * {@link RenderNameStyle} (the latter being deprecated).
+     */
+    public static final RenderNameCase getRenderNameCase(Settings settings) {
+        RenderNameCase result = settings.getRenderNameCase();
+
+        if (result == null || result == RenderNameCase.AS_IS) {
+            RenderNameStyle style = settings.getRenderNameStyle();
+
+            if (style == RenderNameStyle.LOWER)
+                result = RenderNameCase.LOWER;
+            else if (style == RenderNameStyle.UPPER)
+                result = RenderNameCase.UPPER;
+            else
+                result = RenderNameCase.AS_IS;
+        }
+
+        return result;
+    }
+
+    /**
+     * Backwards compatible access to {@link RenderQuotedNames} and/or
+     * {@link RenderNameStyle} (the latter being deprecated).
+     */
+    public static final RenderQuotedNames getRenderQuotedNames(Settings settings) {
+        RenderQuotedNames result = settings.getRenderQuotedNames();
+
+        if (result == null || result == RenderQuotedNames.EXPLICIT_DEFAULT_QUOTED) {
+            RenderNameStyle style = settings.getRenderNameStyle();
+
+            if (style == null || style == RenderNameStyle.QUOTED)
+                result = RenderQuotedNames.EXPLICIT_DEFAULT_QUOTED;
+            else
+                result = RenderQuotedNames.NEVER;
+        }
+
+        return result;
     }
 
     /**
@@ -217,6 +300,8 @@ public final class SettingsTools {
 
         if (result.renderFormatting != null)
             result.renderFormatting = (RenderFormatting) result.renderFormatting.clone();
+        if (result.parseSearchPath != null)
+            result.parseSearchPath = new ArrayList<>(result.parseSearchPath);
 
         return result;
     }
@@ -231,6 +316,18 @@ public final class SettingsTools {
              : settings.getQueryTimeout() != null
              ? settings.getQueryTimeout()
              : 0;
+    }
+
+    /**
+     * Return <code>poolable</code> if it is not <code>null</code>, or the
+     * specified {@link Settings#getQueryPoolable()}.
+     */
+    public static final QueryPoolable getQueryPoolable(QueryPoolable poolable, Settings settings) {
+        return poolable != null && poolable != QueryPoolable.DEFAULT
+             ? poolable
+             : settings.getQueryPoolable() != null
+             ? settings.getQueryPoolable()
+             : QueryPoolable.DEFAULT;
     }
 
     /**

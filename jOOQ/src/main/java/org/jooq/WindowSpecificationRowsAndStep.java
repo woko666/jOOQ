@@ -39,13 +39,16 @@ package org.jooq;
 
 // ...
 // ...
+import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.MARIADB;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 // ...
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
@@ -88,35 +91,35 @@ public interface WindowSpecificationRowsAndStep {
      * Add a <code>... AND UNBOUNDED PRECEDING</code> frame clause to the window
      * specification.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    WindowSpecificationFinalStep andUnboundedPreceding();
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    WindowSpecificationExcludeStep andUnboundedPreceding();
 
     /**
      * Add a <code>... AND [number] PRECEDING</code> frame clause to the window
      * specification.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    WindowSpecificationFinalStep andPreceding(int number);
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    WindowSpecificationExcludeStep andPreceding(int number);
 
     /**
      * Add a <code>... AND CURRENT ROW</code> frame clause to the window
      * specification.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    WindowSpecificationFinalStep andCurrentRow();
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    WindowSpecificationExcludeStep andCurrentRow();
 
     /**
      * Add a <code>... AND UNBOUNDED FOLLOWING</code> frame clause to the window
      * specification.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    WindowSpecificationFinalStep andUnboundedFollowing();
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    WindowSpecificationExcludeStep andUnboundedFollowing();
 
     /**
      * Add a <code>... AND [number] FOLLOWING</code> frame clause to the window
      * specification.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    WindowSpecificationFinalStep andFollowing(int number);
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    WindowSpecificationExcludeStep andFollowing(int number);
 
 }

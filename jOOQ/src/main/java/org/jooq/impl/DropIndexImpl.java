@@ -46,6 +46,7 @@ import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -59,7 +60,7 @@ import static org.jooq.impl.Keywords.K_ON;
 import static org.jooq.impl.Tools.beginTryCatch;
 import static org.jooq.impl.Tools.endTryCatch;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
@@ -74,7 +75,7 @@ import org.jooq.Table;
 /**
  * @author Lukas Eder
  */
-final class DropIndexImpl extends AbstractQuery implements
+final class DropIndexImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for DROP INDEX behaviour
     DropIndexOnStep {
@@ -82,14 +83,14 @@ final class DropIndexImpl extends AbstractQuery implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID     = 8904572826501186329L;
-    private static final Clause[]            CLAUSES              = { DROP_INDEX };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS = EnumSet.of(CUBRID, DERBY, FIREBIRD);
-    private static final EnumSet<SQLDialect> REQUIRES_ON          = EnumSet.of(MARIADB, MYSQL);
+    private static final long            serialVersionUID     = 8904572826501186329L;
+    private static final Clause[]        CLAUSES              = { DROP_INDEX };
+    private static final Set<SQLDialect> NO_SUPPORT_IF_EXISTS = SQLDialect.supported(CUBRID, DERBY, FIREBIRD);
+    private static final Set<SQLDialect> REQUIRES_ON          = SQLDialect.supported(MARIADB, MYSQL);
 
-    private final Index                      index;
-    private final boolean                    ifExists;
-    private Table<?>                         on;
+    private final Index                  index;
+    private final boolean                ifExists;
+    private Table<?>                     on;
 
     DropIndexImpl(Configuration configuration, Index index) {
         this(configuration, index, false);
@@ -149,11 +150,15 @@ final class DropIndexImpl extends AbstractQuery implements
         if (ifExists && supportsIfExists(ctx))
             ctx.visit(K_IF_EXISTS).sql(' ');
 
+
+
+
+
+
         ctx.visit(index);
 
-        if (on != null)
-            if (REQUIRES_ON.contains(ctx.family()))
-                ctx.sql(' ').visit(K_ON).sql(' ').visit(on);
+        if (on != null && REQUIRES_ON.contains(ctx.family()))
+            ctx.sql(' ').visit(K_ON).sql(' ').visit(on);
     }
 
     @Override

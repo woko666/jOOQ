@@ -51,6 +51,7 @@ import org.jooq.meta.hsqldb.HSQLDBDatabase;
 // ...
 import org.jooq.meta.jdbc.JDBCDatabase;
 import org.jooq.meta.mariadb.MariaDBDatabase;
+// ...
 import org.jooq.meta.mysql.MySQLDatabase;
 // ...
 import org.jooq.meta.postgres.PostgresDatabase;
@@ -77,18 +78,7 @@ public class Databases {
     public static final Class<? extends Database> databaseClass(SQLDialect dialect) {
         Class<? extends Database> result = JDBCDatabase.class;
 
-        switch (dialect) {
-
-
-
-
-
-
-
-
-
-
-
+        switch (dialect.family()) {
 
 
 
@@ -109,19 +99,11 @@ public class Databases {
 
             case CUBRID:           result = CUBRIDDatabase.class;           break;
             case DERBY:            result = DerbyDatabase.class;            break;
-            case FIREBIRD_2_5:
-            case FIREBIRD_3_0:
             case FIREBIRD:         result = FirebirdDatabase.class;         break;
             case H2:               result = H2Database.class;               break;
             case HSQLDB:           result = HSQLDBDatabase.class;           break;
             case MARIADB:          result = MariaDBDatabase.class;          break;
-            case MYSQL_5_7:
-            case MYSQL_8_0:
             case MYSQL:            result = MySQLDatabase.class;            break;
-            case POSTGRES_9_3:
-            case POSTGRES_9_4:
-            case POSTGRES_9_5:
-            case POSTGRES_10:
             case POSTGRES:         result = PostgresDatabase.class;         break;
             case SQLITE:           result = SQLiteDatabase.class;           break;
 

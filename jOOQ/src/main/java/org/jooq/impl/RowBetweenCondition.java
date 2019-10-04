@@ -54,6 +54,7 @@ import static org.jooq.SQLDialect.H2;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -68,11 +69,17 @@ import static org.jooq.impl.Keywords.K_BETWEEN;
 import static org.jooq.impl.Keywords.K_NOT;
 import static org.jooq.impl.Keywords.K_SYMMETRIC;
 
-import java.util.EnumSet;
-
-import javax.annotation.Generated;
+import java.util.Set;
 
 import org.jooq.BetweenAndStep1;
+import org.jooq.BetweenAndStep2;
+import org.jooq.BetweenAndStep3;
+import org.jooq.BetweenAndStep4;
+import org.jooq.BetweenAndStep5;
+import org.jooq.BetweenAndStep6;
+import org.jooq.BetweenAndStep7;
+import org.jooq.BetweenAndStep8;
+import org.jooq.BetweenAndStep9;
 import org.jooq.BetweenAndStep10;
 import org.jooq.BetweenAndStep11;
 import org.jooq.BetweenAndStep12;
@@ -83,17 +90,9 @@ import org.jooq.BetweenAndStep16;
 import org.jooq.BetweenAndStep17;
 import org.jooq.BetweenAndStep18;
 import org.jooq.BetweenAndStep19;
-import org.jooq.BetweenAndStep2;
 import org.jooq.BetweenAndStep20;
 import org.jooq.BetweenAndStep21;
 import org.jooq.BetweenAndStep22;
-import org.jooq.BetweenAndStep3;
-import org.jooq.BetweenAndStep4;
-import org.jooq.BetweenAndStep5;
-import org.jooq.BetweenAndStep6;
-import org.jooq.BetweenAndStep7;
-import org.jooq.BetweenAndStep8;
-import org.jooq.BetweenAndStep9;
 import org.jooq.BetweenAndStepN;
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -103,6 +102,14 @@ import org.jooq.Field;
 import org.jooq.QueryPartInternal;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record2;
+import org.jooq.Record3;
+import org.jooq.Record4;
+import org.jooq.Record5;
+import org.jooq.Record6;
+import org.jooq.Record7;
+import org.jooq.Record8;
+import org.jooq.Record9;
 import org.jooq.Record10;
 import org.jooq.Record11;
 import org.jooq.Record12;
@@ -113,19 +120,19 @@ import org.jooq.Record16;
 import org.jooq.Record17;
 import org.jooq.Record18;
 import org.jooq.Record19;
-import org.jooq.Record2;
 import org.jooq.Record20;
 import org.jooq.Record21;
 import org.jooq.Record22;
-import org.jooq.Record3;
-import org.jooq.Record4;
-import org.jooq.Record5;
-import org.jooq.Record6;
-import org.jooq.Record7;
-import org.jooq.Record8;
-import org.jooq.Record9;
 import org.jooq.Row;
 import org.jooq.Row1;
+import org.jooq.Row2;
+import org.jooq.Row3;
+import org.jooq.Row4;
+import org.jooq.Row5;
+import org.jooq.Row6;
+import org.jooq.Row7;
+import org.jooq.Row8;
+import org.jooq.Row9;
 import org.jooq.Row10;
 import org.jooq.Row11;
 import org.jooq.Row12;
@@ -136,24 +143,15 @@ import org.jooq.Row16;
 import org.jooq.Row17;
 import org.jooq.Row18;
 import org.jooq.Row19;
-import org.jooq.Row2;
 import org.jooq.Row20;
 import org.jooq.Row21;
 import org.jooq.Row22;
-import org.jooq.Row3;
-import org.jooq.Row4;
-import org.jooq.Row5;
-import org.jooq.Row6;
-import org.jooq.Row7;
-import org.jooq.Row8;
-import org.jooq.Row9;
 import org.jooq.RowN;
 import org.jooq.SQLDialect;
 
 /**
  * @author Lukas Eder
  */
-@Generated("This class was generated using jOOQ-tools")
 @SuppressWarnings({ "rawtypes", "unchecked" })
 final class RowBetweenCondition<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> extends AbstractCondition
 implements
@@ -189,8 +187,8 @@ implements
     private static final Clause[]            CLAUSES_BETWEEN_SYMMETRIC     = { CONDITION, CONDITION_BETWEEN_SYMMETRIC };
     private static final Clause[]            CLAUSES_NOT_BETWEEN           = { CONDITION, CONDITION_NOT_BETWEEN };
     private static final Clause[]            CLAUSES_NOT_BETWEEN_SYMMETRIC = { CONDITION, CONDITION_NOT_BETWEEN_SYMMETRIC };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_SYMMETRIC          = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
-    private static final EnumSet<SQLDialect> EMULATE_BETWEEN               = EnumSet.of(CUBRID, DERBY, FIREBIRD, MARIADB, MYSQL, SQLITE);
+    private static final Set<SQLDialect>     NO_SUPPORT_SYMMETRIC          = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
+    private static final Set<SQLDialect>     EMULATE_BETWEEN               = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, MARIADB, MYSQL);
 
     private final boolean         symmetric;
     private final boolean         not;
@@ -331,117 +329,117 @@ implements
 
     @Override
     public final Condition and(T1 t1) {
-        return and(row(t1));
+        return and(new Object[] { t1 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2) {
-        return and(row(t1, t2));
+        return and(new Object[] { t1, t2 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3) {
-        return and(row(t1, t2, t3));
+        return and(new Object[] { t1, t2, t3 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4) {
-        return and(row(t1, t2, t3, t4));
+        return and(new Object[] { t1, t2, t3, t4 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) {
-        return and(row(t1, t2, t3, t4, t5));
+        return and(new Object[] { t1, t2, t3, t4, t5 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
-        return and(row(t1, t2, t3, t4, t5, t6));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20, T21 t21) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21 });
     }
 
     @Override
     public final Condition and(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20, T21 t21, T22 t22) {
-        return and(row(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22));
+        return and(new Object[] { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22 });
     }
 
     @Override
     public final Condition and(Object... values) {
-        return and(row(values));
+        return and(row(Tools.fieldsArray(values, row.fields())));
     }
 
     @Override

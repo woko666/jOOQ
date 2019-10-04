@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import java.io.Serializable;
@@ -13,13 +6,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -37,10 +31,10 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 })
 public class MappedSchema
     extends SettingsBase
-    implements Serializable, Cloneable
+    implements Serializable, Cloneable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     protected String input;
     @XmlElement(type = String.class)
     @XmlJavaTypeAdapter(RegexAdapter.class)
@@ -53,11 +47,7 @@ public class MappedSchema
     /**
      * The input schema name as defined in {@link org.jooq.Schema#getName()}
      * <p>
-     * Either &lt;input/> or &lt;inputExpression/> must be provided
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
      *
      */
     public String getInput() {
@@ -65,11 +55,9 @@ public class MappedSchema
     }
 
     /**
-     * Sets the value of the input property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The input schema name as defined in {@link org.jooq.Schema#getName()}
+     * <p>
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
      *
      */
     public void setInput(String value) {
@@ -78,11 +66,7 @@ public class MappedSchema
 
     /**
      * A regular expression matching the input schema name as defined in {@link org.jooq.Schema#getName()}
-     * Either &lt;input/> or &lt;inputExpression/> must be provided
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
      *
      */
     public Pattern getInputExpression() {
@@ -90,11 +74,8 @@ public class MappedSchema
     }
 
     /**
-     * Sets the value of the inputExpression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * A regular expression matching the input schema name as defined in {@link org.jooq.Schema#getName()}
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
      *
      */
     public void setInputExpression(Pattern value) {
@@ -105,13 +86,9 @@ public class MappedSchema
      * The output schema as it will be rendered in SQL.
      * <ul>
      * <li>When this is omitted, you can still apply table mapping.</li>
-     * <li>When &lt;input/> is provided, &lt;output/> is a constant value.</li>
-     * <li>When &lt;inputExpression/> is provided, &lt;output/> is a replacement expression</li>
+     * <li>When &lt;input/&gt; is provided, &lt;output/&gt; is a constant value.</li>
+     * <li>When &lt;inputExpression/&gt; is provided, &lt;output/&gt; is a replacement expression</li>
      * </ul>
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
      *
      */
     public String getOutput() {
@@ -119,11 +96,12 @@ public class MappedSchema
     }
 
     /**
-     * Sets the value of the output property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The output schema as it will be rendered in SQL.
+     * <ul>
+     * <li>When this is omitted, you can still apply table mapping.</li>
+     * <li>When &lt;input/&gt; is provided, &lt;output/&gt; is a constant value.</li>
+     * <li>When &lt;inputExpression/&gt; is provided, &lt;output/&gt; is a replacement expression</li>
+     * </ul>
      *
      */
     public void setOutput(String value) {
@@ -141,16 +119,36 @@ public class MappedSchema
         this.tables = tables;
     }
 
+    /**
+     * The input schema name as defined in {@link org.jooq.Schema#getName()}
+     * <p>
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
+     *
+     */
     public MappedSchema withInput(String value) {
         setInput(value);
         return this;
     }
 
+    /**
+     * A regular expression matching the input schema name as defined in {@link org.jooq.Schema#getName()}
+     * Either &lt;input/&gt; or &lt;inputExpression/&gt; must be provided
+     *
+     */
     public MappedSchema withInputExpression(Pattern value) {
         setInputExpression(value);
         return this;
     }
 
+    /**
+     * The output schema as it will be rendered in SQL.
+     * <ul>
+     * <li>When this is omitted, you can still apply table mapping.</li>
+     * <li>When &lt;input/&gt; is provided, &lt;output/&gt; is a constant value.</li>
+     * <li>When &lt;inputExpression/&gt; is provided, &lt;output/&gt; is a replacement expression</li>
+     * </ul>
+     *
+     */
     public MappedSchema withOutput(String value) {
         setOutput(value);
         return this;
@@ -178,29 +176,18 @@ public class MappedSchema
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("input", input);
+        builder.append("inputExpression", inputExpression);
+        builder.append("output", output);
+        builder.append("tables", "table", tables);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (input!= null) {
-            sb.append("<input>");
-            sb.append(input);
-            sb.append("</input>");
-        }
-        if (inputExpression!= null) {
-            sb.append("<inputExpression>");
-            sb.append(inputExpression);
-            sb.append("</inputExpression>");
-        }
-        if (output!= null) {
-            sb.append("<output>");
-            sb.append(output);
-            sb.append("</output>");
-        }
-        if (tables!= null) {
-            sb.append("<tables>");
-            sb.append(tables);
-            sb.append("</tables>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override
@@ -229,7 +216,7 @@ public class MappedSchema
                 return false;
             }
         } else {
-            if (!inputExpression.equals(other.inputExpression)) {
+            if (!inputExpression.pattern().equals(other.inputExpression.pattern())) {
                 return false;
             }
         }
@@ -259,7 +246,7 @@ public class MappedSchema
         final int prime = 31;
         int result = 1;
         result = ((prime*result)+((input == null)? 0 :input.hashCode()));
-        result = ((prime*result)+((inputExpression == null)? 0 :inputExpression.hashCode()));
+        result = ((prime*result)+((inputExpression == null)? 0 :inputExpression.pattern().hashCode()));
         result = ((prime*result)+((output == null)? 0 :output.hashCode()));
         result = ((prime*result)+((tables == null)? 0 :tables.hashCode()));
         return result;

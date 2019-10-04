@@ -1,19 +1,13 @@
 
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -31,10 +25,10 @@ import javax.xml.bind.annotation.XmlType;
 })
 public class RenderFormatting
     extends SettingsBase
-    implements Serializable, Cloneable
+    implements Serializable, Cloneable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(defaultValue = "\n")
     protected String newline = "\n";
     @XmlElement(defaultValue = "  ")
@@ -45,21 +39,13 @@ public class RenderFormatting
     /**
      * The character to be used for line breaks.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getNewline() {
         return newline;
     }
 
     /**
-     * Sets the value of the newline property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The character to be used for line breaks.
      *
      */
     public void setNewline(String value) {
@@ -69,21 +55,13 @@ public class RenderFormatting
     /**
      * The characters to be used for indentation.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getIndentation() {
         return indentation;
     }
 
     /**
-     * Sets the value of the indentation property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The characters to be used for indentation.
      *
      */
     public void setIndentation(String value) {
@@ -93,61 +71,58 @@ public class RenderFormatting
     /**
      * The print margin after which (some) formatted elements will break lines.
      *
-     * @return
-     *     possible object is
-     *     {@link Integer }
-     *
      */
     public Integer getPrintMargin() {
         return printMargin;
     }
 
     /**
-     * Sets the value of the printMargin property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link Integer }
+     * The print margin after which (some) formatted elements will break lines.
      *
      */
     public void setPrintMargin(Integer value) {
         this.printMargin = value;
     }
 
+    /**
+     * The character to be used for line breaks.
+     *
+     */
     public RenderFormatting withNewline(String value) {
         setNewline(value);
         return this;
     }
 
+    /**
+     * The characters to be used for indentation.
+     *
+     */
     public RenderFormatting withIndentation(String value) {
         setIndentation(value);
         return this;
     }
 
+    /**
+     * The print margin after which (some) formatted elements will break lines.
+     *
+     */
     public RenderFormatting withPrintMargin(Integer value) {
         setPrintMargin(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("newline", newline);
+        builder.append("indentation", indentation);
+        builder.append("printMargin", printMargin);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (newline!= null) {
-            sb.append("<newline>");
-            sb.append(newline);
-            sb.append("</newline>");
-        }
-        if (indentation!= null) {
-            sb.append("<indentation>");
-            sb.append(indentation);
-            sb.append("</indentation>");
-        }
-        if (printMargin!= null) {
-            sb.append("<printMargin>");
-            sb.append(printMargin);
-            sb.append("</printMargin>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

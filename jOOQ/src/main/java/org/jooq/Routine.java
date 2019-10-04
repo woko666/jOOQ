@@ -81,6 +81,9 @@ import org.jooq.exception.DataAccessException;
  * Hence, with #852, jOOQ 1.6.8, the distinction between procedures and
  * functions becomes obsolete. All stored routines are simply referred to as
  * "Routine".
+ * <p>
+ * Instances of this type cannot be created directly. They are available from
+ * generated code.
  *
  * @author Lukas Eder
  */
@@ -99,6 +102,7 @@ public interface Routine<T> extends Named, Attachable {
      * Get the routine schema
      */
     Schema getSchema();
+
 
 
 

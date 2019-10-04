@@ -292,6 +292,9 @@ public interface ExecuteContext extends Scope {
      * {@link DataAccessException}. To have jOOQ throw your own custom
      * {@link RuntimeException}, use {@link #exception(RuntimeException)}
      * instead. This may have no effect, if called at the wrong moment.
+     * <p>
+     * If <code>null</code> is being passed, jOOQ will internally translate the
+     * "unavailable" exception to an unspecified {@link DataAccessException}.
      */
     void sqlException(SQLException e);
 
@@ -311,7 +314,7 @@ public interface ExecuteContext extends Scope {
 
     /**
      * Any server output collected from this statement when
-     * <code>{@link Settings#getFetchServerOutputSize()} > 0</code>.
+     * <code>{@link Settings#getFetchServerOutputSize()} &gt; 0</code>.
      *
      * @return The server output. This is never <code>null</code>.
      */
@@ -319,7 +322,7 @@ public interface ExecuteContext extends Scope {
 
     /**
      * Any server output collected from this statement when
-     * <code>{@link Settings#getFetchServerOutputSize()} > 0</code>.
+     * <code>{@link Settings#getFetchServerOutputSize()} &gt; 0</code>.
      */
     void serverOutput(String[] output);
 }

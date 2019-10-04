@@ -41,13 +41,13 @@ import java.util.stream.Stream;
 
 import org.jooq.Binding;
 import org.jooq.Catalog;
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.Converter;
 import org.jooq.DataType;
 import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.Package;
+// ...
 import org.jooq.Record;
 import org.jooq.Row;
 import org.jooq.Schema;
@@ -62,12 +62,14 @@ import org.jooq.UDTRecord;
  *
  * @author Lukas Eder
  */
+@org.jooq.Internal
 public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UDT<R> {
 
     private static final long     serialVersionUID = -2208672099190913126L;
 
     private final Schema          schema;
     private final Fields<R>       fields;
+
 
 
 
@@ -85,7 +87,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
     public UDTImpl(String name, Schema schema, Package pkg, boolean synthetic) {
         super(qualify(pkg != null ? pkg : schema, DSL.name(name)), CommentImpl.NO_COMMENT);
 
-        this.fields = new Fields<R>();
+        this.fields = new Fields<>();
         this.schema = schema;
 
 
@@ -102,6 +104,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
     public /* non-final */ Schema getSchema() {
         return schema;
     }
+
 
 
 
@@ -168,6 +171,21 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
         return fieldsRow().fields(fieldIndexes);
     }
 
+    @Override
+    public final int indexOf(Field<?> field) {
+        return fieldsRow().indexOf(field);
+    }
+
+    @Override
+    public final int indexOf(String fieldName) {
+        return fieldsRow().indexOf(fieldName);
+    }
+
+    @Override
+    public final int indexOf(Name fieldName) {
+        return fieldsRow().indexOf(fieldName);
+    }
+
     final Fields<R> fields0() {
         return fields;
     }
@@ -183,7 +201,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
 
     @Override
     public final boolean isSQLUsable() {
-        return true                                        ;
+        return true;
     }
 
     @Override
@@ -198,9 +216,8 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
 
     @Override
     public final DataType<R> getDataType() {
-        if (type == null) {
-            type = new UDTDataType<R>(this);
-        }
+        if (type == null)
+            type = new UDTDataType<>(this);
 
         return type;
     }
@@ -220,9 +237,79 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
         ctx.visit(DSL.name(getName()));
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+    /**
+     * Subclasses may call this method to create {@link UDTField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, UDT)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(String name, DataType<T> type, UDT<R> udt) {
+        return createField(DSL.name(name), type, udt, "", null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link UDTField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, UDT, String)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(String name, DataType<T> type, UDT<R> udt, String comment) {
+        return createField(DSL.name(name), type, udt, comment, null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link UDTField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, UDT, String, Converter)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Converter<T, U> converter) {
+        return createField(DSL.name(name), type, udt, comment, converter, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link UDTField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, UDT, String, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Binding<T, U> binding) {
+        return createField(DSL.name(name), type, udt, comment, null, binding);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link UDTField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, UDT, String, Converter, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends UDTRecord<R>, T, X, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+        return createField(DSL.name(name), type, udt, comment, converter, binding);
     }
 
     /**
@@ -232,7 +319,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(String name, DataType<T> type, UDT<R> udt) {
+    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(Name name, DataType<T> type, UDT<R> udt) {
         return createField(name, type, udt, "", null, null);
     }
 
@@ -243,7 +330,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(String name, DataType<T> type, UDT<R> udt, String comment) {
+    protected static final <R extends UDTRecord<R>, T> UDTField<R, T> createField(Name name, DataType<T> type, UDT<R> udt, String comment) {
         return createField(name, type, udt, comment, null, null);
     }
 
@@ -254,7 +341,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Converter<T, U> converter) {
+    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(Name name, DataType<T> type, UDT<R> udt, String comment, Converter<T, U> converter) {
         return createField(name, type, udt, comment, converter, null);
     }
 
@@ -265,7 +352,7 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Binding<T, U> binding) {
+    protected static final <R extends UDTRecord<R>, T, U> UDTField<R, U> createField(Name name, DataType<T> type, UDT<R> udt, String comment, Binding<T, U> binding) {
         return createField(name, type, udt, comment, null, binding);
     }
 
@@ -277,14 +364,14 @@ public class UDTImpl<R extends UDTRecord<R>> extends AbstractNamed implements UD
      * @param type The data type of the field
      */
     @SuppressWarnings("unchecked")
-    protected static final <R extends UDTRecord<R>, T, X, U> UDTField<R, U> createField(String name, DataType<T> type, UDT<R> udt, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+    protected static final <R extends UDTRecord<R>, T, X, U> UDTField<R, U> createField(Name name, DataType<T> type, UDT<R> udt, String comment, Converter<X, U> converter, Binding<T, X> binding) {
         final Binding<T, U> actualBinding = DefaultBinding.newBinding(converter, type, binding);
         final DataType<U> actualType = converter == null && binding == null
             ? (DataType<U>) type
             : type.asConvertedDataType(actualBinding);
 
         // [#5999] TODO: Allow for user-defined Names
-        final UDTFieldImpl<R, U> udtField = new UDTFieldImpl<R, U>(DSL.name(name), actualType, udt, DSL.comment(comment), actualBinding);
+        final UDTFieldImpl<R, U> udtField = new UDTFieldImpl<>(name, actualType, udt, DSL.comment(comment), actualBinding);
 
         return udtField;
     }

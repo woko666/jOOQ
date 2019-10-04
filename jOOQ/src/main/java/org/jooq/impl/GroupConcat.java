@@ -52,6 +52,7 @@ import org.jooq.GroupConcatOrderByStep;
 import org.jooq.GroupConcatSeparatorStep;
 import org.jooq.Name;
 import org.jooq.OrderField;
+// ...
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.WindowDefinition;
@@ -91,9 +92,9 @@ final class GroupConcat extends AbstractFunction<String> implements GroupConcatO
         Function<String> result;
 
         if (separator == null)
-            result = new Function<String>(Term.LIST_AGG, distinct, SQLDataType.VARCHAR, field, inline(","));
+            result = new Function<>(Term.LIST_AGG, distinct, SQLDataType.VARCHAR, field, inline(","));
         else
-            result = new Function<String>(Term.LIST_AGG, distinct, SQLDataType.VARCHAR, field, inline(separator));
+            result = new Function<>(Term.LIST_AGG, distinct, SQLDataType.VARCHAR, field, inline(separator));
 
 
 
@@ -106,6 +107,10 @@ final class GroupConcat extends AbstractFunction<String> implements GroupConcatO
         else
             return result.withinGroupOrderBy(orderBy);
     }
+
+
+
+
 
 
 

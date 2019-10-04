@@ -40,6 +40,7 @@ package org.jooq.impl;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Character.isJavaIdentifierPart;
+import static java.util.Collections.singletonList;
 // ...
 // ...
 // ...
@@ -48,12 +49,15 @@ import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 import static org.jooq.conf.BackslashEscaping.DEFAULT;
 import static org.jooq.conf.BackslashEscaping.ON;
@@ -79,12 +83,14 @@ import static org.jooq.impl.DDLStatementType.DROP_SCHEMA;
 import static org.jooq.impl.DDLStatementType.DROP_SEQUENCE;
 import static org.jooq.impl.DDLStatementType.DROP_TABLE;
 import static org.jooq.impl.DDLStatementType.DROP_VIEW;
+import static org.jooq.impl.DSL.asterisk;
 import static org.jooq.impl.DSL.concat;
 import static org.jooq.impl.DSL.escape;
 import static org.jooq.impl.DSL.getDataType;
 import static org.jooq.impl.DSL.keyword;
 import static org.jooq.impl.DSL.name;
-import static org.jooq.impl.DSL.nullSafe;
+import static org.jooq.impl.DSL.nullSafeDataType;
+import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.val;
 import static org.jooq.impl.DefaultExecuteContext.localConnection;
 import static org.jooq.impl.Identifiers.QUOTES;
@@ -98,6 +104,7 @@ import static org.jooq.impl.Keywords.K_AUTO_INCREMENT;
 import static org.jooq.impl.Keywords.K_BEGIN;
 import static org.jooq.impl.Keywords.K_BEGIN_CATCH;
 import static org.jooq.impl.Keywords.K_BEGIN_TRY;
+import static org.jooq.impl.Keywords.K_CHARACTER_SET;
 import static org.jooq.impl.Keywords.K_COLLATE;
 import static org.jooq.impl.Keywords.K_DECLARE;
 import static org.jooq.impl.Keywords.K_DEFAULT;
@@ -160,21 +167,28 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -189,6 +203,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 // ...
+import org.jooq.Asterisk;
 import org.jooq.Attachable;
 import org.jooq.BindContext;
 import org.jooq.Catalog;
@@ -200,6 +215,7 @@ import org.jooq.Context;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
+import org.jooq.EmbeddableRecord;
 import org.jooq.EnumType;
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
@@ -207,6 +223,8 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Param;
+// ...
+import org.jooq.QualifiedAsterisk;
 import org.jooq.Query;
 import org.jooq.QueryPart;
 import org.jooq.Record;
@@ -231,6 +249,7 @@ import org.jooq.UDTRecord;
 import org.jooq.UpdatableRecord;
 import org.jooq.conf.BackslashEscaping;
 import org.jooq.conf.Settings;
+import org.jooq.conf.SettingsTools;
 import org.jooq.conf.ThrowExceptions;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataTypeException;
@@ -239,6 +258,7 @@ import org.jooq.exception.NoDataFoundException;
 import org.jooq.exception.TooManyRowsException;
 import org.jooq.impl.ResultsImpl.ResultOrRowsImpl;
 import org.jooq.impl.Tools.Cache.CachedOperation;
+import org.jooq.tools.Ints;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StringUtils;
 import org.jooq.tools.jdbc.JDBCUtils;
@@ -277,6 +297,7 @@ final class Tools {
     static final QueryPart[]                EMPTY_QUERYPART                = {};
     static final Record[]                   EMPTY_RECORD                   = {};
     static final RowN[]                     EMPTY_ROWN                     = {};
+    static final Schema[]                   EMPTY_SCHEMA                   = {};
     static final SelectFieldOrAsterisk[]    EMPTY_SELECT_FIELD_OR_ASTERISK = {};
     static final SortField<?>[]             EMPTY_SORTFIELD                = {};
     static final String[]                   EMPTY_STRING                   = {};
@@ -288,7 +309,12 @@ final class Tools {
     // Some constants for use with Context.data()
     // ------------------------------------------------------------------------
 
-    enum DataKey {
+    /**
+     * Keys for {@link Configuration#data()}, which may be referenced frequently
+     * and represent a {@code boolean} value and are thus stored in an
+     * {@link EnumSet} for speedier access.
+     */
+    enum BooleanDataKey {
 
         /**
          * [#1537] This constant is used internally by jOOQ to omit the RETURNING
@@ -296,16 +322,6 @@ final class Tools {
          * {@link SQLDialect#POSTGRES}.
          */
         DATA_OMIT_RETURNING_CLAUSE,
-
-        /**
-         * [#1905] This constant is used internally by jOOQ to indicate to
-         * subqueries that they're being rendered in the context of a row value
-         * expression predicate.
-         * <p>
-         * This is particularly useful for H2, which pretends that ARRAYs and RVEs
-         * are the same
-         */
-        DATA_ROW_VALUE_EXPRESSION_PREDICATE_SUBQUERY,
 
         /**
          * [#1296] This constant is used internally by jOOQ to indicate that
@@ -327,8 +343,11 @@ final class Tools {
          * flag is set when static statements have too many bind variables. Known
          * values are:
          * <ul>
+         * <li>{@link SQLDialect#ACCESS} : 768</li>
          * <li>{@link SQLDialect#ASE} : 2000</li>
          * <li>{@link SQLDialect#INGRES} : 1024</li>
+         * <li>{@link SQLDialect#ORACLE} : 32767</li>
+         * <li>{@link SQLDialect#POSTGRES} : 32767</li>
          * <li>{@link SQLDialect#SQLITE} : 999</li>
          * <li>{@link SQLDialect#SQLSERVER} : 2100</li>
          * </ul>
@@ -343,6 +362,7 @@ final class Tools {
          * {@link Clause#FIELD_REFERENCE} may contain a
          * {@link Clause#TABLE_REFERENCE}.
          */
+        @SuppressWarnings("javadoc")
         DATA_OMIT_CLAUSE_EVENT_EMISSION,
 
         /**
@@ -354,16 +374,23 @@ final class Tools {
          * practice should no longer be pursued, as such "sub-renderers" will emit /
          * divert {@link Clause} events.
          */
+        @SuppressWarnings("javadoc")
         DATA_WRAP_DERIVED_TABLES_IN_PARENTHESES,
 
-        /**
-         * [#531] The local window definitions.
-         * <p>
-         * The window definitions declared in the <code>WINDOW</code> clause are
-         * needed in the <code>SELECT</code> clause when emulating them by inlining
-         * window specifications.
-         */
-        DATA_WINDOW_DEFINITIONS,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -382,37 +409,13 @@ final class Tools {
         DATA_DEFAULT_TRANSACTION_PROVIDER_AUTOCOMMIT,
 
         /**
-         * [#1629] The {@link Connection#getAutoCommit()} flag value before starting
-         * a new transaction.
-         */
-        DATA_DEFAULT_TRANSACTION_PROVIDER_SAVEPOINTS,
-
-        /**
-         * [#1629] The {@link DefaultConnectionProvider} instance to be used during
-         * the transaction.
-         */
-        DATA_DEFAULT_TRANSACTION_PROVIDER_CONNECTION,
-
-        /**
          * [#2080] When emulating OFFSET pagination in certain databases, synthetic
          * aliases are generated that must be referenced also in
          * <code>ORDER BY</code> clauses, in lieu of their corresponding original
          * aliases.
+         * [#8898] Oracle doesn't support aliases in RETURNING clauses.
          */
-        DATA_OVERRIDE_ALIASES_IN_ORDER_BY,
-
-        /**
-         * [#2080] When emulating OFFSET pagination in certain databases, synthetic
-         * aliases are generated that must be referenced also in
-         * <code>ORDER BY</code> clauses, in lieu of their corresponding original
-         * aliases.
-         */
-        DATA_UNALIAS_ALIASES_IN_ORDER_BY,
-
-        /**
-         * [#3381] The table to be used for the {@link Clause#SELECT_INTO} clause.
-         */
-        DATA_SELECT_INTO_TABLE,
+        DATA_UNALIAS_ALIASED_EXPRESSIONS,
 
         /**
          * [#7139] No data must be selected in the <code>SELECT</code> statement.
@@ -422,6 +425,7 @@ final class Tools {
         /**
          * [#3381] Omit the {@link Clause#SELECT_INTO}, as it is being emulated.
          */
+        @SuppressWarnings("javadoc")
         DATA_OMIT_INTO_CLAUSE,
 
         /**
@@ -446,41 +450,12 @@ final class Tools {
         DATA_COLLECT_SEMI_ANTI_JOIN,
 
         /**
-         * [#1206] The collected Semi / Anti JOIN predicates.
-         */
-        DATA_COLLECTED_SEMI_ANTI_JOIN,
-
-        /**
          * [#2995] An <code>INSERT INTO t SELECT</code> statement. Without any
          * explicit column list, the <code>SELECT</code> statement must not be
          * wrapped in parentheses (which would be interpreted as the column
          * list's parentheses).
          */
         DATA_INSERT_SELECT_WITHOUT_INSERT_COLUMN_LIST,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /**
-         * The level of anonymous block nesting, in case we're generating a block.
-         */
-        DATA_BLOCK_NESTING,
 
         /**
          * [#3579] [#6431] [#7222] There are nested set operations in the current
@@ -493,16 +468,136 @@ final class Tools {
          */
         DATA_EMULATE_BULK_INSERT_RETURNING,
 
+
+
+
+
+
+
+
+
         /**
-         * [#7467] In SQL Server, the TOP clause is sometimes preferred over the FETCH clause.
+         * [#1535] We're currently generating the window specification of a ranking function.
          */
-        DATA_PREFER_TOP_OVER_FETCH,
+        DATA_RANKING_FUNCTION,
+
     }
 
     /**
-     * Like {@link DataKey}, but not an enum - for rare usage.
+     * Keys for {@link Configuration#data()}, which may be referenced frequently
+     * and are thus stored in an {@link EnumMap} for speedier access.
      */
-    static class DataExtendedKey {
+    enum DataKey {
+
+        /**
+         * The level of anonymous block nesting, in case we're generating a block.
+         */
+        DATA_BLOCK_NESTING,
+
+        /**
+         * [#531] The local window definitions.
+         * <p>
+         * The window definitions declared in the <code>WINDOW</code> clause are
+         * needed in the <code>SELECT</code> clause when emulating them by inlining
+         * window specifications.
+         */
+        DATA_WINDOW_DEFINITIONS,
+
+        /**
+         * [#1629] The {@link Connection#getAutoCommit()} flag value before starting
+         * a new transaction.
+         */
+        DATA_DEFAULT_TRANSACTION_PROVIDER_SAVEPOINTS,
+
+        /**
+         * [#1629] The {@link DefaultConnectionProvider} instance to be used during
+         * the transaction.
+         */
+        DATA_DEFAULT_TRANSACTION_PROVIDER_CONNECTION,
+
+        /**
+         * [#2080] When emulating OFFSET pagination in certain databases, synthetic
+         * aliases are generated that must be referenced also in
+         * <code>ORDER BY</code> clauses, in lieu of their corresponding original
+         * aliases.
+         */
+        DATA_OVERRIDE_ALIASES_IN_ORDER_BY,
+
+        /**
+         * [#3381] The table to be used for the {@link Clause#SELECT_INTO} clause.
+         */
+        @SuppressWarnings("javadoc")
+        DATA_SELECT_INTO_TABLE,
+
+        /**
+         * [#1206] The collected Semi / Anti JOIN predicates.
+         */
+        DATA_COLLECTED_SEMI_ANTI_JOIN,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /**
+         * [#6583] The target table on which a DML operation operates on.
+         */
+        DATA_DML_TARGET_TABLE,
+
+        /**
+         * [#8479] There is a WHERE clause to be emulated for ON DUPLICATE KEY
+         */
+        DATA_ON_DUPLICATE_KEY_WHERE,
+
+        /**
+         * [#3607] [#8522] CTEs that need to be added to the top level CTE section.
+         */
+        DATA_TOP_LEVEL_CTE
+    }
+
+    /**
+     * Keys for {@link Configuration#data()}, which may be referenced very
+     * infrequently and are thus stored in an ordinary {@link HashMap} for a
+     * more optimal memory layout.
+     */
+    enum DataExtendedKey {
+
+
+
+
+
+
+
+
 
     }
 
@@ -558,6 +653,7 @@ final class Tools {
     private static volatile Reflect          ktJvmClassMapping;
     private static volatile Reflect          ktKClasses;
     private static volatile Reflect          ktKClass;
+    private static volatile Reflect          ktKTypeParameter;
 
     /**
      * [#3696] The maximum number of consumed exceptions in
@@ -657,13 +753,14 @@ final class Tools {
      * All hexadecimal digits accessible through array index, e.g.
      * <code>HEX_DIGITS[15] == 'f'</code>.
      */
-    private static final char[]   HEX_DIGITS                                   = "0123456789abcdef".toCharArray();
+    private static final char[]          HEX_DIGITS                     = "0123456789abcdef".toCharArray();
 
-    private static final EnumSet<SQLDialect> REQUIRES_BACKSLASH_ESCAPING       = EnumSet.of(MARIADB, MYSQL);
-    private static final EnumSet<SQLDialect> NO_SUPPORT_NULL                   = EnumSet.of(DERBY, FIREBIRD, HSQLDB);
-    private static final EnumSet<SQLDialect> NO_SUPPORT_BINARY_TYPE_LENGTH     = EnumSet.of(POSTGRES);
-    private static final EnumSet<SQLDialect> DEFAULT_BEFORE_NULL               = EnumSet.of(FIREBIRD, HSQLDB);
-    private static final EnumSet<SQLDialect> SUPPORT_MYSQL_SYNTAX              = EnumSet.of(MARIADB, MYSQL);
+    private static final Set<SQLDialect> REQUIRES_BACKSLASH_ESCAPING    = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> NO_SUPPORT_NULL                = SQLDialect.supported(DERBY, FIREBIRD, HSQLDB);
+    private static final Set<SQLDialect> NO_SUPPORT_BINARY_TYPE_LENGTH  = SQLDialect.supported(POSTGRES);
+    private static final Set<SQLDialect> NO_SUPPORT_CAST_TYPE_IN_DDL    = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> DEFAULT_BEFORE_NULL            = SQLDialect.supported(FIREBIRD, HSQLDB);
+    private static final Set<SQLDialect> SUPPORT_MYSQL_SYNTAX           = SQLDialect.supported(MARIADB, MYSQL);
 
     // ------------------------------------------------------------------------
     // XXX: Record constructors and related methods
@@ -673,13 +770,14 @@ final class Tools {
      * Turn a {@link Result} into a list of {@link Row}
      */
     static final List<Row> rows(Result<?> result) {
-        List<Row> rows = new ArrayList<Row>(result.size());
+        List<Row> rows = new ArrayList<>(result.size());
 
         for (Record record : result)
             rows.add(record.valuesRow());
 
         return rows;
     }
+
 
 
 
@@ -759,7 +857,7 @@ final class Tools {
             if (record instanceof AbstractRecord)
                 ((AbstractRecord) record).fetched = fetched;
 
-            return new RecordDelegate<R>(configuration, record);
+            return new RecordDelegate<>(configuration, record);
         }
         catch (Exception e) {
             throw new IllegalStateException("Could not construct new record", e);
@@ -1011,7 +1109,7 @@ final class Tools {
             return null;
 
         int size = fields.size();
-        List<SortField<?>> result = new ArrayList<SortField<?>>(size);
+        List<SortField<?>> result = new ArrayList<>(size);
         for (OrderField<?> field : fields)
             result.add(sortField(field));
 
@@ -1179,8 +1277,66 @@ final class Tools {
         return result;
     }
 
+    static final List<Name> names(Collection<?> names) {
+        if (names == null)
+            return null;
+
+        List<Name> result = new ArrayList<>(names.size());
+
+        for (Object o : names)
+            result.add(o instanceof Name ? (Name) o : DSL.name(String.valueOf(o)));
+
+        return result;
+    }
+
     private static final IllegalArgumentException fieldExpected(Object value) {
         return new IllegalArgumentException("Cannot interpret argument of type " + value.getClass() + " as a Field: " + value);
+    }
+
+    /**
+     * [#461] [#473] [#2597] [#8234] Some internals need a cast only if necessary.
+     */
+    @SuppressWarnings("unchecked")
+    static <T> Field<T>[] castAllIfNeeded(Field<?>[] fields, Class<T> type) {
+        Field<T>[] castFields = new Field[fields.length];
+
+        for (int i = 0; i < fields.length; i++)
+            castFields[i] = castIfNeeded(fields[i], type);
+
+        return castFields;
+    }
+
+    /**
+     * [#461] [#473] [#2597] [#8234] Some internals need a cast only if necessary.
+     */
+    @SuppressWarnings("unchecked")
+    static final <T> Field<T> castIfNeeded(Field<?> field, Class<T> type) {
+        if (field.getType().equals(type))
+            return (Field<T>) field;
+        else
+            return field.cast(type);
+    }
+
+    /**
+     * [#461] [#473] [#2597] [#8234] Some internals need a cast only if necessary.
+     */
+    @SuppressWarnings("unchecked")
+    static final <T> Field<T> castIfNeeded(Field<?> field, DataType<T> type) {
+        if (field.getDataType().equals(type))
+            return (Field<T>) field;
+        else
+            return field.cast(type);
+    }
+
+    /**
+     * [#461] [#473] [#2597] [#8234] Some internals need a cast only if necessary.
+     */
+    @SuppressWarnings("unchecked")
+    static final <T> Field<T> castIfNeeded(Field<?> field, Field<T> type) {
+        if (field.getDataType().equals(type.getDataType()))
+            return (Field<T>) field;
+        else
+            return field.cast(type);
     }
 
     /**
@@ -1333,6 +1489,10 @@ final class Tools {
         return val((Object) value, SQLDataType.OFFSETDATETIME);
     }
 
+    static final Param<Instant> field(Instant value) {
+        return val((Object) value, SQLDataType.INSTANT);
+    }
+
 
     static final Param<UUID> field(UUID value) {
         return val((Object) value, SQLDataType.UUID);
@@ -1424,9 +1584,9 @@ final class Tools {
      */
     static final <T> List<Field<T>> fields(T[] values) {
         if (values == null)
-            return new ArrayList<Field<T>>();
+            return new ArrayList<>();
 
-        List<Field<T>> result = new ArrayList<Field<T>>(values.length);
+        List<Field<T>> result = new ArrayList<>(values.length);
 
         for (int i = 0; i < values.length; i++)
             result.add(field(values[i]));
@@ -1442,11 +1602,11 @@ final class Tools {
      * @return The argument objects themselves, if they are {@link Field}s, or a bind
      *         values created from the argument objects.
      */
-    static final List<Field<?>> fields(Object[] values, Field<?> field) {
+    static final <T> List<Field<T>> fields(Object[] values, Field<T> field) {
         if (values == null || field == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
-        List<Field<?>> result = new ArrayList<Field<?>>(values.length);
+        List<Field<T>> result = new ArrayList<>(values.length);
 
         for (int i = 0; i < values.length; i++)
             result.add(field(values[i], field));
@@ -1464,13 +1624,34 @@ final class Tools {
      */
     static final List<Field<?>> fields(Object[] values, Field<?>[] fields) {
         if (values == null || fields == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
         int length = Math.min(values.length, fields.length);
-        List<Field<?>> result = new ArrayList<Field<?>>(length);
+        List<Field<?>> result = new ArrayList<>(length);
 
         for (int i = 0; i < length; i++)
             result.add(field(values[i], fields[i]));
+
+        return result;
+    }
+
+    /**
+     * Be sure that a given set of objects are fields.
+     *
+     * @param values The argument objects
+     * @param fields The fields to take the bind value types from
+     * @return The argument objects themselves, if they are {@link Field}s, or a bind
+     *         values created from the argument objects.
+     */
+    static final Field<?>[] fieldsArray(Object[] values, Field<?>[] fields) {
+        if (values == null || fields == null)
+            return EMPTY_FIELD;
+
+        int length = Math.min(values.length, fields.length);
+        Field<?>[] result = new Field[length];
+
+        for (int i = 0; i < length; i++)
+            result[i] = field(values[i], fields[i]);
 
         return result;
     }
@@ -1483,11 +1664,11 @@ final class Tools {
      * @return The argument objects themselves, if they are {@link Field}s, or a bind
      *         values created from the argument objects.
      */
-    static final List<Field<?>> fields(Object[] values, Class<?> type) {
+    static final <T> List<Field<T>> fields(Object[] values, Class<T> type) {
         if (values == null || type == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
-        List<Field<?>> result = new ArrayList<Field<?>>(values.length);
+        List<Field<T>> result = new ArrayList<>(values.length);
 
         for (int i = 0; i < values.length; i++)
             result.add(field(values[i], type));
@@ -1505,10 +1686,10 @@ final class Tools {
      */
     static final List<Field<?>> fields(Object[] values, Class<?>[] types) {
         if (values == null || types == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
         int length = Math.min(values.length, types.length);
-        List<Field<?>> result = new ArrayList<Field<?>>(length);
+        List<Field<?>> result = new ArrayList<>(length);
 
         for (int i = 0; i < length; i++)
             result.add(field(values[i], types[i]));
@@ -1524,14 +1705,34 @@ final class Tools {
      * @return The argument objects themselves, if they are {@link Field}s, or a bind
      *         values created from the argument objects.
      */
-    static final List<Field<?>> fields(Object[] values, DataType<?> type) {
+    static final <T> List<Field<T>> fields(Object[] values, DataType<T> type) {
         if (values == null || type == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
-        List<Field<?>> result = new ArrayList<Field<?>>(values.length);
+        List<Field<T>> result = new ArrayList<>(values.length);
 
-        for (int i = 0; i < values.length; i++)
-            result.add(field(values[i], type));
+        for (Object value : values)
+            result.add(field(value, type));
+
+        return result;
+    }
+
+    /**
+     * Be sure that a given set of objects are fields.
+     *
+     * @param values The argument objects
+     * @param type The type to take the bind value types from
+     * @return The argument objects themselves, if they are {@link Field}s, or a bind
+     *         values created from the argument objects.
+     */
+    static final <T> List<Field<T>> fields(Collection<?> values, DataType<T> type) {
+        if (values == null || type == null)
+            return new ArrayList<>();
+
+        List<Field<T>> result = new ArrayList<>(values.size());
+
+        for (Object value : values)
+            result.add(field(value, type));
 
         return result;
     }
@@ -1546,10 +1747,10 @@ final class Tools {
      */
     static final List<Field<?>> fields(Object[] values, DataType<?>[] types) {
         if (values == null || types == null)
-            return new ArrayList<Field<?>>();
+            return new ArrayList<>();
 
         int length = Math.min(values.length, types.length);
-        List<Field<?>> result = new ArrayList<Field<?>>(length);
+        List<Field<?>> result = new ArrayList<>(length);
 
         for (int i = 0; i < length; i++)
             result.add(field(values[i], types[i]));
@@ -1557,14 +1758,48 @@ final class Tools {
         return result;
     }
 
+    /**
+     * Be sure that a given set of objects are fields.
+     *
+     * @param values The argument objects
+     * @param types The types to take the bind value types from
+     * @return The argument objects themselves, if they are {@link Field}s, or a bind
+     *         values created from the argument objects.
+     */
+    static final Field<?>[] fieldsArray(Object[] values, DataType<?>[] types) {
+        if (values == null || types == null)
+            return EMPTY_FIELD;
+
+        int length = Math.min(values.length, types.length);
+        Field<?>[] result = new Field[length];
+
+        for (int i = 0; i < length; i++)
+            result[i] = field(values[i], types[i]);
+
+        return result;
+    }
+
     static final <T> List<Field<T>> inline(T[] values) {
         if (values == null)
-            return new ArrayList<Field<T>>();
+            return new ArrayList<>();
 
-        List<Field<T>> result = new ArrayList<Field<T>>(values.length);
+        List<Field<T>> result = new ArrayList<>(values.length);
 
         for (int i = 0; i < values.length; i++)
             result.add(DSL.inline(values[i]));
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    static final Field<Integer>[] inline(int[] fieldIndexes) {
+        if (fieldIndexes == null)
+            return (Field<Integer>[]) EMPTY_FIELD;
+
+        Field<Integer>[] result = new Field[fieldIndexes.length];
+
+        for (int i = 0; i < fieldIndexes.length; i++)
+            result[i] = DSL.inline(fieldIndexes[i]);
 
         return result;
     }
@@ -1658,6 +1893,67 @@ final class Tools {
     }
 
     /**
+     * Reverse an array.
+     */
+
+    @SafeVarargs
+
+    static final <T> T[] reverse(T... array) {
+        if (array == null)
+            return null;
+
+        for (int i = 0; i < array.length / 2; i++) {
+            T tmp = array[i];
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = tmp;
+        }
+
+        return array;
+    }
+
+    /**
+     * Reverse iterate over an array.
+     */
+
+    @SafeVarargs
+
+    static final <T> Iterable<T> reverseIterable(final T... array) {
+        return new Iterable<T>() {
+            @Override
+            public Iterator<T> iterator() {
+                return reverseIterator(array);
+            }
+        };
+    }
+
+    /**
+     * Reverse iterate over an array.
+     */
+
+    @SafeVarargs
+
+    static final <T> Iterator<T> reverseIterator(final T... array) {
+        return new Iterator<T>() {
+            int index = array.length;
+
+            @Override
+            public boolean hasNext() {
+                return index > 0;
+            }
+
+            @Override
+            public T next() {
+                return array[--index];
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("remove");
+            }
+        };
+    }
+
+    /**
      * Use this rather than {@link Arrays#asList(Object...)} for
      * <code>null</code>-safety
      */
@@ -1672,7 +1968,7 @@ final class Tools {
      * Turn a {@link Record} into a {@link Map}
      */
     static final Map<Field<?>, Object> mapOfChangedValues(Record record) {
-        Map<Field<?>, Object> result = new LinkedHashMap<Field<?>, Object>();
+        Map<Field<?>, Object> result = new LinkedHashMap<>();
         int size = record.size();
 
         for (int i = 0; i < size; i++)
@@ -1693,24 +1989,46 @@ final class Tools {
         else {
             Iterator<? extends T> iterator = iterable.iterator();
 
-            if (iterator.hasNext()) {
+            if (iterator.hasNext())
                 return iterator.next();
-            }
-            else {
+            else
                 return null;
-            }
+        }
+    }
+
+    /**
+     * Sets the statement's fetch size to the given value or
+     * {@link org.jooq.conf.Settings#getFetchSize()} if {@code 0}.
+     * <p>
+     * This method should not be called before {@link ExecuteContext#statement(PreparedStatement)}.
+     */
+    static final void setFetchSize(ExecuteContext ctx, int fetchSize) throws SQLException {
+        // [#1263] [#4753] Allow for negative fetch sizes to support some non-standard
+        // MySQL feature, where Integer.MIN_VALUE is used
+        int f = SettingsTools.getFetchSize(fetchSize, ctx.settings());
+        if (f != 0) {
+            if (log.isDebugEnabled())
+                log.debug("Setting fetch size", f);
+
+            PreparedStatement statement = ctx.statement();
+            if (statement != null)
+                statement.setFetchSize(f);
         }
     }
 
     /**
      * Get the only element from a list or <code>null</code>, or throw an
-     * exception
+     * exception.
      *
      * @param list The list
      * @return The only element from the list or <code>null</code>
      * @throws TooManyRowsException Thrown if the list contains more than one
      *             element
+     * @deprecated - [#8881] - Do not reuse this method as it doesn't properly
+     *             manage the {@link ExecuteListener#exception(ExecuteContext)}
+     *             lifecycle event. Use {@link #fetchOne(Cursor)} instead.
      */
+    @Deprecated
     static final <R extends Record> R filterOne(List<R> list) throws TooManyRowsException {
         int size = list.size();
 
@@ -1767,7 +2085,7 @@ final class Tools {
             else if (size == 1)
                 return result.get(0);
             else
-                throw new TooManyRowsException("Cursor returned more than one result");
+                throw exception((CursorImpl<R>) cursor, new TooManyRowsException("Cursor returned more than one result"));
         }
         finally {
             cursor.close();
@@ -1815,15 +2133,23 @@ final class Tools {
             int size = result.size();
 
             if (size == 0)
-                throw new NoDataFoundException("Cursor returned no rows");
+                throw exception((CursorImpl<R>) cursor, new NoDataFoundException("Cursor returned no rows"));
             else if (size == 1)
                 return result.get(0);
             else
-                throw new TooManyRowsException("Cursor returned more than one result");
+                throw exception((CursorImpl<R>) cursor, new TooManyRowsException("Cursor returned more than one result"));
         }
         finally {
             cursor.close();
         }
+    }
+
+    private static final RuntimeException exception(CursorImpl<?> cursor, RuntimeException e) {
+
+        // [#8877] Make sure these exceptions pass through ExecuteListeners as well
+        cursor.ctx.exception(e);
+        cursor.listener.exception(cursor.ctx);
+        return cursor.ctx.exception();
     }
 
     /**
@@ -1876,8 +2202,7 @@ final class Tools {
         // [#1593] Create a dummy renderer if we're in bind mode
         if (render == null) render = new DefaultRenderContext(bind.configuration());
 
-        SQLDialect dialect = render.dialect();
-        SQLDialect family = dialect.family();
+        SQLDialect family = render.family();
         boolean mysql = SUPPORT_MYSQL_SYNTAX.contains(family);
         char[][][] quotes = QUOTES.get(family);
 
@@ -1896,7 +2221,7 @@ final class Tools {
             // [#4182] MySQL also supports # as a comment character, and requires
             // -- to be followed by a whitespace, although the latter is also not
             // handled correctly by the MySQL JDBC driver (yet). See
-    		// http://bugs.mysql.com/bug.php?id=76623
+            // http://bugs.mysql.com/bug.php?id=76623
                 (mysql && peek(sqlChars, i, TOKEN_HASH))) {
 
                 // Consume the complete comment
@@ -1912,11 +2237,22 @@ final class Tools {
             // from t_book where id = ?
             else if (peek(sqlChars, i, TOKEN_MULTI_LINE_COMMENT_OPEN)) {
 
+                int nestedMultilineCommentLevel = 1;
+
                 // Consume the complete comment
-                for (; !peek(sqlChars, i, TOKEN_MULTI_LINE_COMMENT_CLOSE); render.sql(sqlChars[i++]));
+                for (;;) {
+                    render.sql(sqlChars[i++]);
+
+                    if (peek(sqlChars, i, TOKEN_MULTI_LINE_COMMENT_OPEN))
+                        nestedMultilineCommentLevel++;
+                    else if (peek(sqlChars, i, TOKEN_MULTI_LINE_COMMENT_CLOSE))
+                        nestedMultilineCommentLevel--;
+
+                    if (nestedMultilineCommentLevel == 0)
+                        break;
+                }
 
                 // Consume the comment delimiter
-                render.sql(sqlChars[i++]);
                 render.sql(sqlChars[i]);
             }
 
@@ -1952,7 +2288,7 @@ final class Tools {
 
             // [#6704] PostgreSQL supports additional quoted string literals, which we must skip: E'...'
             else if ((sqlChars[i] == 'e' || sqlChars[i] == 'E')
-                        && (                                                            ctx.family() == POSTGRES)
+                        && ( ctx.family() == POSTGRES)
                         && i + 1 < sqlChars.length
                         && sqlChars[i + 1] == '\'') {
 
@@ -2042,16 +2378,20 @@ final class Tools {
                     render.sql(sqlChars[i++]);
 
                 // Consume the whole identifier
+                identifierLoop:
                 for (;;) {
 
                     // Consume an escaped quote
-                    if (peek(sqlChars, i, quotes[QUOTE_END_DELIMITER_ESCAPED][delimiter]))
+                    if (peek(sqlChars, i, quotes[QUOTE_END_DELIMITER_ESCAPED][delimiter])) {
                         for (int d = 0; d < quotes[QUOTE_END_DELIMITER_ESCAPED][delimiter].length; d++)
                             render.sql(sqlChars[i++]);
 
+                        continue identifierLoop;
+                    }
+
                     // Break on the terminal identifier delimiter
                     else if (peek(sqlChars, i, quotes[QUOTE_END_DELIMITER][delimiter]))
-                        break;
+                        break identifierLoop;
 
                     // Consume identifier content
                     render.sql(sqlChars[i++]);
@@ -2124,21 +2464,18 @@ final class Tools {
                     for (; i < sqlChars.length && sqlChars[i] != '}'; i++);
                     int end = i;
 
-                    String token = sql.substring(start, end);
-
                     // Try getting the {numbered placeholder}
-                    try {
-                        QueryPart substitute = substitutes.get(Integer.valueOf(token));
+                    Integer index = Ints.tryParse(sql, start, end);
+                    if (index != null) {
+                        QueryPart substitute = substitutes.get(index);
                         render.visit(substitute);
 
                         if (bind != null) {
                             bind.visit(substitute);
                         }
-                    }
-
-                    // If the above failed, then we're dealing with a {keyword}
-                    catch (NumberFormatException e) {
-                        render.visit(DSL.keyword(token));
+                    } else {
+                        // Then we're dealing with a {keyword}
+                        render.visit(DSL.keyword(sql.substring(start, end)));
                     }
                 }
             }
@@ -2241,7 +2578,7 @@ final class Tools {
             return queryParts(new Object[] { null });
         }
         else {
-            List<QueryPart> result = new ArrayList<QueryPart>(substitutes.length);
+            List<QueryPart> result = new ArrayList<>(substitutes.length);
 
             for (Object substitute : substitutes) {
 
@@ -2252,7 +2589,7 @@ final class Tools {
                 else {
                     @SuppressWarnings("unchecked")
                     Class<Object> type = (Class<Object>) (substitute != null ? substitute.getClass() : Object.class);
-                    result.add(new Val<Object>(substitute, DSL.getDataType(type)));
+                    result.add(new Val<>(substitute, DSL.getDataType(type)));
                 }
             }
 
@@ -2376,8 +2713,10 @@ final class Tools {
      * Translate a {@link SQLException} to a {@link DataAccessException}
      */
     static final DataAccessException translate(String sql, SQLException e) {
-        String message = "SQL [" + sql + "]; " + e.getMessage();
-        return new DataAccessException(message, e);
+        if (e != null)
+            return new DataAccessException("SQL [" + sql + "]; " + e.getMessage(), e);
+        else
+            return new DataAccessException("SQL [" + sql + "]; Unspecified SQLException");
     }
 
     /**
@@ -2583,6 +2922,10 @@ final class Tools {
 
 
 
+
+
+
+
     static final DSLContext CTX    = DSL.using(new DefaultConfiguration());
     static final ParserImpl PARSER = (ParserImpl) CTX.parser();
 
@@ -2599,34 +2942,6 @@ final class Tools {
     }
 
     /**
-     * Utility method to escape strings or "toString" other objects
-     */
-    static final Field<String> escapeForLike(Object value) {
-        return escapeForLike(value, new DefaultConfiguration());
-    }
-
-    /**
-     * Utility method to escape strings or "toString" other objects
-     */
-    static final Field<String> escapeForLike(Object value, Configuration configuration) {
-        if (value != null && value.getClass() == String.class) {
-
-
-
-
-
-
-
-            {
-                return val(escape("" + value, ESCAPE));
-            }
-        }
-        else {
-            return val("" + value);
-        }
-    }
-
-    /**
      * Utility method to escape string fields, or cast other fields
      */
     static final Field<String> escapeForLike(Field<?> field) {
@@ -2638,7 +2953,7 @@ final class Tools {
      */
     @SuppressWarnings("unchecked")
     static final Field<String> escapeForLike(Field<?> field, Configuration configuration) {
-        if (nullSafe(field).getDataType().isString()) {
+        if (nullSafeDataType(field).isString()) {
 
 
 
@@ -2651,7 +2966,7 @@ final class Tools {
             }
         }
         else {
-            return field.cast(String.class);
+            return castIfNeeded(field, String.class);
         }
     }
 
@@ -2663,25 +2978,61 @@ final class Tools {
     }
 
     /**
+     * Utility method to check whether a field uses a default {@link Converter}
+     */
+    static final boolean hasDefaultConverter(Field<?> field) {
+        return field.getConverter() instanceof IdentityConverter;
+    }
+
+    /**
      * Utility method to extract a value from a field
      */
     static final <T> T extractVal(Field<T> field) {
-        if (isVal(field)) {
+        if (isVal(field))
             return ((Param<T>) field).getValue();
-        }
-        else {
+        else
             return null;
-        }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Add primary key conditions to a query
      */
     @SuppressWarnings("deprecation")
     static final void addConditions(org.jooq.ConditionProvider query, Record record, Field<?>... keys) {
-        for (Field<?> field : keys) {
+        for (Field<?> field : keys)
             addCondition(query, record, field);
-        }
     }
 
     /**
@@ -2691,12 +3042,10 @@ final class Tools {
     static final <T> void addCondition(org.jooq.ConditionProvider provider, Record record, Field<T> field) {
 
         // [#2764] If primary keys are allowed to be changed, the
-        if (updatablePrimaryKeys(settings(record))) {
+        if (updatablePrimaryKeys(settings(record)))
             provider.addConditions(condition(field, record.original(field)));
-        }
-        else {
+        else
             provider.addConditions(condition(field, record.get(field)));
-        }
     }
 
     /**
@@ -2722,7 +3071,7 @@ final class Tools {
         static enum Guard {
             RECORD_TOSTRING;
 
-            ThreadLocal<Object> tl = new ThreadLocal<Object>();
+            ThreadLocal<Object> tl = new ThreadLocal<>();
         }
 
         /**
@@ -2816,7 +3165,7 @@ final class Tools {
                     cache = (Map<Object, Object>) configuration.data(type);
 
                     if (cache == null) {
-                        cache = new ConcurrentHashMap<Object, Object>();
+                        cache = new ConcurrentHashMap<>();
                         configuration.data(type, cache);
                     }
                 }
@@ -3004,6 +3353,21 @@ final class Tools {
         return ktKClass;
     }
 
+    static final Reflect ktKTypeParameter() {
+        if (ktKTypeParameter == null) {
+            synchronized (initLock) {
+                if (ktKTypeParameter == null) {
+                    try {
+                        ktKTypeParameter = Reflect.on("kotlin.reflect.KTypeParameter");
+                    }
+                    catch (ReflectException ignore) {}
+                }
+            }
+        }
+
+        return ktKTypeParameter;
+    }
+
     /**
      * Check whether <code>type</code> has any {@link Column} annotated members
      * or methods
@@ -3049,7 +3413,7 @@ final class Tools {
 
             @Override
             public List<java.lang.reflect.Field> call() {
-                List<java.lang.reflect.Field> result = new ArrayList<java.lang.reflect.Field>();
+                List<java.lang.reflect.Field> result = new ArrayList<>();
 
                 for (java.lang.reflect.Field member : getInstanceMembers(type)) {
                     Column column = member.getAnnotation(Column.class);
@@ -3090,7 +3454,7 @@ final class Tools {
 
             @Override
             public List<java.lang.reflect.Field> call() {
-                List<java.lang.reflect.Field> result = new ArrayList<java.lang.reflect.Field>();
+                List<java.lang.reflect.Field> result = new ArrayList<>();
 
                 // [#1942] Caching these values before the field-loop significantly
                 // accerates POJO mapping
@@ -3116,7 +3480,7 @@ final class Tools {
 
             @Override
             public List<Method> call() {
-                List<Method> result = new ArrayList<Method>();
+                Set<SourceMethod> set = new LinkedHashSet<>();
 
                 for (Method method : getInstanceMethods(type)) {
                     Column column = method.getAnnotation(Column.class);
@@ -3125,7 +3489,7 @@ final class Tools {
 
                         // Annotated setter
                         if (method.getParameterTypes().length == 1) {
-                            result.add(accessible(method));
+                            set.add(new SourceMethod(accessible(method)));
                         }
 
                         // Annotated getter with matching setter
@@ -3139,11 +3503,13 @@ final class Tools {
 
                             if (suffix != null) {
                                 try {
-                                    Method setter = type.getMethod("set" + suffix, method.getReturnType());
+
+                                    // [#7953] [#8496] Search the hierarchy for a matching setter
+                                    Method setter = getInstanceMethod(type, "set" + suffix, new Class[] { method.getReturnType() });
 
                                     // Setter annotation is more relevant
                                     if (setter.getAnnotation(Column.class) == null)
-                                        result.add(accessible(setter));
+                                        set.add(new SourceMethod(accessible(setter)));
                                 }
                                 catch (NoSuchMethodException ignore) {}
                             }
@@ -3151,7 +3517,7 @@ final class Tools {
                     }
                 }
 
-                return result;
+                return SourceMethod.methods(set);
             }
 
         }, DATA_REFLECTION_CACHE_GET_ANNOTATED_SETTERS, Cache.key(type, name));
@@ -3216,7 +3582,9 @@ final class Tools {
 
             @Override
             public List<Method> call() {
-                List<Method> result = new ArrayList<Method>();
+
+                // [#8460] Prevent duplicate methods in the call hierarchy
+                Set<SourceMethod> set = new LinkedHashSet<>();
 
                 // [#1942] Caching these values before the method-loop significantly
                 // accerates POJO mapping
@@ -3228,16 +3596,16 @@ final class Tools {
 
                     if (parameterTypes.length == 1)
                         if (name.equals(method.getName()))
-                            result.add(accessible(method));
+                            set.add(new SourceMethod(accessible(method)));
                         else if (camelCaseLC.equals(method.getName()))
-                            result.add(accessible(method));
+                            set.add(new SourceMethod(accessible(method)));
                         else if (("set" + name).equals(method.getName()))
-                            result.add(accessible(method));
+                            set.add(new SourceMethod(accessible(method)));
                         else if (("set" + camelCase).equals(method.getName()))
-                            result.add(accessible(method));
+                            set.add(new SourceMethod(accessible(method)));
                 }
 
-                return result;
+                return SourceMethod.methods(set);
             }
 
         }, DATA_REFLECTION_CACHE_GET_MATCHING_SETTERS, Cache.key(type, name));
@@ -3278,18 +3646,109 @@ final class Tools {
         }, DATA_REFLECTION_CACHE_GET_MATCHING_GETTER, Cache.key(type, name));
     }
 
-    private static final List<Method> getInstanceMethods(Class<?> type) {
-        List<Method> result = new ArrayList<Method>();
+    /**
+     * A wrapper class that re-implements {@link Method#equals(Object)} and
+     * {@link Method#hashCode()} based only on the "source signature" (name,
+     * parameter types), instead of the "binary signature" (declaring class,
+     * name, return type, parameter types).
+     */
+    private static final class SourceMethod {
+        final Method method;
+
+        SourceMethod(Method method) {
+            this.method = method;
+        }
+
+        static List<Method> methods(Collection<? extends SourceMethod> methods) {
+            List<Method> result = new ArrayList<>(methods.size());
+
+            for (SourceMethod s : methods)
+                result.add(s.method);
+
+            return result;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((method == null) ? 0 : method.getName().hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof SourceMethod) {
+                Method other = ((SourceMethod) obj).method;
+
+                if (method.getName().equals(other.getName())) {
+                    Class<?>[] p1 = method.getParameterTypes();
+                    Class<?>[] p2 = other.getParameterTypes();
+
+                    return Arrays.equals(p1, p2);
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return method.toString();
+        }
+    }
+
+    private static final Method getInstanceMethod(Class<?> type, String name, Class<?>[] parameters) throws NoSuchMethodException {
+
+        // first priority: find a public method with exact signature match in class hierarchy
+        try {
+            return type.getMethod(name, parameters);
+        }
+
+        // second priority: find a private method with exact signature match on declaring class
+        catch (NoSuchMethodException e) {
+            do {
+                try {
+                    return type.getDeclaredMethod(name, parameters);
+                }
+                catch (NoSuchMethodException ignore) {}
+
+                type = type.getSuperclass();
+            }
+            while (type != null);
+
+            throw new NoSuchMethodException();
+        }
+    }
+
+    /**
+     * All the public and declared methods of a type.
+     * <p>
+     * This method returns each method only once. Public methods are returned
+     * first in the resulting set while declared methods are returned
+     * afterwards, from lowest to highest type in the type hierarchy.
+     */
+    private static final Set<Method> getInstanceMethods(Class<?> type) {
+        Set<Method> result = new LinkedHashSet<>();
 
         for (Method method : type.getMethods())
             if ((method.getModifiers() & Modifier.STATIC) == 0)
                 result.add(method);
 
+        do {
+            for (Method method : type.getDeclaredMethods())
+                if ((method.getModifiers() & Modifier.STATIC) == 0)
+                    result.add(method);
+
+            type = type.getSuperclass();
+        }
+        while (type != null);
+
         return result;
     }
 
     private static final List<java.lang.reflect.Field> getInstanceMembers(Class<?> type) {
-        List<java.lang.reflect.Field> result = new ArrayList<java.lang.reflect.Field>();
+        List<java.lang.reflect.Field> result = new ArrayList<>();
 
         for (java.lang.reflect.Field field : type.getFields())
             if ((field.getModifiers() & Modifier.STATIC) == 0)
@@ -3313,15 +3772,12 @@ final class Tools {
     static final String getPropertyName(String methodName) {
         String name = methodName;
 
-        if (name.startsWith("is") && name.length() > 2) {
+        if (name.startsWith("is") && name.length() > 2)
             name = name.substring(2, 3).toLowerCase() + name.substring(3);
-        }
-        else if (name.startsWith("get") && name.length() > 3) {
+        else if (name.startsWith("get") && name.length() > 3)
             name = name.substring(3, 4).toLowerCase() + name.substring(4);
-        }
-        else if (name.startsWith("set") && name.length() > 3) {
+        else if (name.startsWith("set") && name.length() > 3)
             name = name.substring(3, 4).toLowerCase() + name.substring(4);
-        }
 
         return name;
     }
@@ -3500,6 +3956,16 @@ final class Tools {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
     /**
      * [#3681] Consume all {@link ResultSet}s from a JDBC {@link Statement}.
      */
@@ -3514,7 +3980,7 @@ final class Tools {
                     anyResults = true;
 
                     Field<?>[] fields = new MetaDataFieldProvider(ctx.configuration(), ctx.resultSet().getMetaData()).getFields();
-                    Cursor<Record> c = new CursorImpl<Record>(ctx, listener, fields, intern != null ? intern.internIndexes(fields) : null, true, false);
+                    Cursor<Record> c = new CursorImpl<>(ctx, listener, fields, intern != null ? intern.internIndexes(fields) : null, true, false);
                     results.resultsOrRows().add(new ResultOrRowsImpl(c.fetch()));
                 }
                 else if (prev == null) {
@@ -3642,7 +4108,7 @@ final class Tools {
             int dataLineStart,
             int dataLineEnd) {
 
-        List<int[]> positions = new ArrayList<int[]>();
+        List<int[]> positions = new ArrayList<>();
         Matcher m = pattern.matcher(strings[matchLine]);
 
         while (m.find()) {
@@ -3650,7 +4116,7 @@ final class Tools {
         }
 
         // Parse header line and data lines into string arrays
-        List<String[]> result = new ArrayList<String[]>();
+        List<String[]> result = new ArrayList<>();
         parseTXTLine(positions, result, strings[headerLine], nullLiteral);
 
         for (int j = dataLineStart; j < dataLineEnd; j++) {
@@ -3685,12 +4151,12 @@ final class Tools {
     private static final Pattern P_PARSE_HTML_COL_BODY = Pattern.compile("<td>(.*?)</td>");
 
     static final List<String[]> parseHTML(String string) {
-        List<String[]> result = new ArrayList<String[]>();
+        List<String[]> result = new ArrayList<>();
 
         Matcher mRow = P_PARSE_HTML_ROW.matcher(string);
         while (mRow.find()) {
             String row = mRow.group(1);
-            List<String> col = new ArrayList<String>();
+            List<String> col = new ArrayList<>();
 
             // Header was not yet emitted
             if (result.isEmpty()) {
@@ -3898,6 +4364,8 @@ final class Tools {
 
 
 
+
+
             case FIREBIRD: {
                 begin(ctx);
                 beginExecuteImmediate(ctx);
@@ -3905,7 +4373,7 @@ final class Tools {
             }
 
             case MARIADB: {
-                List<String> sqlstates = new ArrayList<String>();
+                List<String> sqlstates = new ArrayList<>();
 
 //                if (type == CREATE_SCHEMA)
 //                    sqlstates.add("42710");
@@ -3957,6 +4425,10 @@ final class Tools {
 
     static final void endTryCatch(Context<?> ctx, DDLStatementType type, Boolean container, Boolean element) {
         switch (ctx.family()) {
+
+
+
+
 
 
 
@@ -4185,6 +4657,7 @@ final class Tools {
 
 
 
+
                 case H2:
                 case MARIADB:
                 case MYSQL:  ctx.sql(' ').visit(K_AUTO_INCREMENT); break;
@@ -4198,6 +4671,9 @@ final class Tools {
     }
 
     static final void toSQLDDLTypeDeclaration(Context<?> ctx, DataType<?> type) {
+        DataType<?> elementType = (type instanceof ArrayDataType)
+            ? ((ArrayDataType<?>) type).elementType
+            : type;
 
         // In some databases, identity is a type, not a flag.
         if (type.identity()) {
@@ -4217,20 +4693,21 @@ final class Tools {
 
             @SuppressWarnings("unchecked")
             DataType<EnumType> enumType = (DataType<EnumType>) type;
-            Object[] enums = enumConstants(enumType);
 
             switch (ctx.family()) {
 
 
 
 
+
+                case H2:
                 case MARIADB:
                 case MYSQL: {
                     ctx.visit(K_ENUM).sql('(');
 
                     String separator = "";
-                    for (Object e : enums) {
-                        ctx.sql(separator).visit(DSL.inline(((EnumType) e).getLiteral()));
+                    for (EnumType e : enumConstants(enumType)) {
+                        ctx.sql(separator).visit(DSL.inline(e.getLiteral()));
                         separator = ", ";
                     }
 
@@ -4238,32 +4715,47 @@ final class Tools {
                     return;
                 }
 
+                // [#7597] In PostgreSQL, the enum type reference should be used
+
+
+
+                case POSTGRES: {
+
+                    // [#7597] but only if the EnumType.getSchema() value is present
+                    //         i.e. when it is a known, stored enum type
+                    if (!storedEnumType(enumType))
+                        type = emulateEnumType(enumType);
+
+                    break;
+                }
+
                 default: {
-                    type = emulateEnumType(enumType, enums);
+                    type = emulateEnumType(enumType);
                     break;
                 }
             }
         }
 
         // [#5807] These databases cannot use the DataType.getCastTypeName() (which is simply char in this case)
-        if (type.getType() == UUID.class) {
-            switch (ctx.family()) {
-                case MARIADB:
-                case MYSQL: {
-                    toSQLDDLTypeDeclaration(ctx, VARCHAR(36));
-                    return;
-                }
-            }
+        if (type.getType() == UUID.class && NO_SUPPORT_CAST_TYPE_IN_DDL.contains(ctx.family())) {
+            toSQLDDLTypeDeclaration(ctx, VARCHAR(36));
+            return;
         }
 
         String typeName = type.getTypeName(ctx.configuration());
-        if (type.hasLength()) {
+
+        // [#8070] Make sure VARCHAR(n) ARRAY types are generated as such in HSQLDB
+        if (type.hasLength() || elementType.hasLength()) {
 
             // [#6289] [#7191] Some databases don't support lengths on binary types
             if (type.isBinary() && NO_SUPPORT_BINARY_TYPE_LENGTH.contains(ctx.family()))
                 ctx.sql(typeName);
             else if (type.length() > 0)
                 ctx.sql(typeName).sql('(').sql(type.length()).sql(')');
+
+            // [#6745] The DataType.getCastTypeName() cannot be used in some dialects, for DDL
+            else if (NO_SUPPORT_CAST_TYPE_IN_DDL.contains(ctx.family()))
+                ctx.sql(SQLDataType.CLOB.getTypeName(ctx.configuration()));
 
             // Some databases don't allow for length-less VARCHAR, VARBINARY types
             else {
@@ -4291,12 +4783,21 @@ final class Tools {
             ctx.sql(typeName);
         }
 
-        if (type.collation() != null)
+        // [#8041] Character sets are vendor-specific storage clauses, which we might need to ignore
+        if (type.characterSet() != null && ctx.configuration().data("org.jooq.ddl.ignore-storage-clauses") == null)
+            ctx.sql(' ').visit(K_CHARACTER_SET).sql(' ').visit(type.characterSet());
+
+        // [#8011] Collations are vendor-specific storage clauses, which we might need to ignore
+        if (type.collation() != null && ctx.configuration().data("org.jooq.ddl.ignore-storage-clauses") == null)
             ctx.sql(' ').visit(K_COLLATE).sql(' ').visit(type.collation());
     }
 
-    private static Object[] enumConstants(DataType<? extends EnumType> type) {
-        Object[] enums = type.getType().getEnumConstants();
+    static boolean storedEnumType(DataType<EnumType> enumType) {
+        return enumConstants(enumType)[0].getSchema() != null;
+    }
+
+    private static EnumType[] enumConstants(DataType<? extends EnumType> type) {
+        EnumType[] enums = type.getType().getEnumConstants();
 
         if (enums == null)
             throw new DataTypeException("EnumType must be a Java enum");
@@ -4308,11 +4809,12 @@ final class Tools {
         return emulateEnumType(type, enumConstants(type));
     }
 
-    static final DataType<String> emulateEnumType(DataType<? extends EnumType> type, Object[] enums) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static final DataType<String> emulateEnumType(DataType<? extends EnumType> type, EnumType[] enums) {
         int length = 0;
-        for (Object e : enums)
-            if (((EnumType) e).getLiteral() != null)
-                length = Math.max(length, ((EnumType) e).getLiteral().length());
+        for (EnumType e : enums)
+            if (e.getLiteral() != null)
+                length = Math.max(length, e.getLiteral().length());
 
         return VARCHAR(length).nullability(type.nullability()).defaultValue((Field) type.defaultValue());
     }
@@ -4421,12 +4923,43 @@ final class Tools {
         if (fields == null)
             return false;
 
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
         for (Field<?> field : fields)
             if (!names.add(field.getName()))
                 return true;
 
         return false;
+    }
+
+    @SuppressWarnings("serial")
+    static final QueryPartList<SelectFieldOrAsterisk> qualify(final Table<?> table, SelectFieldList<SelectFieldOrAsterisk> fields) {
+        QueryPartList<SelectFieldOrAsterisk> result = new QueryPartList<SelectFieldOrAsterisk>() {
+            @Override
+            protected void toSQLEmptyList(Context<?> context) {
+                table.asterisk();
+            }
+
+            @Override
+            public boolean declaresFields() {
+                return true;
+            }
+        };
+
+        for (SelectFieldOrAsterisk field : fields)
+            result.add(qualify(table, field));
+
+        return result;
+    }
+
+    static final SelectFieldOrAsterisk qualify(Table<?> table, SelectFieldOrAsterisk field) {
+        if (field instanceof Field)
+            return qualify(table, (Field<?>) field);
+        else if (field instanceof Asterisk)
+            return table.asterisk();
+        else if (field instanceof QualifiedAsterisk)
+            return table.asterisk();
+        else
+            throw new IllegalArgumentException("Unsupported field : " + field);
     }
 
     static final <T> Field<T> qualify(Table<?> table, Field<T> field) {
@@ -4459,6 +4992,21 @@ final class Tools {
             return ((TableAlias<R>) table).alias;
         else
             return null;
+    }
+
+    /**
+     * Whether a counter is currently at the top level or not.
+     *
+     * @see #increment(Map, DataKey)
+     * @see #decrement(Map, DataKey)
+     */
+    static final boolean toplevel(Map<Object, Object> data, DataKey key) {
+        Integer updateCounts = (Integer) data.get(key);
+
+        if (updateCounts == null)
+            throw new IllegalStateException();
+        else
+            return updateCounts == 1;
     }
 
     /**
@@ -4548,5 +5096,176 @@ final class Tools {
 
     static final boolean isEmpty(Object[] array) {
         return array == null || array.length == 0;
+    }
+
+    static final boolean isEmbeddable(Field<?> field) {
+        return field instanceof EmbeddableTableField
+            || field instanceof Val && ((Val<?>) field).value instanceof EmbeddableRecord;
+    }
+
+    @SuppressWarnings("unchecked")
+    static final Field<?>[] embeddedFields(Field<?> field) {
+        return field instanceof EmbeddableTableField
+             ? ((EmbeddableTableField<?, ?>) field).fields
+             : field instanceof Val && ((Val<?>) field).value instanceof EmbeddableRecord
+             ? ((EmbeddableRecord<?>) ((Val<?>) field).value).valuesRow().fields()
+
+             // It's an embeddable type, but it is null
+             : field instanceof Val && EmbeddableRecord.class.isAssignableFrom(field.getType())
+             ? newInstance((Class<? extends EmbeddableRecord<?>>) field.getType()).valuesRow().fields()
+             : null;
+    }
+
+    private static final EmbeddableRecord<?> newInstance(Class<? extends EmbeddableRecord<?>> type) {
+        try {
+            return type.getConstructor().newInstance();
+        }
+        catch (Exception e) {
+            throw new MappingException("Cannot create EmbeddableRecord type", e);
+        }
+    }
+
+    /**
+     * Flatten out an {@link EmbeddableTableField}.
+     */
+    static final <E extends Field<?>> Iterable<E> flatten(final E field) {
+        return new Iterable<E>() {
+            @Override
+            public Iterator<E> iterator() {
+                Iterator<E> it = singletonList(field).iterator();
+
+                if (field instanceof EmbeddableTableField)
+                    return new FlatteningIterator<E>(it) {
+                        @SuppressWarnings("unchecked")
+                        @Override
+                        List<E> flatten(E e) {
+                            return (List<E>) Arrays.asList(((EmbeddableTableField<?, ?>) e).fields);
+                        }
+                    };
+                else
+                    return it;
+            }
+        };
+    }
+
+    /**
+     * Flatten out {@link EmbeddableTableField} elements contained in an
+     * ordinary iterable.
+     */
+    static final <E extends Field<?>> Iterable<E> flattenCollection(final Iterable<E> iterable) {
+        return new Iterable<E>() {
+            @Override
+            public Iterator<E> iterator() {
+                return new FlatteningIterator<E>(iterable.iterator()) {
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    List<E> flatten(E e) {
+                        if (e instanceof EmbeddableTableField)
+                            return (List<E>) Arrays.asList(((EmbeddableTableField<?, ?>) e).fields);
+
+                        return null;
+                    }
+                };
+            }
+        };
+    }
+
+    /**
+     * Flatten out {@link EmbeddableTableField} elements contained in an
+     * entry set iterable.
+     */
+    static final <E extends Entry<Field<?>, Field<?>>> Iterable<E> flattenEntrySet(final Iterable<E> iterable) {
+        return new Iterable<E>() {
+            @Override
+            public Iterator<E> iterator() {
+                return new FlatteningIterator<E>(iterable.iterator()) {
+                    @SuppressWarnings("unchecked")
+                    @Override
+                    List<E> flatten(E e) {
+                        if (e.getKey() instanceof EmbeddableTableField) {
+                            List<E> result = new ArrayList<>();
+                            Field<?>[] keys = embeddedFields(e.getKey());
+                            Field<?>[] values = embeddedFields(e.getValue());
+
+                            for (int i = 0; i < keys.length; i++)
+                                result.add((E) new SimpleImmutableEntry<Field<?>, Field<?>>(
+                                    keys[i], values[i]
+                                ));
+
+                            return result;
+                        }
+
+                        return null;
+                    }
+                };
+            }
+        };
+    }
+
+    /**
+     * A base implementation for {@link EmbeddableTableField} flattening
+     * iterators with a default implementation for {@link Iterator#remove()} for
+     * convenience in the Java 6 build.
+     */
+    static abstract class FlatteningIterator<E> implements Iterator<E> {
+        private final Iterator<E> delegate;
+        private Iterator<E> flatten;
+        private E next;
+
+        FlatteningIterator(Iterator<E> delegate) {
+            this.delegate = delegate;
+        }
+
+        abstract List<E> flatten(E e);
+
+        private final void move() {
+            if (next == null) {
+                if (flatten != null) {
+                    if (flatten.hasNext()) {
+                        next = flatten.next();
+                        return;
+                    }
+                    else {
+                        flatten = null;
+                    }
+                }
+
+                if (delegate.hasNext()) {
+                    next = delegate.next();
+
+                    List<E> flattened = flatten(next);
+                    if (flattened == null)
+                        return;
+
+                    next = null;
+                    flatten = flattened.iterator();
+                    move();
+                    return;
+                }
+            }
+        }
+
+        @Override
+        public final boolean hasNext() {
+            move();
+            return next != null;
+        }
+
+        @Override
+        public final E next() {
+            move();
+
+            if (next == null)
+                throw new NoSuchElementException();
+
+            E result = next;
+            next = null;
+            return result;
+        }
+
+        @Override
+        public final void remove() {
+            throw new UnsupportedOperationException("remove");
+        }
     }
 }

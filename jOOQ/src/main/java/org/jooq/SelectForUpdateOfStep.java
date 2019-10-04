@@ -46,7 +46,7 @@ import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
-import static org.jooq.SQLDialect.MYSQL_8_0;
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
@@ -68,9 +68,9 @@ import java.util.Collection;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -142,7 +142,7 @@ public interface SelectForUpdateOfStep<R extends Record> extends SelectForUpdate
      * @see SelectQuery#setForUpdateOf(Table...) see LockProvider for more
      *      details
      */
-    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MYSQL_8_0, POSTGRES })
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MYSQL, POSTGRES })
     SelectForUpdateWaitStep<R> of(Table<?>... tables);
 
 }

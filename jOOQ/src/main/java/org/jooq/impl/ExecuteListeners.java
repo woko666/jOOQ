@@ -38,6 +38,7 @@
 package org.jooq.impl;
 
 import static java.lang.Boolean.FALSE;
+import static org.jooq.conf.InvocationOrder.REVERSE;
 import static org.jooq.impl.Tools.EMPTY_EXECUTE_LISTENER;
 
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ final class ExecuteListeners implements ExecuteListener {
     private static final ExecuteListener EMPTY_LISTENER         = new DefaultExecuteListener();
     private static final JooqLogger      LOGGER_LISTENER_LOGGER = JooqLogger.getLogger(LoggerListener.class);
 
-    private final ExecuteListener[]      listeners;
+    private final ExecuteListener[][]    listeners;
 
     // In some setups, these two events may get mixed up chronologically by the
     // Cursor. Postpone fetchEnd event until after resultEnd event, if there is
@@ -75,7 +76,7 @@ final class ExecuteListeners implements ExecuteListener {
     private boolean                      fetchEnd;
 
     static ExecuteListener get(ExecuteContext ctx) {
-        ExecuteListener[] listeners = listeners(ctx);
+        ExecuteListener[][] listeners = listeners(ctx);
 
         if (listeners == null)
             return EMPTY_LISTENER;
@@ -86,15 +87,15 @@ final class ExecuteListeners implements ExecuteListener {
     /**
      * Provide delegate listeners from an <code>ExecuteContext</code>
      */
-    private static final ExecuteListener[] listeners(ExecuteContext ctx) {
-        List<ExecuteListener> result = null;
+    private static final ExecuteListener[][] listeners(ExecuteContext ctx) {
+        List<ExecuteListener> list = null;
 
         // jOOQ-internal listeners are added first, so their results are available to user-defined listeners
         // -------------------------------------------------------------------------------------------------
 
         // [#6580] Fetching server output may require some pre / post actions around the actual statement
         if (SettingsTools.getFetchServerOutputSize(0, ctx.settings()) > 0)
-            (result = init(result)).add(new FetchServerOutputListener());
+            (list = init(list)).add(new FetchServerOutputListener());
 
         // [#6051] The previously used StopWatchListener is no longer included by default
         if (!FALSE.equals(ctx.settings().isExecuteLogging())) {
@@ -102,23 +103,32 @@ final class ExecuteListeners implements ExecuteListener {
             // [#6747] Avoid allocating the listener (and by consequence, the ExecuteListeners) if
             //         we do not DEBUG log anyway.
             if (LOGGER_LISTENER_LOGGER.isDebugEnabled())
-                (result = init(result)).add(new LoggerListener());
+                (list = init(list)).add(new LoggerListener());
         }
 
         for (ExecuteListenerProvider provider : ctx.configuration().executeListenerProviders())
 
             // Could be null after deserialisation
             if (provider != null)
-                (result = init(result)).add(provider.provide());
+                (list = init(list)).add(provider.provide());
 
-        return result == null ? null : result.toArray(EMPTY_EXECUTE_LISTENER);
+        if (list == null)
+            return null;
+
+        ExecuteListener[] def = list.toArray(EMPTY_EXECUTE_LISTENER);
+        ExecuteListener[] rev = null;
+
+        return new ExecuteListener[][] {
+            ctx.settings().getExecuteListenerStartInvocationOrder() != REVERSE ? def : (                     rev = Tools.reverse(def.clone())),
+            ctx.settings().getExecuteListenerEndInvocationOrder()   != REVERSE ? def : (rev != null ? rev : (rev = Tools.reverse(def.clone())))
+        };
     }
 
     private static final List<ExecuteListener> init(List<ExecuteListener> result) {
-        return result == null ? new ArrayList<ExecuteListener>() : result;
+        return result == null ? new ArrayList<>() : result;
     }
 
-    private ExecuteListeners(ExecuteContext ctx, ExecuteListener[] listeners) {
+    private ExecuteListeners(ExecuteContext ctx, ExecuteListener[][] listeners) {
         this.listeners = listeners;
 
         start(ctx);
@@ -126,43 +136,43 @@ final class ExecuteListeners implements ExecuteListener {
 
     @Override
     public final void start(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.start(ctx);
     }
 
     @Override
     public final void renderStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.renderStart(ctx);
     }
 
     @Override
     public final void renderEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.renderEnd(ctx);
     }
 
     @Override
     public final void prepareStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.prepareStart(ctx);
     }
 
     @Override
     public final void prepareEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.prepareEnd(ctx);
     }
 
     @Override
     public final void bindStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.bindStart(ctx);
     }
 
     @Override
     public final void bindEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.bindEnd(ctx);
     }
 
@@ -171,31 +181,31 @@ final class ExecuteListeners implements ExecuteListener {
         if (ctx instanceof DefaultExecuteContext)
             ((DefaultExecuteContext) ctx).incrementStatementExecutionCount();
 
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.executeStart(ctx);
     }
 
     @Override
     public final void executeEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.executeEnd(ctx);
     }
 
     @Override
     public final void fetchStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.fetchStart(ctx);
     }
 
     @Override
     public final void outStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.outStart(ctx);
     }
 
     @Override
     public final void outEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.outEnd(ctx);
     }
 
@@ -203,19 +213,19 @@ final class ExecuteListeners implements ExecuteListener {
     public final void resultStart(ExecuteContext ctx) {
         resultStart = true;
 
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.resultStart(ctx);
     }
 
     @Override
     public final void recordStart(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.recordStart(ctx);
     }
 
     @Override
     public final void recordEnd(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.recordEnd(ctx);
     }
 
@@ -223,7 +233,7 @@ final class ExecuteListeners implements ExecuteListener {
     public final void resultEnd(ExecuteContext ctx) {
         resultStart = false;
 
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.resultEnd(ctx);
 
         if (fetchEnd)
@@ -235,25 +245,25 @@ final class ExecuteListeners implements ExecuteListener {
         if (resultStart)
             fetchEnd = true;
         else
-            for (ExecuteListener listener : listeners)
+            for (ExecuteListener listener : listeners[1])
                 listener.fetchEnd(ctx);
     }
 
     @Override
     public final void end(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[1])
             listener.end(ctx);
     }
 
     @Override
     public final void exception(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.exception(ctx);
     }
 
     @Override
     public final void warning(ExecuteContext ctx) {
-        for (ExecuteListener listener : listeners)
+        for (ExecuteListener listener : listeners[0])
             listener.warning(ctx);
     }
 }

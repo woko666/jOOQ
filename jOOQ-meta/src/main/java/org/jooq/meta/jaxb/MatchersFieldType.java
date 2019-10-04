@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -14,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -29,10 +24,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatchersFieldType implements Serializable
+public class MatchersFieldType implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String expression;
     protected MatcherRule fieldIdentifier;
@@ -43,21 +38,13 @@ public class MatchersFieldType implements Serializable
     /**
      * This field matcher applies to all unqualified or qualified field names matched by this expression. If left empty, this matcher applies to all fields.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getExpression() {
         return expression;
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This field matcher applies to all unqualified or qualified field names matched by this expression. If left empty, this matcher applies to all fields.
      *
      */
     public void setExpression(String value) {
@@ -67,21 +54,13 @@ public class MatchersFieldType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Field} identifier.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getFieldIdentifier() {
         return fieldIdentifier;
     }
 
     /**
-     * Sets the value of the fieldIdentifier property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Field} identifier.
      *
      */
     public void setFieldIdentifier(MatcherRule value) {
@@ -91,21 +70,13 @@ public class MatchersFieldType implements Serializable
     /**
      * This rule influences the naming of generated members (e.g. in POJOs) corresponding to this {@link org.jooq.Field}
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getFieldMember() {
         return fieldMember;
     }
 
     /**
-     * Sets the value of the fieldMember property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of generated members (e.g. in POJOs) corresponding to this {@link org.jooq.Field}
      *
      */
     public void setFieldMember(MatcherRule value) {
@@ -115,21 +86,13 @@ public class MatchersFieldType implements Serializable
     /**
      * This rule influences the naming of generated setters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getFieldSetter() {
         return fieldSetter;
     }
 
     /**
-     * Sets the value of the fieldSetter property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of generated setters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
      *
      */
     public void setFieldSetter(MatcherRule value) {
@@ -139,81 +102,78 @@ public class MatchersFieldType implements Serializable
     /**
      * This rule influences the naming of generated getters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getFieldGetter() {
         return fieldGetter;
     }
 
     /**
-     * Sets the value of the fieldGetter property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of generated getters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
      *
      */
     public void setFieldGetter(MatcherRule value) {
         this.fieldGetter = value;
     }
 
+    /**
+     * This field matcher applies to all unqualified or qualified field names matched by this expression. If left empty, this matcher applies to all fields.
+     *
+     */
     public MatchersFieldType withExpression(String value) {
         setExpression(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Field} identifier.
+     *
+     */
     public MatchersFieldType withFieldIdentifier(MatcherRule value) {
         setFieldIdentifier(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of generated members (e.g. in POJOs) corresponding to this {@link org.jooq.Field}
+     *
+     */
     public MatchersFieldType withFieldMember(MatcherRule value) {
         setFieldMember(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of generated setters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
+     *
+     */
     public MatchersFieldType withFieldSetter(MatcherRule value) {
         setFieldSetter(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of generated getters (e.g. in {@link org.jooq.TableRecord} and/or POJOs) corresponding to this {@link org.jooq.Field}
+     *
+     */
     public MatchersFieldType withFieldGetter(MatcherRule value) {
         setFieldGetter(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("expression", expression);
+        builder.append("fieldIdentifier", fieldIdentifier);
+        builder.append("fieldMember", fieldMember);
+        builder.append("fieldSetter", fieldSetter);
+        builder.append("fieldGetter", fieldGetter);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        if (fieldIdentifier!= null) {
-            sb.append("<fieldIdentifier>");
-            sb.append(fieldIdentifier);
-            sb.append("</fieldIdentifier>");
-        }
-        if (fieldMember!= null) {
-            sb.append("<fieldMember>");
-            sb.append(fieldMember);
-            sb.append("</fieldMember>");
-        }
-        if (fieldSetter!= null) {
-            sb.append("<fieldSetter>");
-            sb.append(fieldSetter);
-            sb.append("</fieldSetter>");
-        }
-        if (fieldGetter!= null) {
-            sb.append("<fieldGetter>");
-            sb.append(fieldGetter);
-            sb.append("</fieldGetter>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

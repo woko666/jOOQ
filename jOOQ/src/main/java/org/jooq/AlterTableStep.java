@@ -51,9 +51,11 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
+// ...
 // ...
 // ...
 // ...
@@ -156,42 +158,42 @@ public interface AlterTableStep {
      * Add a <code>RENAME INDEX</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, HSQLDB, MYSQL, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MYSQL, POSTGRES })
     AlterTableRenameIndexToStep renameIndex(Name oldName);
 
     /**
      * Add a <code>RENAME INDEX</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, HSQLDB, MYSQL, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MYSQL, POSTGRES })
     AlterTableRenameIndexToStep renameIndex(Index oldName);
 
     /**
      * Add a <code>RENAME INDEX</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, HSQLDB, MYSQL, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MYSQL, POSTGRES })
     AlterTableRenameIndexToStep renameIndex(String oldName);
 
     /**
      * Add a <code>RENAME CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterTableRenameConstraintToStep renameConstraint(Constraint oldName);
 
     /**
      * Add a <code>RENAME CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterTableRenameConstraintToStep renameConstraint(Name oldName);
 
     /**
      * Add a <code>RENAME CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     AlterTableRenameConstraintToStep renameConstraint(String oldName);
 
     /**
@@ -249,21 +251,21 @@ public interface AlterTableStep {
      * This is an alias for {@link #addColumn(Field)}.
      */
     @Support
-    AlterTableFinalStep add(Field<?> field);
+    AlterTableAddStep add(Field<?> field);
 
     /**
      * Add an <code>ADD</code> clause with multiple columns or constraints to
      * the <code>ALTER TABLE</code> statement.
      */
     @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
-    AlterTableFinalStep add(FieldOrConstraint... fields);
+    AlterTableAddStep add(FieldOrConstraint... fields);
 
     /**
      * Add an <code>ADD</code> clause with multiple columns or constraints to
      * the <code>ALTER TABLE</code> statement.
      */
     @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
-    AlterTableFinalStep add(Collection<? extends FieldOrConstraint> fields);
+    AlterTableAddStep add(Collection<? extends FieldOrConstraint> fields);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
@@ -272,7 +274,7 @@ public interface AlterTableStep {
      * This is an alias for {@link #addColumn(Field, DataType)}.
      */
     @Support
-    <T> AlterTableFinalStep add(Field<T> field, DataType<T> type);
+    <T> AlterTableAddStep add(Field<T> field, DataType<T> type);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
@@ -281,7 +283,7 @@ public interface AlterTableStep {
      * This is an alias for {@link #addColumn(Name, DataType)}.
      */
     @Support
-    AlterTableFinalStep add(Name field, DataType<?> type);
+    AlterTableAddStep add(Name field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
@@ -290,7 +292,7 @@ public interface AlterTableStep {
      * This is an alias for {@link #addColumn(String, DataType)}.
      */
     @Support
-    AlterTableFinalStep add(String field, DataType<?> type);
+    AlterTableAddStep add(String field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
@@ -298,8 +300,8 @@ public interface AlterTableStep {
      * <p>
      * This is an alias for {@link #addColumnIfNotExists(Field)}.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addIfNotExists(Field<?> field);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addIfNotExists(Field<?> field);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
@@ -307,8 +309,8 @@ public interface AlterTableStep {
      * <p>
      * This is an alias for {@link #addColumnIfNotExists(Field, DataType)}.
      */
-    @Support({ H2, POSTGRES })
-    <T> AlterTableFinalStep addIfNotExists(Field<T> field, DataType<T> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    <T> AlterTableAddStep addIfNotExists(Field<T> field, DataType<T> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
@@ -316,8 +318,8 @@ public interface AlterTableStep {
      * <p>
      * This is an alias for {@link #addColumnIfNotExists(Name, DataType)}.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addIfNotExists(Name field, DataType<?> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addIfNotExists(Name field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
@@ -325,64 +327,64 @@ public interface AlterTableStep {
      * <p>
      * This is an alias for {@link #addColumnIfNotExists(String, DataType)}.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addIfNotExists(String field, DataType<?> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addIfNotExists(String field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
     @Support
-    AlterTableFinalStep addColumn(Field<?> field);
+    AlterTableAddStep addColumn(Field<?> field);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
     @Support
-    <T> AlterTableFinalStep addColumn(Field<T> field, DataType<T> type);
+    <T> AlterTableAddStep addColumn(Field<T> field, DataType<T> type);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
     @Support
-    AlterTableFinalStep addColumn(Name field, DataType<?> type);
+    AlterTableAddStep addColumn(Name field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
     @Support
-    AlterTableFinalStep addColumn(String field, DataType<?> type);
+    AlterTableAddStep addColumn(String field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addColumnIfNotExists(Field<?> field);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addColumnIfNotExists(Field<?> field);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, POSTGRES })
-    <T> AlterTableFinalStep addColumnIfNotExists(Field<T> field, DataType<T> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    <T> AlterTableAddStep addColumnIfNotExists(Field<T> field, DataType<T> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addColumnIfNotExists(Name field, DataType<?> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addColumnIfNotExists(Name field, DataType<?> type);
 
     /**
      * Add an <code>ADD COLUMN IF NOT EXISTS</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ H2, POSTGRES })
-    AlterTableFinalStep addColumnIfNotExists(String field, DataType<?> type);
+    @Support({ H2, MARIADB, POSTGRES })
+    AlterTableAddStep addColumnIfNotExists(String field, DataType<?> type);
 
     /**
      * Add an <code>ADD CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
@@ -532,7 +534,7 @@ public interface AlterTableStep {
      * Add an <code>DROP COLUMN</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ FIREBIRD, H2, MARIADB, MYSQL })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
     AlterTableDropStep dropColumns(String... fields);
 
     /**
@@ -541,7 +543,7 @@ public interface AlterTableStep {
      * <p>
      * This is an alias for {@link #dropColumns(Collection)}.
      */
-    @Support({ FIREBIRD, H2, MARIADB, MYSQL })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
     AlterTableDropStep drop(Collection<? extends Field<?>> fields);
 
     /**
@@ -555,7 +557,7 @@ public interface AlterTableStep {
      * Add a <code>DROP CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
      * statement.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     AlterTableFinalStep drop(Constraint constraint);
 
     /**
@@ -564,14 +566,99 @@ public interface AlterTableStep {
      *
      * @see DSL#constraint(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
-    AlterTableFinalStep dropConstraint(Name constraint);
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    AlterTableFinalStep dropConstraint(Constraint constraint);
+
     /**
      * Add a <code>DROP CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
      * statement.
      *
      * @see DSL#constraint(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    AlterTableFinalStep dropConstraint(Name constraint);
+
+    /**
+     * Add a <code>DROP CONSTRAINT</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     *
+     * @see DSL#constraint(String)
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     AlterTableFinalStep dropConstraint(String constraint);
+
+    /**
+     * Add a <code>DROP PRIMARY KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     */
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL })
+    AlterTableFinalStep dropPrimaryKey();
+
+    /**
+     * Add a <code>DROP PRIMARY KEY</code> clause to the
+     * <code>ALTER TABLE</code> statement.
+     * <p>
+     * Dialect families derived from MySQL do not know named constraints, in
+     * case of which this clause simply generates <code>DROP PRIMARY KEY</code>
+     * as in {@link #dropPrimaryKey()}. In other dialect families, this produces
+     * a <code>DROP CONSTRAINT [name]</code> clause, as in
+     * {@link #dropConstraint(Constraint)}.
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropPrimaryKey(Constraint constraint);
+
+    /**
+     * Add a <code>DROP PRIMARY KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     * <p>
+     * Dialect families derived from MySQL do not know named constraints, in
+     * case of which this clause simply generates <code>DROP PRIMARY KEY</code>
+     * as in {@link #dropPrimaryKey()}. In other dialect families, this produces
+     * a <code>DROP CONSTRAINT [name]</code> clause, as in
+     * {@link #dropConstraint(Name)}.
+     *
+     * @see DSL#constraint(Name)
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropPrimaryKey(Name constraint);
+
+    /**
+     * Add a <code>DROP PRIMARY KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     * <p>
+     * Dialect families derived from MySQL do not know named constraints, in
+     * case of which this clause simply generates <code>DROP PRIMARY KEY</code>
+     * as in {@link #dropPrimaryKey()}. In other dialect families, this produces
+     * a <code>DROP CONSTRAINT [name]</code> clause, as in
+     * {@link #dropConstraint(String)}.
+     *
+     * @see DSL#constraint(String)
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropPrimaryKey(String constraint);
+
+    /**
+     * Add a <code>DROP FOREIGN KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropForeignKey(Constraint constraint);
+
+    /**
+     * Add a <code>DROP FOREIGN KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     *
+     * @see DSL#constraint(Name)
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropForeignKey(Name constraint);
+
+    /**
+     * Add a <code>DROP FOREIGN KEY</code> clause to the <code>ALTER TABLE</code>
+     * statement.
+     *
+     * @see DSL#constraint(String)
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    AlterTableFinalStep dropForeignKey(String constraint);
 }

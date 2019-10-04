@@ -47,7 +47,13 @@ import static org.jooq.SQLDialect.POSTGRES;
 import java.util.Collection;
 
 /**
- * A query used for deletion of data
+ * A <code>DELETE</code> statement (model API).
+ * <p>
+ * This type is the model API representation of a {@link Delete} statement,
+ * which can be mutated after creation. The advantage of this API compared to
+ * the DSL API is a more simple approach to writing dynamic SQL.
+ * <p>
+ * Instances can be created using {@link DSLContext#deleteQuery(Table)}.
  *
  * @param <R> The record type of the table being deleted from
  * @author Lukas Eder
@@ -59,47 +65,61 @@ public interface DeleteQuery<R extends Record> extends ConditionProvider, Delete
     // Methods from ConditionProvider, OrderProvider, LockProvider
     // ------------------------------------------------------------------------
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Condition condition);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Condition... conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Collection<? extends Condition> conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Condition condition);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Condition... conditions);
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     @Support
     void addConditions(Operator operator, Collection<? extends Condition> conditions);
+
+    /**
+     * Adds ordering fields.
+     *
+     * @param fields The ordering fields
+     */
+    @Support
+    void addOrderBy(OrderField<?>... fields);
+
+    /**
+     * Adds ordering fields.
+     *
+     * @param fields The ordering fields
+     */
+    @Support
+    void addOrderBy(Collection<? extends OrderField<?>> fields);
+
+    /**
+     * Limit the results of this select.
+     *
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Number numberOfRows);
+
+    /**
+     * Limit the results of this select using named parameters.
+     *
+     * @param numberOfRows The number of rows to return
+     */
+    @Support
+    void addLimit(Param<? extends Number> numberOfRows);
 
     // ------------------------------------------------------------------------
     // XXX: Methods for the DELETE .. RETURNING syntax

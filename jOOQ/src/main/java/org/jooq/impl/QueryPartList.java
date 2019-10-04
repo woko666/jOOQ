@@ -38,8 +38,9 @@
 
 package org.jooq.impl;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
-import static org.jooq.impl.Tools.DataKey.DATA_LIST_ALREADY_INDENTED;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_LIST_ALREADY_INDENTED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,9 +48,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.QueryPart;
+import org.jooq.Statement;
 
 /**
  * @author Lukas Eder
@@ -79,7 +80,7 @@ class QueryPartList<T extends QueryPart> extends AbstractQueryPart implements Li
     QueryPartList(Collection<? extends T> wrappedList, boolean qualify) {
         super();
 
-        this.wrappedList = new ArrayList<T>();
+        this.wrappedList = new ArrayList<>();
         this.qualify = qualify;
 
         // [#4664] Don't allocate the backing array if not necessary!
@@ -105,7 +106,7 @@ class QueryPartList<T extends QueryPart> extends AbstractQueryPart implements Li
 
         else {
             String separator = "";
-            boolean indent = (size() > 1) && ctx.data(DATA_LIST_ALREADY_INDENTED) == null;
+            boolean indent = (size() > 1) && !TRUE.equals(ctx.data(DATA_LIST_ALREADY_INDENTED));
 
             if (indent)
                 ctx.formatIndentStart();
@@ -116,8 +117,12 @@ class QueryPartList<T extends QueryPart> extends AbstractQueryPart implements Li
                 if (i > 0 || indent)
                     ctx.formatNewLine();
 
-                ctx.visit(get(i));
-                separator = ", ";
+                T part = get(i);
+                ctx.visit(part);
+
+                // [#3607] Procedures and functions are not separated by comma
+                if (!(part instanceof Statement))
+                    separator = ", ";
             }
 
             if (indent)
@@ -127,19 +132,12 @@ class QueryPartList<T extends QueryPart> extends AbstractQueryPart implements Li
         ctx.qualify(previous);
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
     /**
      * Subclasses may override this method
      */
     @SuppressWarnings("unused")
     protected void toSQLEmptyList(Context<?> context) {
     }
-
-
 
     // -------------------------------------------------------------------------
     // Implementations from the List API
@@ -208,15 +206,24 @@ class QueryPartList<T extends QueryPart> extends AbstractQueryPart implements Li
 
         // [#2145] Collections that contain nulls are quite rare, so it is wise
         // to add a relatively cheap defender check to avoid unnecessary loops
-        if (c.contains(null)) {
-            List<T> list = new ArrayList<T>(c);
+        boolean containsNulls;
+
+        try {
+            containsNulls = c.contains(null);
+        }
+
+        // [#7991] Some immutable collections do not allow for nulls to be contained
+        catch (NullPointerException ignore) {
+            containsNulls = false;
+        }
+
+        if (containsNulls) {
+            List<T> list = new ArrayList<>(c);
             Iterator<T> it = list.iterator();
 
-            while (it.hasNext()) {
-                if (it.next() == null) {
+            while (it.hasNext())
+                if (it.next() == null)
                     it.remove();
-                }
-            }
 
             return list;
         }

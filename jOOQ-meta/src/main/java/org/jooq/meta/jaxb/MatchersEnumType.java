@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -14,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -29,10 +24,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatchersEnumType implements Serializable
+public class MatchersEnumType implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String expression;
     protected MatcherRule enumClass;
@@ -40,11 +35,7 @@ public class MatchersEnumType implements Serializable
     protected String enumImplements;
 
     /**
-     * This sequence matcher applies to all unqualified or qualified enum names matched by this expression. If left empty, this matcher applies to all enums.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
+     * This enum matcher applies to all unqualified or qualified enum names matched by this expression. If left empty, this matcher applies to all enums.
      *
      */
     public String getExpression() {
@@ -52,11 +43,7 @@ public class MatchersEnumType implements Serializable
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This enum matcher applies to all unqualified or qualified enum names matched by this expression. If left empty, this matcher applies to all enums.
      *
      */
     public void setExpression(String value) {
@@ -66,21 +53,13 @@ public class MatchersEnumType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.EnumType} object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getEnumClass() {
         return enumClass;
     }
 
     /**
-     * Sets the value of the enumClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.EnumType} object.
      *
      */
     public void setEnumClass(MatcherRule value) {
@@ -90,61 +69,58 @@ public class MatchersEnumType implements Serializable
     /**
      * This string provides additional interfaces that a generated {@link org.jooq.EnumType} should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getEnumImplements() {
         return enumImplements;
     }
 
     /**
-     * Sets the value of the enumImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated {@link org.jooq.EnumType} should implement.
      *
      */
     public void setEnumImplements(String value) {
         this.enumImplements = value;
     }
 
+    /**
+     * This enum matcher applies to all unqualified or qualified enum names matched by this expression. If left empty, this matcher applies to all enums.
+     *
+     */
     public MatchersEnumType withExpression(String value) {
         setExpression(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.EnumType} object.
+     *
+     */
     public MatchersEnumType withEnumClass(MatcherRule value) {
         setEnumClass(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated {@link org.jooq.EnumType} should implement.
+     *
+     */
     public MatchersEnumType withEnumImplements(String value) {
         setEnumImplements(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("expression", expression);
+        builder.append("enumClass", enumClass);
+        builder.append("enumImplements", enumImplements);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        if (enumClass!= null) {
-            sb.append("<enumClass>");
-            sb.append(enumClass);
-            sb.append("</enumClass>");
-        }
-        if (enumImplements!= null) {
-            sb.append("<enumImplements>");
-            sb.append(enumImplements);
-            sb.append("</enumImplements>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

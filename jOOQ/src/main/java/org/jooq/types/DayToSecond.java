@@ -39,12 +39,12 @@ package org.jooq.types;
 
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jooq.Field;
 import org.jooq.SQLDialect;
-import org.jooq.tools.Convert;
 import org.jooq.tools.StringUtils;
 
 /**
@@ -86,7 +86,7 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
      * Generated UID
      */
     private static final long    serialVersionUID = -3853596481984643811L;
-    private static final Pattern PATTERN          = Pattern.compile("([+-])?(?:(\\d+) )?(\\d+):(\\d+):(\\d+)(?:\\.(\\d+))?");
+    private static final Pattern PATTERN          = Pattern.compile("^([+-])?(?:(\\d+) )?(\\d+):(\\d+):(\\d+)(?:\\.(\\d+))?$");
 
     private final boolean        negative;
     private final int            days;
@@ -96,7 +96,14 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
     private final int            nano;
 
     /**
-     * Create a new day-hour interval.
+     * Create a new interval.
+     */
+    public DayToSecond() {
+        this(0, 0, 0, 0, 0, false);
+    }
+
+    /**
+     * Create a new day interval.
      */
     public DayToSecond(int days) {
         this(days, 0, 0, 0, 0, false);
@@ -110,43 +117,43 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
     }
 
     /**
-     * Create a new day-hour interval.
+     * Create a new day-minute interval.
      */
     public DayToSecond(int days, int hours, int minutes) {
         this(days, hours, minutes, 0, 0, false);
     }
 
     /**
-     * Create a new day-hour interval.
+     * Create a new day-second interval.
      */
     public DayToSecond(int days, int hours, int minutes, int seconds) {
         this(days, hours, minutes, seconds, 0, false);
     }
 
     /**
-     * Create a new day-hour interval.
+     * Create a new day-nanoseconds interval.
      */
     public DayToSecond(int days, int hours, int minutes, int seconds, int nano) {
         this(days, hours, minutes, seconds, nano, false);
     }
 
-    private DayToSecond(int days, int hours, int minutes, int seconds, int nano, boolean negative) {
+    DayToSecond(int days, int hours, int minutes, int seconds, int nano, boolean negative) {
 
         // Perform normalisation. Specifically, Postgres may return intervals
         // such as 24:00:00, 25:13:15, etc...
-        if (nano >= 1000000000) {
+        if (Math.abs(nano) >= 1000000000) {
             seconds += (nano / 1000000000);
             nano %= 1000000000;
         }
-        if (seconds >= 60) {
+        if (Math.abs(seconds) >= 60) {
             minutes += (seconds / 60);
             seconds %= 60;
         }
-        if (minutes >= 60) {
+        if (Math.abs(minutes) >= 60) {
             hours += (minutes / 60);
             minutes %= 60;
         }
-        if (hours >= 24) {
+        if (Math.abs(hours) >= 24) {
             days += (hours / 24);
             hours %= 24;
         }
@@ -169,7 +176,8 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
      */
     public static DayToSecond valueOf(String string) {
         if (string != null) {
-            // Accept also doubles as the number of days
+
+            // Accept also doubles as the number of milliseconds
             try {
                 return valueOf(Double.valueOf(string));
             }
@@ -177,15 +185,7 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
                 Matcher matcher = PATTERN.matcher(string);
 
                 if (matcher.find()) {
-                    boolean negative = "-".equals(matcher.group(1));
-
-                    int days = Convert.convert(matcher.group(2), int.class);
-                    int hours = Convert.convert(matcher.group(3), int.class);
-                    int minutes = Convert.convert(matcher.group(4), int.class);
-                    int seconds = Convert.convert(matcher.group(5), int.class);
-                    int nano = Convert.convert(StringUtils.rightPad(matcher.group(6), 9, "0"), int.class);
-
-                    return new DayToSecond(days, hours, minutes, seconds, nano, negative);
+                    return YearToSecond.parseDS(matcher, 0);
                 }
 
 
@@ -227,13 +227,54 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
         return result;
     }
 
+    /**
+     * Load a {@link Double} representation of a
+     * <code>INTERVAL DAY TO SECOND</code> by assuming standard 24 hour days and
+     * 60 second minutes.
+     *
+     * @param second The number of seconds
+     * @param nanos The number of nano seconds
+     * @return The loaded <code>INTERVAL DAY TO SECOND</code> object
+     */
+    public static DayToSecond valueOf(long second, int nanos) {
+        long abs = Math.abs(second);
+
+        int s = (int) (abs % 60L); abs = abs / 60L;
+        int m = (int) (abs % 60L); abs = abs / 60L;
+        int h = (int) (abs % 24L); abs = abs / 24L;
+        int d = (int) abs;
+
+        DayToSecond result = new DayToSecond(d, h, m, s, nanos);
+
+        if (second < 0)
+            result = result.neg();
+
+        return result;
+    }
+
 
     /**
      * Transform a {@link Duration} into a {@link DayToSecond} interval by
      * taking its number of milliseconds.
      */
     public static DayToSecond valueOf(Duration duration) {
-        return duration == null ? null : valueOf(duration.toMillis());
+        if (duration == null)
+            return null;
+
+        long s = duration.get(ChronoUnit.SECONDS);
+        int n = (int) duration.get(ChronoUnit.NANOS);
+
+        if (s < 0) {
+            n = 1_000_000_000 - n;
+            s++;
+        }
+
+        return valueOf(s, n);
+    }
+
+    @Override
+    public final Duration toDuration() {
+        return Duration.ofSeconds((long) getTotalSeconds(), getSign() * getNano());
     }
 
 
@@ -460,12 +501,17 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
     @Override
     public final int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + days;
-        result = prime * result + hours;
-        result = prime * result + minutes;
-        result = prime * result + nano;
-        result = prime * result + seconds;
+        int result = 0;
+        if (days != 0)
+            result = prime * result + days;
+        if (hours != 0)
+            result = prime * result + hours;
+        if (minutes != 0)
+            result = prime * result + minutes;
+        if (nano != 0)
+            result = prime * result + nano;
+        if (seconds != 0)
+            result = prime * result + seconds;
         return result;
     }
 
@@ -475,20 +521,24 @@ public final class DayToSecond extends Number implements Interval, Comparable<Da
             return true;
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass())
+        if (getClass() == obj.getClass()) {
+            DayToSecond other = (DayToSecond) obj;
+            if (days != other.days)
+                return false;
+            if (hours != other.hours)
+                return false;
+            if (minutes != other.minutes)
+                return false;
+            if (nano != other.nano)
+                return false;
+            if (seconds != other.seconds)
+                return false;
+            return true;
+        }
+        else if (obj instanceof YearToSecond)
+            return obj.equals(this);
+        else
             return false;
-        DayToSecond other = (DayToSecond) obj;
-        if (days != other.days)
-            return false;
-        if (hours != other.hours)
-            return false;
-        if (minutes != other.minutes)
-            return false;
-        if (nano != other.nano)
-            return false;
-        if (seconds != other.seconds)
-            return false;
-        return true;
     }
 
     @Override

@@ -38,6 +38,9 @@
 package org.jooq.impl;
 
 import static org.jooq.Clause.TABLE_VALUES;
+// ...
+import static org.jooq.impl.Keywords.K_MULTISET;
+import static org.jooq.impl.Keywords.K_TABLE;
 import static org.jooq.impl.Keywords.K_VALUES;
 
 import org.jooq.Context;
@@ -82,12 +85,12 @@ final class Values<R extends Record> extends AbstractTable<R> {
 
     @Override
     public final Table<R> as(Name alias) {
-        return new TableAlias<R>(this, alias, true);
+        return new TableAlias<>(this, alias, true);
     }
 
     @Override
     public final Table<R> as(Name alias, Name... fieldAliases) {
-        return new TableAlias<R>(this, alias, fieldAliases, true);
+        return new TableAlias<>(this, alias, fieldAliases, true);
     }
 
     @Override
@@ -96,6 +99,7 @@ final class Values<R extends Record> extends AbstractTable<R> {
 
             // [#915] Emulate VALUES(..) with SELECT .. UNION ALL SELECT ..
             // for those dialects that do not support a VALUES() constructor
+
 
 
 
@@ -148,8 +152,14 @@ final class Values<R extends Record> extends AbstractTable<R> {
 
 
             default: {
-                ctx.start(TABLE_VALUES)
-                   .visit(K_VALUES);
+                ctx.start(TABLE_VALUES);
+
+
+
+
+
+
+                ctx.visit(K_VALUES);
 
                 if (rows.length > 1)
                     ctx.formatIndentStart()
@@ -167,6 +177,10 @@ final class Values<R extends Record> extends AbstractTable<R> {
                     ctx.formatIndentEnd()
                        .formatNewLine();
 
+
+
+
+
                 ctx.end(TABLE_VALUES);
                 break;
             }
@@ -175,6 +189,6 @@ final class Values<R extends Record> extends AbstractTable<R> {
 
     @Override
     final Fields<R> fields0() {
-        return new Fields<R>(rows[0].fields());
+        return new Fields<>(rows[0].fields());
     }
 }

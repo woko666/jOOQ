@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import javax.xml.bind.annotation.XmlEnum;
@@ -57,6 +50,18 @@ public enum TableConstraintType {
             }
         }
         throw new IllegalArgumentException(v);
+    }
+
+    @Override
+    public String toString() {
+        switch (this) {
+            case PRIMARY_KEY:
+                return "PRIMARY KEY";
+            case FOREIGN_KEY:
+                return "FOREIGN KEY";
+            default:
+                return this.name();
+        }
     }
 
 }

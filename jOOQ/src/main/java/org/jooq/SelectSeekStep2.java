@@ -37,7 +37,7 @@
  */
 package org.jooq;
 
-import javax.annotation.Generated;
+import org.jooq.Record;
 
 /**
  * This type is used for the {@link Select}'s DSL API when selecting generic
@@ -54,9 +54,9 @@ import javax.annotation.Generated;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -81,7 +81,6 @@ import javax.annotation.Generated;
  *
  * @author Lukas Eder
  */
-@Generated("This class was generated using jOOQ-tools")
 public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitStep<R> {
 
     /**
@@ -112,7 +111,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * <p>
      * <code><pre>
      * SELECT * FROM table
-     * WHERE (id, code) > (3, 'abc')
+     * WHERE (id, code) &gt; (3, 'abc')
      * ORDER BY id ASC, code ASC
      * </pre></code>
      * <p>
@@ -120,7 +119,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * equivalent predicate:
      * <p>
      * <code><pre>
-     * WHERE (id > 3) OR (id = 3 AND code > 'abc')
+     * WHERE (id &gt; 3) OR (id = 3 AND code &gt; 'abc')
      * </pre></code>
      * <p>
      * The <code>SEEK AFTER</code> method currently does not support seeking
@@ -133,6 +132,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      *      href="http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method/">http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method</a>
      * @see #seekAfter(Object, Object)
      */
+    @Support
     SelectSeekLimitStep<R> seek(T1 t1, T2 t2);
 
     /**
@@ -163,7 +163,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * <p>
      * <code><pre>
      * SELECT * FROM table
-     * WHERE (id, code) > (3, 'abc')
+     * WHERE (id, code) &gt; (3, 'abc')
      * ORDER BY id ASC, code ASC
      * </pre></code>
      * <p>
@@ -171,7 +171,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * equivalent predicate:
      * <p>
      * <code><pre>
-     * WHERE (id > 3) OR (id = 3 AND code > 'abc')
+     * WHERE (id &gt; 3) OR (id = 3 AND code &gt; 'abc')
      * </pre></code>
      * <p>
      * The <code>SEEK AFTER</code> method currently does not support seeking
@@ -184,6 +184,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      *      href="http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method/">http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method</a>
      * @see #seekAfter(Field, Field)
      */
+    @Support
     SelectSeekLimitStep<R> seek(Field<T1> field1, Field<T2> field2);
 
     /**
@@ -214,7 +215,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * <p>
      * <code><pre>
      * SELECT * FROM table
-     * WHERE (id, code) > (3, 'abc')
+     * WHERE (id, code) &gt; (3, 'abc')
      * ORDER BY id ASC, code ASC
      * </pre></code>
      * <p>
@@ -222,7 +223,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * equivalent predicate:
      * <p>
      * <code><pre>
-     * WHERE (id > 3) OR (id = 3 AND code > 'abc')
+     * WHERE (id &gt; 3) OR (id = 3 AND code &gt; 'abc')
      * </pre></code>
      * <p>
      * The <code>SEEK AFTER</code> method currently does not support seeking
@@ -234,6 +235,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * @see <a
      *      href="http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method/">http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method</a>
      */
+    @Support
     SelectSeekLimitStep<R> seekAfter(T1 t1, T2 t2);
 
     /**
@@ -264,7 +266,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * <p>
      * <code><pre>
      * SELECT * FROM table
-     * WHERE (id, code) > (3, 'abc')
+     * WHERE (id, code) &gt; (3, 'abc')
      * ORDER BY id ASC, code ASC
      * </pre></code>
      * <p>
@@ -272,7 +274,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * equivalent predicate:
      * <p>
      * <code><pre>
-     * WHERE (id > 3) OR (id = 3 AND code > 'abc')
+     * WHERE (id &gt; 3) OR (id = 3 AND code &gt; 'abc')
      * </pre></code>
      * <p>
      * The <code>SEEK AFTER</code> method currently does not support seeking
@@ -284,6 +286,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * @see <a
      *      href="http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method/">http://blog.jooq.org/2013/10/26/faster-sql-paging-with-jooq-using-the-seek-method</a>
      */
+    @Support
     SelectSeekLimitStep<R> seekAfter(Field<T1> field1, Field<T2> field2);
 
     /**
@@ -336,6 +339,7 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * @deprecated - [#7461] - SEEK BEFORE is not implemented correctly
      */
     @Deprecated
+    @Support
     SelectSeekLimitStep<R> seekBefore(T1 t1, T2 t2);
 
     /**
@@ -388,5 +392,6 @@ public interface SelectSeekStep2<R extends Record, T1, T2> extends SelectLimitSt
      * @deprecated - [#7461] - SEEK BEFORE is not implemented correctly
      */
     @Deprecated
+    @Support
     SelectSeekLimitStep<R> seekBefore(Field<T1> field1, Field<T2> field2);
 }

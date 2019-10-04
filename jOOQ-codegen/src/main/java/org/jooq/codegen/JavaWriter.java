@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,8 +33,8 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
 
     private final Pattern             fullyQualifiedTypes;
     private final boolean             javadoc;
-    private final Set<String>         qualifiedTypes   = new TreeSet<String>();
-    private final Map<String, String> unqualifiedTypes = new TreeMap<String, String>();
+    private final Set<String>         qualifiedTypes   = new TreeSet<>(qualifiedTypeComparator());
+    private final Map<String, String> unqualifiedTypes = new TreeMap<>();
     private final String              className;
     private final boolean             isJava;
     private final boolean             isScala;
@@ -47,7 +48,22 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
     }
 
     public JavaWriter(File file, String fullyQualifiedTypes, String encoding, boolean javadoc) {
-        super(file, encoding);
+        super(file, encoding, null);
+
+        this.className = file.getName().replaceAll("\\.(java|scala)$", "");
+        this.isJava = file.getName().endsWith(".java");
+        this.isScala = file.getName().endsWith(".scala");
+        this.fullyQualifiedTypes = fullyQualifiedTypes == null ? null : Pattern.compile(fullyQualifiedTypes);
+        this.javadoc = javadoc;
+
+        if (isJava)
+            tabString("    ");
+        else if (isScala)
+            tabString("  ");
+    }
+
+    public JavaWriter(File file, String fullyQualifiedTypes, String encoding, boolean javadoc, Files files) {
+        super(file, encoding, files);
 
         this.className = file.getName().replaceAll("\\.(java|scala)$", "");
         this.isJava = file.getName().endsWith(".java");
@@ -77,7 +93,7 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
 
         if (javadoc) {
 
-            // [#3450] [#4575] Must not print */ inside Javadoc
+            // [#3450] [#4575] [#7693] Must not print */ inside Javadoc
             String escaped = escapeJavadoc(string);
             Object[] escapedArgs = Arrays.copyOf(args, args.length);
             for (int i = 0; i < escapedArgs.length; i++)
@@ -92,10 +108,15 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
         return this;
     }
 
-    private String escapeJavadoc(String string) {
+    static String escapeJavadoc(String string) {
 
-        // [#3450] [#4880] Must not print */ inside Javadoc
-        return string.replace("/*", "/ *").replace("*/", "* /");
+        // [#3450] [#4880] [#7693] Must not print */ inside Javadoc
+        return string
+            .replace("/*", "/ *")
+            .replace("*/", "* /")
+            .replace("\\u002a/", "\\u002a /")
+            .replace("*\\u002f", "* \\u002f")
+            .replace("\\u002a\\u002f", "\\u002a \\u002f");
     }
 
     public JavaWriter header(String header, Object... args) {
@@ -115,32 +136,25 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
     }
 
     public JavaWriter overrideIf(boolean override) {
-        if (override) {
+        if (override)
             println("@Override");
-        }
 
         return this;
     }
 
     public JavaWriter overrideInherit() {
         final int t = tab();
-
-        tab(t).javadoc("{@inheritDoc}");
+        tab(t).println();
         tab(t).override();
-
         return this;
     }
 
     public JavaWriter overrideInheritIf(boolean override) {
         final int t = tab();
 
-        if (override) {
-            tab(t).javadoc("{@inheritDoc}");
+        tab(t).println();
+        if (override)
             tab(t).override();
-        }
-        else {
-            tab(t).println();
-        }
 
         return this;
     }
@@ -154,6 +168,13 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
 
     public void printImports() {
         println(IMPORT_STATEMENT);
+    }
+
+    /**
+     * Subclasses may override this to specify their own order of qualified types.
+     */
+    protected Comparator<String> qualifiedTypeComparator() {
+        return null;
     }
 
     @Override
@@ -186,11 +207,11 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
             String topLevelPackage = imp.split("\\.")[0];
 
             if (!topLevelPackage.equals(previous))
-                importString.append("\n");
+                importString.append(newlineString());
 
             importString.append("import ")
                         .append(imp)
-                        .append(isScala ? "\n" : ";\n");
+                        .append(isScala ? "" : ";").append(newlineString());
 
             previous = topLevelPackage;
         }
@@ -202,7 +223,7 @@ public class JavaWriter extends GeneratorWriter<JavaWriter> {
 
     @Override
     protected List<String> ref(List<String> clazz, int keepSegments) {
-        List<String> result = new ArrayList<String>(clazz == null ? 0 : clazz.size());
+        List<String> result = new ArrayList<>(clazz == null ? 0 : clazz.size());
 
         if (clazz != null) {
             for (String c : clazz) {

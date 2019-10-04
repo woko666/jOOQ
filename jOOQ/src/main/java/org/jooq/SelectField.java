@@ -41,6 +41,8 @@ package org.jooq;
 /**
  * A <code>QueryPart</code> to be used exclusively in <code>SELECT</code>
  * clauses.
+ * <p>
+ * Instances of this type cannot be created directly, only of its subtypes.
  *
  * @author Lukas Eder
  */
@@ -54,7 +56,7 @@ public interface SelectField<T> extends SelectFieldOrAsterisk, Named {
      * The field's underlying {@link Converter}.
      * <p>
      * By default, all fields reference an identity-converter
-     * <code>Converter&lt;T, T></code>. Custom data types may be obtained by a
+     * <code>Converter&lt;T, T&gt;</code>. Custom data types may be obtained by a
      * custom {@link Converter} placed on the generated {@link TableField}.
      */
     Converter<?, T> getConverter();

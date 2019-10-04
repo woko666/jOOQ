@@ -49,7 +49,7 @@ import static org.jooq.impl.Internal.createPathAlias;
 import static org.jooq.impl.Keywords.K_TABLE;
 
 import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Comment;
@@ -58,6 +58,7 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Name;
 import org.jooq.Record;
+import org.jooq.Row;
 import org.jooq.SQLDialect;
 import org.jooq.Schema;
 import org.jooq.Table;
@@ -70,19 +71,20 @@ import org.jooq.tools.StringUtils;
  *
  * @author Lukas Eder
  */
+@org.jooq.Internal
 public class TableImpl<R extends Record> extends AbstractTable<R> {
 
-    private static final long                serialVersionUID               = 261033315221985068L;
-    private static final Clause[]            CLAUSES_TABLE_REFERENCE        = { TABLE, TABLE_REFERENCE };
-    private static final Clause[]            CLAUSES_TABLE_ALIAS            = { TABLE, TABLE_ALIAS };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_QUALIFIED_TVF_CALLS = EnumSet.of(POSTGRES);
+    private static final long            serialVersionUID               = 261033315221985068L;
+    private static final Clause[]        CLAUSES_TABLE_REFERENCE        = { TABLE, TABLE_REFERENCE };
+    private static final Clause[]        CLAUSES_TABLE_ALIAS            = { TABLE, TABLE_ALIAS };
+    private static final Set<SQLDialect> NO_SUPPORT_QUALIFIED_TVF_CALLS = SQLDialect.supported(POSTGRES);
 
-    final Fields<R>                          fields;
-    final Alias<Table<R>>                    alias;
+    final Fields<R>                      fields;
+    final Alias<Table<R>>                alias;
 
-    protected final Field<?>[]               parameters;
-    final Table<?>                           child;
-    final ForeignKey<?, R>                   childPath;
+    protected final Field<?>[]           parameters;
+    final Table<?>                       child;
+    final ForeignKey<?, R>               childPath;
 
     /**
      * @deprecated - 3.10 - [#5996] - Use {@link #TableImpl(Name)} instead (or
@@ -164,7 +166,7 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
     public TableImpl(Name name, Schema schema, Table<?> child, ForeignKey<?, R> path, Table<R> aliased, Field<?>[] parameters, Comment comment) {
         super(name, schema, comment);
 
-        this.fields = new Fields<R>();
+        this.fields = new Fields<>();
         this.child = child;
         this.childPath = path;
 
@@ -175,9 +177,9 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
             Alias<Table<R>> existingAlias = Tools.alias(aliased);
 
             if (existingAlias != null)
-                alias = new Alias<Table<R>>(existingAlias.wrapped, this, name, existingAlias.fieldAliases, existingAlias.wrapInParentheses);
+                alias = new Alias<>(existingAlias.wrapped, this, name, existingAlias.fieldAliases, existingAlias.wrapInParentheses);
             else
-                alias = new Alias<Table<R>>(aliased, this, name);
+                alias = new Alias<>(aliased, this, name);
         }
         else
             alias = null;
@@ -253,10 +255,10 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
 
             // [#2925] Some dialects don't like empty parameter lists
             if (ctx.family() == FIREBIRD && parameters.length == 0)
-                ctx.visit(new QueryPartList<Field<?>>(parameters));
+                ctx.visit(new QueryPartList<>(parameters));
             else
                 ctx.sql('(')
-                   .visit(new QueryPartList<Field<?>>(parameters))
+                   .visit(new QueryPartList<>(parameters))
                    .sql(')');
         }
 
@@ -275,7 +277,7 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
         if (alias != null)
             return alias.wrapped().as(as);
         else
-            return new TableAlias<R>(this, as);
+            return new TableAlias<>(this, as);
     }
 
     /**
@@ -289,15 +291,15 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
         if (alias != null)
             return alias.wrapped().as(as, fieldAliases);
         else
-            return new TableAlias<R>(this, as, fieldAliases);
+            return new TableAlias<>(this, as, fieldAliases);
     }
 
     public Table<R> rename(String rename) {
-        return new TableImpl<R>(rename, getSchema());
+        return new TableImpl<>(rename, getSchema());
     }
 
     public Table<R> rename(Name rename) {
-        return new TableImpl<R>(rename, getSchema());
+        return new TableImpl<>(rename, getSchema());
     }
 
     /**
@@ -339,4 +341,11 @@ public class TableImpl<R extends Record> extends AbstractTable<R> {
 
         return super.equals(that);
     }
+
+    // [#8489] this override is necessary due to a Scala compiler bug (versions 2.10 and 2.11)
+    @Override
+    public Row fieldsRow() {
+        return super.fieldsRow();
+    }
+
 }

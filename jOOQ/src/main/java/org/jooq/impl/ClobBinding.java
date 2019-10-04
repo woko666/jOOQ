@@ -37,10 +37,11 @@
  */
 package org.jooq.impl;
 
+import static org.jooq.impl.DefaultExecuteContext.localConnection;
+import static org.jooq.impl.DefaultExecuteContext.localTargetConnection;
 import static org.jooq.tools.reflect.Reflect.on;
 
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -90,16 +91,12 @@ public class ClobBinding implements Binding<String, String> {
 
     @Override
     public final void set(BindingSetStatementContext<String> ctx) throws SQLException {
-        Clob clob = newClob(ctx.configuration(), ctx.value());
-        DefaultExecuteContext.register(clob);
-        ctx.statement().setClob(ctx.index(), clob);
+        ctx.statement().setClob(ctx.index(), ctx.autoFree(newClob(ctx.configuration(), ctx.value())));
     }
 
     @Override
     public final void set(BindingSetSQLOutputContext<String> ctx) throws SQLException {
-        Clob clob = newClob(ctx.configuration(), ctx.value());
-        DefaultExecuteContext.register(clob);
-        ctx.output().writeClob(clob);
+        ctx.output().writeClob(ctx.autoFree(newClob(ctx.configuration(), ctx.value())));
     }
 
     @Override
@@ -139,12 +136,9 @@ public class ClobBinding implements Binding<String, String> {
     }
 
     private final Clob newClob(Configuration configuration, String string) throws SQLException {
-        Connection c = configuration.connectionProvider().acquire();
+        Clob clob;
 
-        try {
-            Clob clob = null;
-
-            switch (configuration.family()) {
+        switch (configuration.family()) {
 
 
 
@@ -156,17 +150,13 @@ public class ClobBinding implements Binding<String, String> {
 
 
 
-                default: {
-                    clob = c.createClob();
-                    break;
-                }
+            default: {
+                clob = localConnection().createClob();
+                break;
             }
+        }
 
-            clob.setString(1, string);
-            return clob;
-        }
-        finally {
-            configuration.connectionProvider().release(c);
-        }
+        clob.setString(1, string);
+        return clob;
     }
 }

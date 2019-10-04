@@ -49,22 +49,26 @@ import static org.jooq.SQLDialect.CUBRID;
 // ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+// ...
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
+// ...
 import static org.jooq.SQLDialect.MYSQL;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
+// ...
 // ...
 // ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_3;
-import static org.jooq.SQLDialect.POSTGRES_9_4;
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+// ...
+// ...
+// ...
+// ...
 // ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
@@ -75,6 +79,19 @@ import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
+// ...
+import static org.jooq.impl.SQLDataType.JSON;
+import static org.jooq.impl.SQLDataType.JSONB;
+import static org.jooq.impl.Term.CUME_DIST;
+import static org.jooq.impl.Term.DENSE_RANK;
+import static org.jooq.impl.Term.FIRST_VALUE;
+import static org.jooq.impl.Term.LAG;
+import static org.jooq.impl.Term.LAST_VALUE;
+import static org.jooq.impl.Term.LEAD;
+import static org.jooq.impl.Term.NTH_VALUE;
+import static org.jooq.impl.Term.NTILE;
+import static org.jooq.impl.Term.PERCENT_RANK;
+import static org.jooq.impl.Term.RANK;
 import static org.jooq.impl.Term.ROW_NUMBER;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
 import static org.jooq.impl.Tools.EMPTY_QUERYPART;
@@ -106,7 +123,6 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Function;
 
-import javax.annotation.Generated;
 import javax.sql.DataSource;
 
 import org.jooq.AggregateFunction;
@@ -115,6 +131,7 @@ import org.jooq.AlterIndexStep;
 import org.jooq.AlterSchemaStep;
 import org.jooq.AlterSequenceStep;
 import org.jooq.AlterTableStep;
+import org.jooq.AlterTypeStep;
 import org.jooq.AlterViewStep;
 import org.jooq.ArrayAggOrderByStep;
 // ...
@@ -124,6 +141,7 @@ import org.jooq.Case;
 import org.jooq.CaseConditionStep;
 import org.jooq.CaseValueStep;
 import org.jooq.Catalog;
+import org.jooq.CharacterSet;
 import org.jooq.Collation;
 import org.jooq.Comment;
 import org.jooq.CommentOnIsStep;
@@ -156,14 +174,17 @@ import org.jooq.ConstraintForeignKeyReferencesStep8;
 import org.jooq.ConstraintForeignKeyReferencesStep9;
 import org.jooq.ConstraintForeignKeyReferencesStepN;
 import org.jooq.ConstraintTypeStep;
+// ...
 import org.jooq.CreateIndexStep;
 import org.jooq.CreateSchemaFinalStep;
-import org.jooq.CreateSequenceFinalStep;
-import org.jooq.CreateTableAsStep;
+import org.jooq.CreateSequenceFlagsStep;
+import org.jooq.CreateTableColumnStep;
+import org.jooq.CreateTypeStep;
 import org.jooq.CreateViewAsStep;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
 import org.jooq.DatePart;
+// ...
 import org.jooq.Delete;
 import org.jooq.DeleteWhereStep;
 import org.jooq.DerivedColumnList;
@@ -171,13 +192,18 @@ import org.jooq.DropIndexOnStep;
 import org.jooq.DropSchemaStep;
 import org.jooq.DropSequenceFinalStep;
 import org.jooq.DropTableStep;
+import org.jooq.DropTypeStep;
 import org.jooq.DropViewFinalStep;
+// ...
 import org.jooq.False;
 import org.jooq.Field;
 import org.jooq.FieldOrRow;
+// ...
 import org.jooq.GrantOnStep;
 import org.jooq.GroupConcatOrderByStep;
+import org.jooq.GroupConcatSeparatorStep;
 import org.jooq.GroupField;
+// ...
 import org.jooq.Index;
 import org.jooq.Insert;
 import org.jooq.InsertSetStep;
@@ -204,7 +230,12 @@ import org.jooq.InsertValuesStep7;
 import org.jooq.InsertValuesStep8;
 import org.jooq.InsertValuesStep9;
 import org.jooq.InsertValuesStepN;
+import org.jooq.JSON;
+import org.jooq.JSONB;
+import org.jooq.JSONEntry;
 import org.jooq.Keyword;
+// ...
+// ...
 // ...
 import org.jooq.Merge;
 import org.jooq.MergeKeyStep1;
@@ -232,6 +263,7 @@ import org.jooq.MergeKeyStep9;
 import org.jooq.MergeKeyStepN;
 import org.jooq.MergeUsingStep;
 import org.jooq.Name;
+import org.jooq.Name.Quoted;
 import org.jooq.Operator;
 import org.jooq.OrderField;
 import org.jooq.OrderedAggregateFunction;
@@ -239,6 +271,7 @@ import org.jooq.OrderedAggregateFunctionOfDeferredType;
 import org.jooq.Param;
 import org.jooq.PlainSQL;
 import org.jooq.Privilege;
+// ...
 import org.jooq.QuantifiedSelect;
 import org.jooq.Queries;
 import org.jooq.Query;
@@ -268,6 +301,7 @@ import org.jooq.Record8;
 import org.jooq.Record9;
 import org.jooq.RecordHandler;
 import org.jooq.RecordType;
+// ...
 import org.jooq.Result;
 import org.jooq.ResultQuery;
 import org.jooq.RevokeOnStep;
@@ -294,6 +328,7 @@ import org.jooq.Row6;
 import org.jooq.Row7;
 import org.jooq.Row8;
 import org.jooq.Row9;
+import org.jooq.RowCountQuery;
 import org.jooq.RowN;
 import org.jooq.SQL;
 import org.jooq.SQLDialect;
@@ -314,11 +349,12 @@ import org.jooq.UDTRecord;
 import org.jooq.Update;
 import org.jooq.UpdateSetFirstStep;
 import org.jooq.User;
+// ...
 import org.jooq.WindowFromFirstLastStep;
 import org.jooq.WindowIgnoreNullsStep;
 import org.jooq.WindowOverStep;
 import org.jooq.WindowSpecification;
-import org.jooq.WindowSpecificationFinalStep;
+import org.jooq.WindowSpecificationExcludeStep;
 import org.jooq.WindowSpecificationOrderByStep;
 import org.jooq.WindowSpecificationRowsAndStep;
 import org.jooq.WindowSpecificationRowsStep;
@@ -346,7 +382,6 @@ import org.jooq.WithAsStep7;
 import org.jooq.WithAsStep8;
 import org.jooq.WithAsStep9;
 import org.jooq.WithStep;
-import org.jooq.conf.RenderNameStyle;
 import org.jooq.conf.Settings;
 import org.jooq.exception.SQLDialectNotSupportedException;
 import org.jooq.tools.Convert;
@@ -703,7 +738,7 @@ public class DSL {
      * and {@link #withRecursive(String)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep with(String alias) {
         return new WithImpl(null, false).with(alias);
     }
@@ -721,7 +756,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep with(String alias, String... fieldAliases) {
         return new WithImpl(null, false).with(alias, fieldAliases);
     }
@@ -739,7 +774,7 @@ public class DSL {
      * and {@link #withRecursive(Name)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep with(Name alias) {
         return new WithImpl(null, false).with(alias);
     }
@@ -757,7 +792,7 @@ public class DSL {
      * and {@link #withRecursive(Name, Name...)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep with(Name alias, Name... fieldAliases) {
         return new WithImpl(null, false).with(alias, fieldAliases);
     }
@@ -779,13 +814,13 @@ public class DSL {
      * that all column names are produced by a function that receives the CTE's
      * {@link Select} columns as input.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep with(String alias, Function<? super Field<?>, ? extends String> fieldNameFunction) {
         return new WithImpl(null, false).with(alias, fieldNameFunction);
     }
 
 
-    // [jooq-tools] START [with]
+
 
     /**
      * Create a <code>WITH</code> clause to supply subsequent
@@ -800,8 +835,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep1 with(String alias, String fieldAlias1) {
         return new WithImpl(null, false).with(alias, fieldAlias1);
     }
@@ -819,8 +853,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep2 with(String alias, String fieldAlias1, String fieldAlias2) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2);
     }
@@ -838,8 +871,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep3 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3);
     }
@@ -857,8 +889,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep4 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4);
     }
@@ -876,8 +907,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep5 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5);
     }
@@ -895,8 +925,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep6 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6);
     }
@@ -914,8 +943,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep7 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7);
     }
@@ -933,8 +961,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep8 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8);
     }
@@ -952,8 +979,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep9 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9);
     }
@@ -971,8 +997,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep10 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10);
     }
@@ -990,8 +1015,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep11 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11);
     }
@@ -1009,8 +1033,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep12 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12);
     }
@@ -1028,8 +1051,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep13 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13);
     }
@@ -1047,8 +1069,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep14 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14);
     }
@@ -1066,8 +1087,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep15 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15);
     }
@@ -1085,8 +1105,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep16 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16);
     }
@@ -1104,8 +1123,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep17 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17);
     }
@@ -1123,8 +1141,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep18 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18);
     }
@@ -1142,8 +1159,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep19 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19);
     }
@@ -1161,8 +1177,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep20 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20);
     }
@@ -1180,8 +1195,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep21 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20, String fieldAlias21) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21);
     }
@@ -1199,8 +1213,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep22 with(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20, String fieldAlias21, String fieldAlias22) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21, fieldAlias22);
     }
@@ -1218,8 +1231,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep1 with(Name alias, Name fieldAlias1) {
         return new WithImpl(null, false).with(alias, fieldAlias1);
     }
@@ -1237,8 +1249,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep2 with(Name alias, Name fieldAlias1, Name fieldAlias2) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2);
     }
@@ -1256,8 +1267,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep3 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3);
     }
@@ -1275,8 +1285,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep4 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4);
     }
@@ -1294,8 +1303,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep5 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5);
     }
@@ -1313,8 +1321,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep6 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6);
     }
@@ -1332,8 +1339,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep7 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7);
     }
@@ -1351,8 +1357,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep8 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8);
     }
@@ -1370,8 +1375,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep9 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9);
     }
@@ -1389,8 +1393,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep10 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10);
     }
@@ -1408,8 +1411,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep11 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11);
     }
@@ -1427,8 +1429,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep12 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12);
     }
@@ -1446,8 +1447,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep13 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13);
     }
@@ -1465,8 +1465,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep14 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14);
     }
@@ -1484,8 +1483,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep15 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15);
     }
@@ -1503,8 +1501,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep16 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16);
     }
@@ -1522,8 +1519,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep17 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17);
     }
@@ -1541,8 +1537,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep18 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18);
     }
@@ -1560,8 +1555,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep19 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19);
     }
@@ -1579,8 +1573,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep20 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20);
     }
@@ -1598,8 +1591,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep21 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20, Name fieldAlias21) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21);
     }
@@ -1617,13 +1609,12 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep22 with(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20, Name fieldAlias21, Name fieldAlias22) {
         return new WithImpl(null, false).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21, fieldAlias22);
     }
 
-// [jooq-tools] END [with]
+
 
     /**
      * Create a <code>WITH</code> clause to supply subsequent
@@ -1646,7 +1637,7 @@ public class DSL {
      * and {@link #withRecursive(CommonTableExpression...)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithStep with(CommonTableExpression<?>... tables) {
         return new WithImpl(null, false).with(tables);
     }
@@ -1667,7 +1658,7 @@ public class DSL {
      * Note that the {@link SQLDialect#H2} database only supports single-table,
      * <code>RECURSIVE</code> common table expression lists.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep withRecursive(String alias) {
         return new WithImpl(null, true).with(alias);
     }
@@ -1688,7 +1679,7 @@ public class DSL {
      * Note that the {@link SQLDialect#H2} database only supports single-table,
      * <code>RECURSIVE</code> common table expression lists.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep withRecursive(String alias, String... fieldAliases) {
         return new WithImpl(null, true).with(alias, fieldAliases);
     }
@@ -1709,7 +1700,7 @@ public class DSL {
      * Note that the {@link SQLDialect#H2} database only supports single-table,
      * <code>RECURSIVE</code> common table expression lists.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep withRecursive(Name alias) {
         return new WithImpl(null, true).with(alias);
     }
@@ -1727,7 +1718,7 @@ public class DSL {
      * and {@link #withRecursive(Name, Name...)} for strictly
      * recursive CTE.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep withRecursive(Name alias, Name... fieldAliases) {
         return new WithImpl(null, true).with(alias, fieldAliases);
     }
@@ -1753,13 +1744,13 @@ public class DSL {
      * that all column names are produced by a function that receives the CTE's
      * {@link Select} columns as input.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep withRecursive(String alias, Function<? super Field<?>, ? extends String> fieldNameFunction) {
         return new WithImpl(null, true).with(alias, fieldNameFunction);
     }
 
 
-    // [jooq-tools] START [with-recursive]
+
 
     /**
      * Create a <code>WITH</code> clause to supply subsequent
@@ -1774,8 +1765,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep1 withRecursive(String alias, String fieldAlias1) {
         return new WithImpl(null, true).with(alias, fieldAlias1);
     }
@@ -1793,8 +1783,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep2 withRecursive(String alias, String fieldAlias1, String fieldAlias2) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2);
     }
@@ -1812,8 +1801,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep3 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3);
     }
@@ -1831,8 +1819,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep4 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4);
     }
@@ -1850,8 +1837,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep5 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5);
     }
@@ -1869,8 +1855,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep6 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6);
     }
@@ -1888,8 +1873,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep7 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7);
     }
@@ -1907,8 +1891,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep8 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8);
     }
@@ -1926,8 +1909,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep9 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9);
     }
@@ -1945,8 +1927,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep10 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10);
     }
@@ -1964,8 +1945,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep11 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11);
     }
@@ -1983,8 +1963,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep12 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12);
     }
@@ -2002,8 +1981,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep13 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13);
     }
@@ -2021,8 +1999,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep14 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14);
     }
@@ -2040,8 +2017,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep15 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15);
     }
@@ -2059,8 +2035,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep16 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16);
     }
@@ -2078,8 +2053,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep17 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17);
     }
@@ -2097,8 +2071,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep18 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18);
     }
@@ -2116,8 +2089,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep19 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19);
     }
@@ -2135,8 +2107,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep20 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20);
     }
@@ -2154,8 +2125,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep21 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20, String fieldAlias21) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21);
     }
@@ -2173,8 +2143,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep22 withRecursive(String alias, String fieldAlias1, String fieldAlias2, String fieldAlias3, String fieldAlias4, String fieldAlias5, String fieldAlias6, String fieldAlias7, String fieldAlias8, String fieldAlias9, String fieldAlias10, String fieldAlias11, String fieldAlias12, String fieldAlias13, String fieldAlias14, String fieldAlias15, String fieldAlias16, String fieldAlias17, String fieldAlias18, String fieldAlias19, String fieldAlias20, String fieldAlias21, String fieldAlias22) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21, fieldAlias22);
     }
@@ -2192,8 +2161,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep1 withRecursive(Name alias, Name fieldAlias1) {
         return new WithImpl(null, true).with(alias, fieldAlias1);
     }
@@ -2211,8 +2179,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep2 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2);
     }
@@ -2230,8 +2197,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep3 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3);
     }
@@ -2249,8 +2215,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep4 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4);
     }
@@ -2268,8 +2233,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep5 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5);
     }
@@ -2287,8 +2251,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep6 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6);
     }
@@ -2306,8 +2269,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep7 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7);
     }
@@ -2325,8 +2287,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep8 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8);
     }
@@ -2344,8 +2305,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep9 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9);
     }
@@ -2363,8 +2323,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep10 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10);
     }
@@ -2382,8 +2341,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep11 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11);
     }
@@ -2401,8 +2359,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep12 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12);
     }
@@ -2420,8 +2377,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep13 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13);
     }
@@ -2439,8 +2395,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep14 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14);
     }
@@ -2458,8 +2413,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep15 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15);
     }
@@ -2477,8 +2431,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep16 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16);
     }
@@ -2496,8 +2449,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep17 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17);
     }
@@ -2515,8 +2467,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep18 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18);
     }
@@ -2534,8 +2485,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep19 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19);
     }
@@ -2553,8 +2503,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep20 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20);
     }
@@ -2572,8 +2521,7 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep21 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20, Name fieldAlias21) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21);
     }
@@ -2591,13 +2539,12 @@ public class DSL {
      * and {@link #withRecursive(String, String...)} for strictly
      * recursive CTE.
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithAsStep22 withRecursive(Name alias, Name fieldAlias1, Name fieldAlias2, Name fieldAlias3, Name fieldAlias4, Name fieldAlias5, Name fieldAlias6, Name fieldAlias7, Name fieldAlias8, Name fieldAlias9, Name fieldAlias10, Name fieldAlias11, Name fieldAlias12, Name fieldAlias13, Name fieldAlias14, Name fieldAlias15, Name fieldAlias16, Name fieldAlias17, Name fieldAlias18, Name fieldAlias19, Name fieldAlias20, Name fieldAlias21, Name fieldAlias22) {
         return new WithImpl(null, true).with(alias, fieldAlias1, fieldAlias2, fieldAlias3, fieldAlias4, fieldAlias5, fieldAlias6, fieldAlias7, fieldAlias8, fieldAlias9, fieldAlias10, fieldAlias11, fieldAlias12, fieldAlias13, fieldAlias14, fieldAlias15, fieldAlias16, fieldAlias17, fieldAlias18, fieldAlias19, fieldAlias20, fieldAlias21, fieldAlias22);
     }
 
-// [jooq-tools] END [with-recursive]
+
 
     /**
      * Create a <code>WITH</code> clause to supply subsequent
@@ -2623,7 +2570,7 @@ public class DSL {
      * Note that the {@link SQLDialect#H2} database only supports single-table,
      * <code>RECURSIVE</code> common table expression lists.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WithStep withRecursive(CommonTableExpression<?>... tables) {
         return new WithImpl(null, true).with(tables);
     }
@@ -2697,6 +2644,7 @@ public class DSL {
      * @see SQL
      */
     @Support
+    @PlainSQL
     public static <R extends Record> SelectWhereStep<R> selectFrom(SQL sql) {
         return dsl().selectFrom(sql);
     }
@@ -2727,6 +2675,7 @@ public class DSL {
      * @see SQL
      */
     @Support
+    @PlainSQL
     public static <R extends Record> SelectWhereStep<R> selectFrom(String sql) {
         return dsl().selectFrom(sql);
     }
@@ -2757,6 +2706,7 @@ public class DSL {
      * @see SQL
      */
     @Support
+    @PlainSQL
     public static <R extends Record> SelectWhereStep<R> selectFrom(String sql, Object... bindings) {
         return dsl().selectFrom(sql, bindings);
     }
@@ -2787,6 +2737,7 @@ public class DSL {
      * @see SQL
      */
     @Support
+    @PlainSQL
     public static <R extends Record> SelectWhereStep<R> selectFrom(String sql, QueryPart... parts) {
         return dsl().selectFrom(sql, parts);
     }
@@ -2864,14 +2815,14 @@ public class DSL {
      * using plain SQL</li>
      * </ul>
      *
-     * @see DSLContext#select(SelectField...)
+     * @see DSLContext#select(SelectFieldOrAsterisk...)
      */
     @Support
     public static SelectSelectStep<Record> select(SelectFieldOrAsterisk... fields) {
         return dsl().select(fields);
     }
 
-// [jooq-tools] START [select]
+
 
     /**
      * Create a new DSL subselect statement.
@@ -2905,7 +2856,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> SelectSelectStep<Record1<T1>> select(SelectField<T1> field1) {
         return (SelectSelectStep) select(new SelectField[] { field1 });
@@ -2943,7 +2893,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> SelectSelectStep<Record2<T1, T2>> select(SelectField<T1> field1, SelectField<T2> field2) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2 });
@@ -2981,7 +2930,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> SelectSelectStep<Record3<T1, T2, T3>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3 });
@@ -3019,7 +2967,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> SelectSelectStep<Record4<T1, T2, T3, T4>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4 });
@@ -3057,7 +3004,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> SelectSelectStep<Record5<T1, T2, T3, T4, T5>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5 });
@@ -3095,7 +3041,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> SelectSelectStep<Record6<T1, T2, T3, T4, T5, T6>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6 });
@@ -3133,7 +3078,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> SelectSelectStep<Record7<T1, T2, T3, T4, T5, T6, T7>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7 });
@@ -3171,7 +3115,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> SelectSelectStep<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8 });
@@ -3209,7 +3152,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> SelectSelectStep<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9 });
@@ -3247,7 +3189,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> SelectSelectStep<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10 });
@@ -3285,7 +3226,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> SelectSelectStep<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11 });
@@ -3323,7 +3263,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> SelectSelectStep<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12 });
@@ -3361,7 +3300,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> SelectSelectStep<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13 });
@@ -3399,7 +3337,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> SelectSelectStep<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14 });
@@ -3437,7 +3374,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> SelectSelectStep<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15 });
@@ -3475,7 +3411,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> SelectSelectStep<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16 });
@@ -3513,7 +3448,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> SelectSelectStep<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17 });
@@ -3551,7 +3485,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> SelectSelectStep<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18 });
@@ -3589,7 +3522,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> SelectSelectStep<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19 });
@@ -3627,7 +3559,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> SelectSelectStep<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20 });
@@ -3665,7 +3596,6 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> SelectSelectStep<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20, SelectField<T21> field21) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21 });
@@ -3703,13 +3633,12 @@ public class DSL {
      * @see DSLContext#select(SelectFieldOrAsterisk...)
      * @see #select(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> SelectSelectStep<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> select(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20, SelectField<T21> field21, SelectField<T22> field22) {
         return (SelectSelectStep) select(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
     }
 
-// [jooq-tools] END [select]
+
 
     /**
      * Create a new DSL subselect statement.
@@ -3784,14 +3713,14 @@ public class DSL {
      * using plain SQL</li>
      * </ul>
      *
-     * @see DSLContext#selectDistinct(SelectField...)
+     * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      */
     @Support
     public static SelectSelectStep<Record> selectDistinct(SelectFieldOrAsterisk... fields) {
         return dsl().selectDistinct(fields);
     }
 
-// [jooq-tools] START [selectDistinct]
+
 
     /**
      * Create a new DSL subselect statement.
@@ -3825,7 +3754,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> SelectSelectStep<Record1<T1>> selectDistinct(SelectField<T1> field1) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1 });
@@ -3863,7 +3791,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> SelectSelectStep<Record2<T1, T2>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2 });
@@ -3901,7 +3828,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> SelectSelectStep<Record3<T1, T2, T3>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3 });
@@ -3939,7 +3865,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> SelectSelectStep<Record4<T1, T2, T3, T4>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4 });
@@ -3977,7 +3902,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> SelectSelectStep<Record5<T1, T2, T3, T4, T5>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5 });
@@ -4015,7 +3939,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> SelectSelectStep<Record6<T1, T2, T3, T4, T5, T6>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6 });
@@ -4053,7 +3976,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> SelectSelectStep<Record7<T1, T2, T3, T4, T5, T6, T7>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7 });
@@ -4091,7 +4013,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> SelectSelectStep<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8 });
@@ -4129,7 +4050,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> SelectSelectStep<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9 });
@@ -4167,7 +4087,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> SelectSelectStep<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10 });
@@ -4205,7 +4124,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> SelectSelectStep<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11 });
@@ -4243,7 +4161,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> SelectSelectStep<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12 });
@@ -4281,7 +4198,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> SelectSelectStep<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13 });
@@ -4319,7 +4235,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> SelectSelectStep<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14 });
@@ -4357,7 +4272,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> SelectSelectStep<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15 });
@@ -4395,7 +4309,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> SelectSelectStep<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16 });
@@ -4433,7 +4346,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> SelectSelectStep<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17 });
@@ -4471,7 +4383,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> SelectSelectStep<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18 });
@@ -4509,7 +4420,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> SelectSelectStep<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19 });
@@ -4547,7 +4457,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> SelectSelectStep<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20 });
@@ -4585,7 +4494,6 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> SelectSelectStep<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20, SelectField<T21> field21) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21 });
@@ -4623,13 +4531,12 @@ public class DSL {
      * @see DSLContext#selectDistinct(SelectFieldOrAsterisk...)
      * @see #selectDistinct(SelectFieldOrAsterisk...)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> SelectSelectStep<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> selectDistinct(SelectField<T1> field1, SelectField<T2> field2, SelectField<T3> field3, SelectField<T4> field4, SelectField<T5> field5, SelectField<T6> field6, SelectField<T7> field7, SelectField<T8> field8, SelectField<T9> field9, SelectField<T10> field10, SelectField<T11> field11, SelectField<T12> field12, SelectField<T13> field13, SelectField<T14> field14, SelectField<T15> field15, SelectField<T16> field16, SelectField<T17> field17, SelectField<T18> field18, SelectField<T19> field19, SelectField<T20> field20, SelectField<T21> field21, SelectField<T22> field22) {
         return (SelectSelectStep) selectDistinct(new SelectField[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
     }
 
-// [jooq-tools] END [selectDistinct]
+
 
     /**
      * Create a new DSL subselect statement for a constant <code>0</code>
@@ -4762,7 +4669,7 @@ public class DSL {
         return dsl().insertInto(into);
     }
 
-    // [jooq-tools] START [insert]
+
 
     /**
      * Create a new DSL insert statement.
@@ -4786,7 +4693,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1> InsertValuesStep1<R, T1> insertInto(Table<R> into, Field<T1> field1) {
         return (InsertValuesStep1) insertInto(into, new Field[] { field1 });
@@ -4814,7 +4720,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2> InsertValuesStep2<R, T1, T2> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2) {
         return (InsertValuesStep2) insertInto(into, new Field[] { field1, field2 });
@@ -4842,7 +4747,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3> InsertValuesStep3<R, T1, T2, T3> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3) {
         return (InsertValuesStep3) insertInto(into, new Field[] { field1, field2, field3 });
@@ -4870,7 +4774,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4> InsertValuesStep4<R, T1, T2, T3, T4> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
         return (InsertValuesStep4) insertInto(into, new Field[] { field1, field2, field3, field4 });
@@ -4898,7 +4801,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5> InsertValuesStep5<R, T1, T2, T3, T4, T5> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
         return (InsertValuesStep5) insertInto(into, new Field[] { field1, field2, field3, field4, field5 });
@@ -4926,7 +4828,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6> InsertValuesStep6<R, T1, T2, T3, T4, T5, T6> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
         return (InsertValuesStep6) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6 });
@@ -4954,7 +4855,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7> InsertValuesStep7<R, T1, T2, T3, T4, T5, T6, T7> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
         return (InsertValuesStep7) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7 });
@@ -4982,7 +4882,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8> InsertValuesStep8<R, T1, T2, T3, T4, T5, T6, T7, T8> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
         return (InsertValuesStep8) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8 });
@@ -5010,7 +4909,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9> InsertValuesStep9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
         return (InsertValuesStep9) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9 });
@@ -5038,7 +4936,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> InsertValuesStep10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
         return (InsertValuesStep10) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10 });
@@ -5066,7 +4963,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> InsertValuesStep11<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
         return (InsertValuesStep11) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11 });
@@ -5094,7 +4990,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> InsertValuesStep12<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
         return (InsertValuesStep12) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12 });
@@ -5122,7 +5017,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> InsertValuesStep13<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
         return (InsertValuesStep13) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13 });
@@ -5150,7 +5044,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> InsertValuesStep14<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
         return (InsertValuesStep14) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14 });
@@ -5178,7 +5071,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> InsertValuesStep15<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
         return (InsertValuesStep15) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15 });
@@ -5206,7 +5098,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> InsertValuesStep16<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
         return (InsertValuesStep16) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16 });
@@ -5234,7 +5125,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> InsertValuesStep17<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
         return (InsertValuesStep17) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17 });
@@ -5262,7 +5152,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> InsertValuesStep18<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
         return (InsertValuesStep18) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18 });
@@ -5290,7 +5179,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> InsertValuesStep19<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
         return (InsertValuesStep19) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19 });
@@ -5318,7 +5206,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> InsertValuesStep20<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
         return (InsertValuesStep20) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20 });
@@ -5346,7 +5233,6 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> InsertValuesStep21<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
         return (InsertValuesStep21) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21 });
@@ -5374,13 +5260,12 @@ public class DSL {
      *
      * @see DSLContext#insertInto(Table, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field, Field)
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> InsertValuesStep22<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> insertInto(Table<R> into, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
         return (InsertValuesStep22) insertInto(into, new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
     }
 
-// [jooq-tools] END [insert]
+
 
     /**
      * Create a new DSL insert statement.
@@ -5549,12 +5434,12 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table)
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record> MergeUsingStep<R> mergeInto(Table<R> table) {
         return dsl().mergeInto(table);
     }
 
-    // [jooq-tools] START [merge]
+
 
     /**
      * Create a new DSL UPSERT statement ({@link SQLDialect#H2}
@@ -5562,8 +5447,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1> MergeKeyStep1<R, T1> mergeInto(Table<R> table, Field<T1> field1) {
         return using(new DefaultConfiguration()).mergeInto(table, field1);
     }
@@ -5574,8 +5458,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2> MergeKeyStep2<R, T1, T2> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2);
     }
@@ -5586,8 +5469,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3> MergeKeyStep3<R, T1, T2, T3> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3);
     }
@@ -5598,8 +5480,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4> MergeKeyStep4<R, T1, T2, T3, T4> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4);
     }
@@ -5610,8 +5491,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5> MergeKeyStep5<R, T1, T2, T3, T4, T5> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5);
     }
@@ -5622,8 +5502,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6> MergeKeyStep6<R, T1, T2, T3, T4, T5, T6> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6);
     }
@@ -5634,8 +5513,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7> MergeKeyStep7<R, T1, T2, T3, T4, T5, T6, T7> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7);
     }
@@ -5646,8 +5524,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8> MergeKeyStep8<R, T1, T2, T3, T4, T5, T6, T7, T8> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8);
     }
@@ -5658,8 +5535,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9> MergeKeyStep9<R, T1, T2, T3, T4, T5, T6, T7, T8, T9> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9);
     }
@@ -5670,8 +5546,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> MergeKeyStep10<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10);
     }
@@ -5682,8 +5557,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> MergeKeyStep11<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11);
     }
@@ -5694,8 +5568,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> MergeKeyStep12<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12);
     }
@@ -5706,8 +5579,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> MergeKeyStep13<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13);
     }
@@ -5718,8 +5590,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> MergeKeyStep14<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14);
     }
@@ -5730,8 +5601,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> MergeKeyStep15<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15);
     }
@@ -5742,8 +5612,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> MergeKeyStep16<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16);
     }
@@ -5754,8 +5623,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> MergeKeyStep17<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17);
     }
@@ -5766,8 +5634,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> MergeKeyStep18<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18);
     }
@@ -5778,8 +5645,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> MergeKeyStep19<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19);
     }
@@ -5790,8 +5656,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> MergeKeyStep20<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20);
     }
@@ -5802,8 +5667,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> MergeKeyStep21<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21);
     }
@@ -5814,13 +5678,12 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support({ CUBRID, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> MergeKeyStep22<R, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> mergeInto(Table<R> table, Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
         return using(new DefaultConfiguration()).mergeInto(table, field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22);
     }
 
-// [jooq-tools] END [merge]
+
 
     /**
      * Create a new DSL merge statement (H2-specific syntax).
@@ -5848,7 +5711,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Field...)
      */
-    @Support({ CUBRID, H2, HSQLDB })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record> MergeKeyStepN<R> mergeInto(Table<R> table, Field<?>... fields) {
         return dsl().mergeInto(table, fields);
     }
@@ -5862,7 +5725,7 @@ public class DSL {
      *
      * @see DSLContext#mergeInto(Table, Collection)
      */
-    @Support({ CUBRID, H2, HSQLDB })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record> MergeKeyStepN<R> mergeInto(Table<R> table, Collection<? extends Field<?>> fields) {
         return dsl().mergeInto(table, fields);
     }
@@ -5989,7 +5852,7 @@ public class DSL {
      *
      * @see DSLContext#commentOnColumn(Name)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static CommentOnIsStep commentOnColumn(Name columnName) {
         return dsl().commentOnColumn(columnName);
     }
@@ -5999,7 +5862,7 @@ public class DSL {
      *
      * @see DSLContext#commentOnColumn(Field)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static CommentOnIsStep commentOnColumn(Field<?> field) {
         return dsl().commentOnColumn(field);
     }
@@ -6076,12 +5939,11 @@ public class DSL {
         return constraint().foreignKey(fields);
     }
 
-    // [jooq-tools] START [foreignKey]
+
 
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> ConstraintForeignKeyReferencesStep1<T1> foreignKey(Field<T1> field1) {
         return constraint().foreignKey(field1);
@@ -6090,7 +5952,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> ConstraintForeignKeyReferencesStep2<T1, T2> foreignKey(Field<T1> field1, Field<T2> field2) {
         return constraint().foreignKey(field1, field2);
@@ -6099,7 +5960,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> ConstraintForeignKeyReferencesStep3<T1, T2, T3> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3) {
         return constraint().foreignKey(field1, field2, field3);
@@ -6108,7 +5968,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> ConstraintForeignKeyReferencesStep4<T1, T2, T3, T4> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
         return constraint().foreignKey(field1, field2, field3, field4);
@@ -6117,7 +5976,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> ConstraintForeignKeyReferencesStep5<T1, T2, T3, T4, T5> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
         return constraint().foreignKey(field1, field2, field3, field4, field5);
@@ -6126,7 +5984,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> ConstraintForeignKeyReferencesStep6<T1, T2, T3, T4, T5, T6> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6);
@@ -6135,7 +5992,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> ConstraintForeignKeyReferencesStep7<T1, T2, T3, T4, T5, T6, T7> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7);
@@ -6144,7 +6000,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> ConstraintForeignKeyReferencesStep8<T1, T2, T3, T4, T5, T6, T7, T8> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8);
@@ -6153,7 +6008,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> ConstraintForeignKeyReferencesStep9<T1, T2, T3, T4, T5, T6, T7, T8, T9> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9);
@@ -6162,7 +6016,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> ConstraintForeignKeyReferencesStep10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10);
@@ -6171,7 +6024,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> ConstraintForeignKeyReferencesStep11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11);
@@ -6180,7 +6032,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> ConstraintForeignKeyReferencesStep12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12);
@@ -6189,7 +6040,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> ConstraintForeignKeyReferencesStep13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13);
@@ -6198,7 +6048,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> ConstraintForeignKeyReferencesStep14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14);
@@ -6207,7 +6056,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> ConstraintForeignKeyReferencesStep15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15);
@@ -6216,7 +6064,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> ConstraintForeignKeyReferencesStep16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16);
@@ -6225,7 +6072,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> ConstraintForeignKeyReferencesStep17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17);
@@ -6234,7 +6080,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> ConstraintForeignKeyReferencesStep18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18);
@@ -6243,7 +6088,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> ConstraintForeignKeyReferencesStep19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19);
@@ -6252,7 +6096,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> ConstraintForeignKeyReferencesStep20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20);
@@ -6261,7 +6104,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> ConstraintForeignKeyReferencesStep21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21);
@@ -6270,7 +6112,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> ConstraintForeignKeyReferencesStep22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> foreignKey(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22);
@@ -6279,7 +6120,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep1<?> foreignKey(Name field1) {
         return constraint().foreignKey(field1);
@@ -6288,7 +6128,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep2<?, ?> foreignKey(Name field1, Name field2) {
         return constraint().foreignKey(field1, field2);
@@ -6297,7 +6136,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep3<?, ?, ?> foreignKey(Name field1, Name field2, Name field3) {
         return constraint().foreignKey(field1, field2, field3);
@@ -6306,7 +6144,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep4<?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4) {
         return constraint().foreignKey(field1, field2, field3, field4);
@@ -6315,7 +6152,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep5<?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5) {
         return constraint().foreignKey(field1, field2, field3, field4, field5);
@@ -6324,7 +6160,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep6<?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6);
@@ -6333,7 +6168,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep7<?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7);
@@ -6342,7 +6176,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep8<?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8);
@@ -6351,7 +6184,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep9<?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9);
@@ -6360,7 +6192,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep10<?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10);
@@ -6369,7 +6200,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep11<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11);
@@ -6378,7 +6208,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep12<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12);
@@ -6387,7 +6216,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep13<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13);
@@ -6396,7 +6224,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep14<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14);
@@ -6405,7 +6232,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep15<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15);
@@ -6414,7 +6240,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep16<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16);
@@ -6423,7 +6248,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep17<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17);
@@ -6432,7 +6256,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep18<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17, Name field18) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18);
@@ -6441,7 +6264,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep19<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17, Name field18, Name field19) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19);
@@ -6450,7 +6272,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep20<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17, Name field18, Name field19, Name field20) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20);
@@ -6459,7 +6280,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep21<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17, Name field18, Name field19, Name field20, Name field21) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21);
@@ -6468,7 +6288,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep22<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(Name field1, Name field2, Name field3, Name field4, Name field5, Name field6, Name field7, Name field8, Name field9, Name field10, Name field11, Name field12, Name field13, Name field14, Name field15, Name field16, Name field17, Name field18, Name field19, Name field20, Name field21, Name field22) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22);
@@ -6477,7 +6296,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep1<?> foreignKey(String field1) {
         return constraint().foreignKey(field1);
@@ -6486,7 +6304,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep2<?, ?> foreignKey(String field1, String field2) {
         return constraint().foreignKey(field1, field2);
@@ -6495,7 +6312,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep3<?, ?, ?> foreignKey(String field1, String field2, String field3) {
         return constraint().foreignKey(field1, field2, field3);
@@ -6504,7 +6320,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep4<?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4) {
         return constraint().foreignKey(field1, field2, field3, field4);
@@ -6513,7 +6328,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep5<?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5) {
         return constraint().foreignKey(field1, field2, field3, field4, field5);
@@ -6522,7 +6336,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep6<?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6);
@@ -6531,7 +6344,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep7<?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7);
@@ -6540,7 +6352,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep8<?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8);
@@ -6549,7 +6360,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep9<?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9);
@@ -6558,7 +6368,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep10<?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10);
@@ -6567,7 +6376,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep11<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11);
@@ -6576,7 +6384,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep12<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12);
@@ -6585,7 +6392,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep13<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13);
@@ -6594,7 +6400,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep14<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14);
@@ -6603,7 +6408,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep15<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15);
@@ -6612,7 +6416,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep16<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16);
@@ -6621,7 +6424,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep17<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17);
@@ -6630,7 +6432,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep18<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17, String field18) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18);
@@ -6639,7 +6440,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep19<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17, String field18, String field19) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19);
@@ -6648,7 +6448,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep20<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17, String field18, String field19, String field20) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20);
@@ -6657,7 +6456,6 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep21<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17, String field18, String field19, String field20, String field21) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21);
@@ -6666,13 +6464,12 @@ public class DSL {
     /**
      * Add an unnamed (system named) <code>FOREIGN KEY</code> clause to the <code>CONSTRAINT</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static ConstraintForeignKeyReferencesStep22<?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?> foreignKey(String field1, String field2, String field3, String field4, String field5, String field6, String field7, String field8, String field9, String field10, String field11, String field12, String field13, String field14, String field15, String field16, String field17, String field18, String field19, String field20, String field21, String field22) {
         return constraint().foreignKey(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22);
     }
 
-// [jooq-tools] END [foreignKey]
+
 
     /**
      * Create an unnamed (system named) <code>UNIQUE</code> constraint.
@@ -6716,7 +6513,7 @@ public class DSL {
      * @see DSL#catalog(Name)
      */
     @Support({ MARIADB, MYSQL })
-    public static Query setCatalog(String catalog) {
+    public static RowCountQuery setCatalog(String catalog) {
         return dsl().setCatalog(catalog);
     }
 
@@ -6726,7 +6523,7 @@ public class DSL {
      * @see DSL#catalog(Name)
      */
     @Support({ MARIADB, MYSQL })
-    public static Query setCatalog(Name catalog) {
+    public static RowCountQuery setCatalog(Name catalog) {
         return dsl().setCatalog(catalog);
     }
 
@@ -6734,7 +6531,7 @@ public class DSL {
      * Set the current catalog to a new value.
      */
     @Support({ MARIADB, MYSQL })
-    public static Query setCatalog(Catalog catalog) {
+    public static RowCountQuery setCatalog(Catalog catalog) {
         return dsl().setCatalog(catalog);
     }
 
@@ -6742,9 +6539,10 @@ public class DSL {
      * Set the current schema to a new value.
      *
      * @see DSL#schema(Name)
+     * @see DSLContext#setSchema(String)
      */
     @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
-    public static Query setSchema(String schema) {
+    public static RowCountQuery setSchema(String schema) {
         return dsl().setSchema(schema);
     }
 
@@ -6752,17 +6550,20 @@ public class DSL {
      * Set the current schema to a new value.
      *
      * @see DSL#schema(Name)
+     * @see DSLContext#setSchema(Name)
      */
     @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
-    public static Query setSchema(Name schema) {
+    public static RowCountQuery setSchema(Name schema) {
         return dsl().setSchema(schema);
     }
 
     /**
      * Set the current schema to a new value.
+     *
+     * @see DSLContext#setSchema(Schema)
      */
     @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
-    public static Query setSchema(Schema schema) {
+    public static RowCountQuery setSchema(Schema schema) {
         return dsl().setSchema(schema);
     }
 
@@ -6775,7 +6576,7 @@ public class DSL {
      *
      * @see DSLContext#createSchema(String)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static CreateSchemaFinalStep createSchema(String schema) {
         return dsl().createSchema(schema);
     }
@@ -6785,9 +6586,9 @@ public class DSL {
      *
      * @see DSLContext#createSchema(Name)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
-    public static CreateSchemaFinalStep createSchema(Name table) {
-        return dsl().createSchema(table);
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static CreateSchemaFinalStep createSchema(Name schema) {
+        return dsl().createSchema(schema);
     }
 
     /**
@@ -6795,7 +6596,7 @@ public class DSL {
      *
      * @see DSLContext#createSchema(Schema)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static CreateSchemaFinalStep createSchema(Schema schema) {
         return dsl().createSchema(schema);
     }
@@ -6805,7 +6606,7 @@ public class DSL {
      *
      * @see DSLContext#createSchemaIfNotExists(String)
      */
-    @Support({ H2, MARIADB, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateSchemaFinalStep createSchemaIfNotExists(String schema) {
         return dsl().createSchemaIfNotExists(schema);
     }
@@ -6815,7 +6616,7 @@ public class DSL {
      *
      * @see DSLContext#createSchemaIfNotExists(Name)
      */
-    @Support({ H2, MARIADB, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateSchemaFinalStep createSchemaIfNotExists(Name table) {
         return dsl().createSchemaIfNotExists(table);
     }
@@ -6825,7 +6626,7 @@ public class DSL {
      *
      * @see DSLContext#createSchemaIfNotExists(Schema)
      */
-    @Support({ H2, MARIADB, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateSchemaFinalStep createSchemaIfNotExists(Schema schema) {
         return dsl().createSchemaIfNotExists(schema);
     }
@@ -6836,8 +6637,8 @@ public class DSL {
      *
      * @see DSLContext#createTable(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTable(String table) {
+    @Support
+    public static CreateTableColumnStep createTable(String table) {
         return dsl().createTable(table);
     }
 
@@ -6846,8 +6647,8 @@ public class DSL {
      *
      * @see DSLContext#createTable(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTable(Name table) {
+    @Support
+    public static CreateTableColumnStep createTable(Name table) {
         return dsl().createTable(table);
     }
 
@@ -6856,8 +6657,8 @@ public class DSL {
      *
      * @see DSLContext#createTable(Table)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTable(Table<?> table) {
+    @Support
+    public static CreateTableColumnStep createTable(Table<?> table) {
         return dsl().createTable(table);
     }
 
@@ -6867,7 +6668,7 @@ public class DSL {
      * @see DSLContext#createTableIfNotExists(String)
      */
     @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTableIfNotExists(String table) {
+    public static CreateTableColumnStep createTableIfNotExists(String table) {
         return dsl().createTableIfNotExists(table);
     }
 
@@ -6877,7 +6678,7 @@ public class DSL {
      * @see DSLContext#createTableIfNotExists(Name)
      */
     @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTableIfNotExists(Name table) {
+    public static CreateTableColumnStep createTableIfNotExists(Name table) {
         return dsl().createTableIfNotExists(table);
     }
 
@@ -6887,38 +6688,68 @@ public class DSL {
      * @see DSLContext#createTableIfNotExists(Table)
      */
     @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    public static CreateTableAsStep<Record> createTableIfNotExists(Table<?> table) {
+    public static CreateTableColumnStep createTableIfNotExists(Table<?> table) {
         return dsl().createTableIfNotExists(table);
     }
 
     /**
-     * Create a new DSL <code>CREATE GLOBAL TEMPORARY TABLE</code> statement.
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
      *
      * @see DSLContext#createTemporaryTable(String)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createTemporaryTable(String table) {
+    public static CreateTableColumnStep createTemporaryTable(String table) {
         return dsl().createTemporaryTable(table);
     }
 
     /**
-     * Create a new DSL <code>CREATE GLOBAL TEMPORARY TABLE</code> statement.
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
      *
      * @see DSLContext#createTemporaryTable(Name)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createTemporaryTable(Name table) {
+    public static CreateTableColumnStep createTemporaryTable(Name table) {
         return dsl().createTemporaryTable(table);
     }
 
     /**
-     * Create a new DSL <code>CREATE GLOBAL TEMPORARY TABLE</code> statement.
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
      *
      * @see DSLContext#createTemporaryTable(Table)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createTemporaryTable(Table<?> table) {
+    public static CreateTableColumnStep createTemporaryTable(Table<?> table) {
         return dsl().createTemporaryTable(table);
+    }
+
+    /**
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
+     *
+     * @see DSLContext#createTemporaryTableIfNotExists(String)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static CreateTableColumnStep createTemporaryTableIfNotExists(String table) {
+        return dsl().createTemporaryTableIfNotExists(table);
+    }
+
+    /**
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
+     *
+     * @see DSLContext#createTemporaryTableIfNotExists(Name)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static CreateTableColumnStep createTemporaryTableIfNotExists(Name table) {
+        return dsl().createTemporaryTableIfNotExists(table);
+    }
+
+    /**
+     * Create a new DSL <code>CREATE TEMPORARY TABLE</code> statement.
+     *
+     * @see DSLContext#createTemporaryTableIfNotExists(Table)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static CreateTableColumnStep createTemporaryTableIfNotExists(Table<?> table) {
+        return dsl().createTemporaryTableIfNotExists(table);
     }
 
     /**
@@ -6927,7 +6758,7 @@ public class DSL {
      * @see DSLContext#createGlobalTemporaryTable(String)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createGlobalTemporaryTable(String table) {
+    public static CreateTableColumnStep createGlobalTemporaryTable(String table) {
         return dsl().createGlobalTemporaryTable(table);
     }
 
@@ -6937,7 +6768,7 @@ public class DSL {
      * @see DSLContext#createGlobalTemporaryTable(Name)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createGlobalTemporaryTable(Name table) {
+    public static CreateTableColumnStep createGlobalTemporaryTable(Name table) {
         return dsl().createGlobalTemporaryTable(table);
     }
 
@@ -6947,7 +6778,7 @@ public class DSL {
      * @see DSLContext#createGlobalTemporaryTable(Table)
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
-    public static CreateTableAsStep<Record> createGlobalTemporaryTable(Table<?> table) {
+    public static CreateTableColumnStep createGlobalTemporaryTable(Table<?> table) {
         return dsl().createGlobalTemporaryTable(table);
     }
 
@@ -7030,7 +6861,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(String, String...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(String view, String... fields) {
         return dsl().createOrReplaceView(view, fields);
     }
@@ -7040,7 +6871,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(Name, Name...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(Name view, Name... fields) {
         return dsl().createOrReplaceView(view, fields);
     }
@@ -7050,7 +6881,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(Table, Field...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(Table<?> view, Field<?>... fields) {
         return dsl().createOrReplaceView(view, fields);
     }
@@ -7065,7 +6896,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(String, String...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(String view, Function<? super Field<?>, ? extends String> fieldNameFunction) {
         return dsl().createOrReplaceView(view, fieldNameFunction);
     }
@@ -7079,7 +6910,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(Name, Name...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(Name view, Function<? super Field<?>, ? extends Name> fieldNameFunction) {
         return dsl().createOrReplaceView(view, fieldNameFunction);
     }
@@ -7093,7 +6924,7 @@ public class DSL {
      *
      * @see DSLContext#createOrReplaceView(Table, Field...)
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES })
     public static CreateViewAsStep createOrReplaceView(Table<?> view, Function<? super Field<?>, ? extends Field<?>> fieldNameFunction) {
         return dsl().createOrReplaceView(view, fieldNameFunction);
     }
@@ -7174,11 +7005,151 @@ public class DSL {
 
 
     /**
+     * Create a new DSL <code>CREATE TYPE</code> statement.
+     *
+     * @see DSLContext#createType(String)
+     */
+    @Support({ H2, POSTGRES })
+    public static CreateTypeStep createType(String type) {
+        return dsl().createType(type);
+    }
+
+    /**
+     * Create a new DSL <code>CREATE TYPE</code> statement.
+     *
+     * @see DSLContext#createType(Name)
+     */
+    @Support({ H2, POSTGRES })
+    public static CreateTypeStep createType(Name type) {
+        return dsl().createType(type);
+    }
+
+    /**
+     * Create a new DSL <code>ALTER TYPE</code> statement.
+     *
+     * @see DSLContext#alterType(String)
+     */
+    @Support({ POSTGRES })
+    public static AlterTypeStep alterType(String type) {
+        return dsl().alterType(type);
+    }
+
+    /**
+     * Create a new DSL <code>ALTER TYPE</code> statement.
+     *
+     * @see DSLContext#alterType(Name)
+     */
+    @Support({ POSTGRES })
+    public static AlterTypeStep alterType(Name type) {
+        return dsl().alterType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropType(String)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropType(String type) {
+        return dsl().dropType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropType(Name)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropType(Name type) {
+        return dsl().dropType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropType(String...)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropType(String... type) {
+        return dsl().dropType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropType(Name...)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropType(Name... type) {
+        return dsl().dropType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropType(Collection)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropType(Collection<?> type) {
+        return dsl().dropType(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropTypeIfExists(String)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropTypeIfExists(String type) {
+        return dsl().dropTypeIfExists(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropTypeIfExists(Name)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropTypeIfExists(Name type) {
+        return dsl().dropTypeIfExists(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropTypeIfExists(String...)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropTypeIfExists(String... type) {
+        return dsl().dropTypeIfExists(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropTypeIfExists(Name...)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropTypeIfExists(Name... type) {
+        return dsl().dropTypeIfExists(type);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TYPE</code> statement.
+     *
+     * @see DSL#dropTypeIfExists(Collection)
+     */
+    @Support({ H2, POSTGRES })
+    public static DropTypeStep dropTypeIfExists(Collection<?> type) {
+        return dsl().dropTypeIfExists(type);
+    }
+
+    /**
      * Create a new DSL <code>CREATE INDEX</code> statement.
      *
      * @see DSLContext#createIndex()
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createIndex() {
         return dsl().createIndex();
     }
@@ -7188,7 +7159,7 @@ public class DSL {
      *
      * @see DSLContext#createIndex(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createIndex(String index) {
         return dsl().createIndex(index);
     }
@@ -7198,7 +7169,7 @@ public class DSL {
      *
      * @see DSLContext#createIndex(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createIndex(Name index) {
         return dsl().createIndex(index);
     }
@@ -7208,7 +7179,7 @@ public class DSL {
      *
      * @see DSLContext#createIndex(Index)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createIndex(Index index) {
         return dsl().createIndex(index);
     }
@@ -7218,7 +7189,7 @@ public class DSL {
      *
      * @see DSLContext#createIndexIfNotExists(String)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static CreateIndexStep createIndexIfNotExists(String index) {
         return dsl().createIndexIfNotExists(index);
     }
@@ -7228,7 +7199,7 @@ public class DSL {
      *
      * @see DSLContext#createIndexIfNotExists(Name)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static CreateIndexStep createIndexIfNotExists(Name index) {
         return dsl().createIndexIfNotExists(index);
     }
@@ -7238,7 +7209,7 @@ public class DSL {
      *
      * @see DSLContext#createIndexIfNotExists(Index)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static CreateIndexStep createIndexIfNotExists(Index index) {
         return dsl().createIndexIfNotExists(index);
     }
@@ -7248,7 +7219,7 @@ public class DSL {
      *
      * @see DSLContext#createUniqueIndex()
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createUniqueIndex() {
         return dsl().createUniqueIndex();
     }
@@ -7258,7 +7229,7 @@ public class DSL {
      *
      * @see DSLContext#createUniqueIndex(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createUniqueIndex(String index) {
         return dsl().createUniqueIndex(index);
     }
@@ -7268,7 +7239,7 @@ public class DSL {
      *
      * @see DSLContext#createUniqueIndex(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createUniqueIndex(Name index) {
         return dsl().createUniqueIndex(index);
     }
@@ -7278,7 +7249,7 @@ public class DSL {
      *
      * @see DSLContext#createUniqueIndex(Index)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static CreateIndexStep createUniqueIndex(Index index) {
         return dsl().createUniqueIndex(index);
     }
@@ -7318,8 +7289,8 @@ public class DSL {
      *
      * @see DSLContext#createSequence(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequence(String sequence) {
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequence(String sequence) {
         return dsl().createSequence(sequence);
     }
 
@@ -7328,8 +7299,8 @@ public class DSL {
      *
      * @see DSLContext#createSequence(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequence(Name sequence) {
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequence(Name sequence) {
         return dsl().createSequence(sequence);
     }
 
@@ -7338,8 +7309,8 @@ public class DSL {
      *
      * @see DSLContext#createSequence(Sequence)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequence(Sequence<?> sequence) {
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequence(Sequence<?> sequence) {
         return dsl().createSequence(sequence);
     }
 
@@ -7348,8 +7319,8 @@ public class DSL {
      *
      * @see DSLContext#createSequenceIfNotExists(String)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequenceIfNotExists(String sequence) {
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequenceIfNotExists(String sequence) {
         return dsl().createSequenceIfNotExists(sequence);
     }
 
@@ -7358,8 +7329,8 @@ public class DSL {
      *
      * @see DSLContext#createSequenceIfNotExists(Name)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequenceIfNotExists(Name sequence) {
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequenceIfNotExists(Name sequence) {
         return dsl().createSequenceIfNotExists(sequence);
     }
 
@@ -7368,8 +7339,8 @@ public class DSL {
      *
      * @see DSLContext#createSequenceIfNotExists(Sequence)
      */
-    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
-    public static CreateSequenceFinalStep createSequenceIfNotExists(Sequence<?> sequence) {
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
+    public static CreateSequenceFlagsStep createSequenceIfNotExists(Sequence<?> sequence) {
         return dsl().createSequenceIfNotExists(sequence);
     }
 
@@ -7378,7 +7349,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequence(String)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static AlterSequenceStep<BigInteger> alterSequence(String sequence) {
         return dsl().alterSequence(sequence);
     }
@@ -7388,7 +7359,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequence(Name)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static AlterSequenceStep<BigInteger> alterSequence(Name sequence) {
         return dsl().alterSequence(sequence);
     }
@@ -7398,7 +7369,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequence(Sequence)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> AlterSequenceStep<T> alterSequence(Sequence<T> sequence) {
         return dsl().alterSequence(sequence);
     }
@@ -7408,7 +7379,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequenceIfExists(String)
      */
-    @Support({ POSTGRES })
+    @Support({ MARIADB, POSTGRES })
     public static AlterSequenceStep<BigInteger> alterSequenceIfExists(String sequence) {
         return dsl().alterSequenceIfExists(sequence);
     }
@@ -7418,7 +7389,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequenceIfExists(Name)
      */
-    @Support({ POSTGRES })
+    @Support({ MARIADB, POSTGRES })
     public static AlterSequenceStep<BigInteger> alterSequenceIfExists(Name sequence) {
         return dsl().alterSequenceIfExists(sequence);
     }
@@ -7428,7 +7399,7 @@ public class DSL {
      *
      * @see DSLContext#alterSequenceIfExists(Sequence)
      */
-    @Support({ POSTGRES })
+    @Support({ MARIADB, POSTGRES })
     public static <T extends Number> AlterSequenceStep<T> alterSequenceIfExists(Sequence<T> sequence) {
         return dsl().alterSequenceIfExists(sequence);
     }
@@ -7498,7 +7469,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchema(String)
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     public static AlterSchemaStep alterSchema(String schema) {
         return dsl().alterSchema(schema);
     }
@@ -7508,7 +7479,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchema(Name)
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     public static AlterSchemaStep alterSchema(Name schema) {
         return dsl().alterSchema(schema);
     }
@@ -7518,7 +7489,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchema(Schema)
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     public static AlterSchemaStep alterSchema(Schema schema) {
         return dsl().alterSchema(schema);
     }
@@ -7528,7 +7499,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchemaIfExists(String)
      */
-    @Support({ POSTGRES })
+    @Support({ H2 })
     public static AlterSchemaStep alterSchemaIfExists(String schema) {
         return dsl().alterSchemaIfExists(schema);
     }
@@ -7538,7 +7509,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchemaIfExists(Name)
      */
-    @Support({ POSTGRES })
+    @Support({ H2 })
     public static AlterSchemaStep alterSchemaIfExists(Name schema) {
         return dsl().alterSchemaIfExists(schema);
     }
@@ -7548,7 +7519,7 @@ public class DSL {
      *
      * @see DSLContext#alterSchemaIfExists(Schema)
      */
-    @Support({ POSTGRES })
+    @Support({ H2 })
     public static AlterSchemaStep alterSchemaIfExists(Schema schema) {
         return dsl().alterSchemaIfExists(schema);
     }
@@ -7558,7 +7529,7 @@ public class DSL {
      *
      * @see DSLContext#alterView(String)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
     public static AlterViewStep alterView(String view) {
         return dsl().alterView(view);
     }
@@ -7568,7 +7539,7 @@ public class DSL {
      *
      * @see DSLContext#alterView(Name)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
     public static AlterViewStep alterView(Name view) {
         return dsl().alterView(view);
     }
@@ -7578,7 +7549,7 @@ public class DSL {
      *
      * @see DSLContext#alterView(Table)
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, POSTGRES })
     public static AlterViewStep alterView(Table<?> view) {
         return dsl().alterView(view);
     }
@@ -7618,7 +7589,7 @@ public class DSL {
      *
      * @see DSLContext#alterIndex(String)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AlterIndexOnStep alterIndex(String index) {
         return dsl().alterIndex(index);
     }
@@ -7628,7 +7599,7 @@ public class DSL {
      *
      * @see DSLContext#alterIndex(Name)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AlterIndexOnStep alterIndex(Name index) {
         return dsl().alterIndex(index);
     }
@@ -7638,7 +7609,7 @@ public class DSL {
      *
      * @see DSLContext#alterIndex(Index)
      */
-    @Support({ H2, HSQLDB, POSTGRES })
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AlterIndexOnStep alterIndex(Index index) {
         return dsl().alterIndex(index);
     }
@@ -7678,8 +7649,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchema(String)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchema(String schema){
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchema(String schema) {
         return dsl().dropSchema(schema);
     }
 
@@ -7688,8 +7659,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchema(Name)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchema(Name schema){
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchema(Name schema) {
         return dsl().dropSchema(schema);
     }
 
@@ -7698,8 +7669,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchema(Schema)
      */
-    @Support({ DERBY, H2, HSQLDB, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchema(Schema schema){
+    @Support({ DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchema(Schema schema) {
         return dsl().dropSchema(schema);
     }
 
@@ -7708,8 +7679,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchemaIfExists(String)
      */
-    @Support({ H2, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchemaIfExists(String schema){
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchemaIfExists(String schema) {
         return dsl().dropSchemaIfExists(schema);
     }
 
@@ -7718,8 +7689,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchemaIfExists(Name)
      */
-    @Support({ H2, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchemaIfExists(Name schema){
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchemaIfExists(Name schema) {
         return dsl().dropSchemaIfExists(schema);
     }
 
@@ -7728,8 +7699,8 @@ public class DSL {
      *
      * @see DSLContext#dropSchemaIfExists(Schema)
      */
-    @Support({ H2, MARIADB, POSTGRES })
-    public static DropSchemaStep dropSchemaIfExists(Schema schema){
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static DropSchemaStep dropSchemaIfExists(Schema schema) {
         return dsl().dropSchemaIfExists(schema);
     }
 
@@ -7771,7 +7742,7 @@ public class DSL {
      *
      * @see DSLContext#dropViewIfExists(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropViewFinalStep dropViewIfExists(String view) {
         return dsl().dropViewIfExists(view);
     }
@@ -7784,7 +7755,7 @@ public class DSL {
      *
      * @see DSLContext#dropViewIfExists(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropViewFinalStep dropViewIfExists(Name view) {
         return dsl().dropViewIfExists(view);
     }
@@ -7797,7 +7768,7 @@ public class DSL {
      *
      * @see DSLContext#dropViewIfExists(Table)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropViewFinalStep dropViewIfExists(Table<?> view) {
         return dsl().dropViewIfExists(view);
     }
@@ -7837,7 +7808,7 @@ public class DSL {
      *
      * @see DSLContext#dropTemporaryTable(String)
      */
-    @Support
+    @Support({ MARIADB, MYSQL, POSTGRES })
     public static DropTableStep dropTemporaryTable(String table) {
         return dsl().dropTemporaryTable(table);
     }
@@ -7847,7 +7818,7 @@ public class DSL {
      *
      * @see DSLContext#dropTemporaryTable(Name)
      */
-    @Support
+    @Support({ MARIADB, MYSQL, POSTGRES })
     public static DropTableStep dropTemporaryTable(Name table) {
         return dsl().dropTemporaryTable(table);
     }
@@ -7857,9 +7828,39 @@ public class DSL {
      *
      * @see DSLContext#dropTemporaryTable(Table)
      */
-    @Support
+    @Support({ MARIADB, MYSQL, POSTGRES })
     public static DropTableStep dropTemporaryTable(Table<?> table) {
         return dsl().dropTemporaryTable(table);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TEMPORARY TABLE IF EXISTS</code> statement.
+     *
+     * @see DSLContext#dropTemporaryTableIfExists(String)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static DropTableStep dropTemporaryTableIfExists(String table) {
+        return dsl().dropTemporaryTableIfExists(table);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TEMPORARY TABLE IF EXISTS</code> statement.
+     *
+     * @see DSLContext#dropTemporaryTableIfExists(Name)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static DropTableStep dropTemporaryTableIfExists(Name table) {
+        return dsl().dropTemporaryTableIfExists(table);
+    }
+
+    /**
+     * Create a new DSL <code>DROP TEMPORARY TABLE IF EXISTS</code> statement.
+     *
+     * @see DSLContext#dropTemporaryTableIfExists(Table)
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static DropTableStep dropTemporaryTableIfExists(Table<?> table) {
+        return dsl().dropTemporaryTableIfExists(table);
     }
 
     /**
@@ -7870,7 +7871,7 @@ public class DSL {
      *
      * @see DSLContext#dropTableIfExists(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropTableStep dropTableIfExists(String table) {
         return dsl().dropTableIfExists(table);
     }
@@ -7883,7 +7884,7 @@ public class DSL {
      *
      * @see DSLContext#dropTableIfExists(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropTableStep dropTableIfExists(Name table) {
         return dsl().dropTableIfExists(table);
     }
@@ -7896,7 +7897,7 @@ public class DSL {
      *
      * @see DSLContext#dropTableIfExists(Table)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static DropTableStep dropTableIfExists(Table<?> table) {
         return dsl().dropTableIfExists(table);
     }
@@ -7939,7 +7940,7 @@ public class DSL {
      *
      * @see DSLContext#dropIndexIfExists(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static DropIndexOnStep dropIndexIfExists(String index) {
         return dsl().dropIndexIfExists(index);
     }
@@ -7952,7 +7953,7 @@ public class DSL {
      *
      * @see DSLContext#dropIndexIfExists(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static DropIndexOnStep dropIndexIfExists(Name index) {
         return dsl().dropIndexIfExists(index);
     }
@@ -7965,7 +7966,7 @@ public class DSL {
      *
      * @see DSLContext#dropIndexIfExists(Index)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES, SQLITE })
     public static DropIndexOnStep dropIndexIfExists(Index index) {
         return dsl().dropIndexIfExists(index);
     }
@@ -7975,7 +7976,7 @@ public class DSL {
      *
      * @see DSLContext#dropSequence(String)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequence(String sequence) {
         return dsl().dropSequence(sequence);
     }
@@ -7985,7 +7986,7 @@ public class DSL {
      *
      * @see DSLContext#dropSequence(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequence(Name sequence) {
         return dsl().dropSequence(sequence);
     }
@@ -7995,7 +7996,7 @@ public class DSL {
      *
      * @see DSLContext#dropSequence(Sequence)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequence(Sequence<?> sequence) {
         return dsl().dropSequence(sequence);
     }
@@ -8008,7 +8009,7 @@ public class DSL {
      *
      * @see DSLContext#dropSequenceIfExists(String)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequenceIfExists(String sequence) {
         return dsl().dropSequenceIfExists(sequence);
     }
@@ -8021,7 +8022,7 @@ public class DSL {
      *
      * @see DSLContext#dropSequenceIfExists(Name)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequenceIfExists(Name sequence) {
         return dsl().dropSequenceIfExists(sequence);
     }
@@ -8034,9 +8035,86 @@ public class DSL {
      *
      * @see DSLContext#dropSequenceIfExists(Sequence)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> DropSequenceFinalStep dropSequenceIfExists(Sequence<?> sequence) {
         return dsl().dropSequenceIfExists(sequence);
+    }
+
+    /**
+     * Create a new DSL truncate statement.
+     * <p>
+     * Synonym for {@link #truncateTable(String)}
+     */
+    @Support
+    public static TruncateIdentityStep<Record> truncate(String table) {
+        return truncateTable(table);
+    }
+
+    /**
+     * Create a new DSL truncate statement.
+     * <p>
+     * Synonym for {@link #truncateTable(Name)}
+     */
+    @Support
+    public static TruncateIdentityStep<Record> truncate(Name table) {
+        return truncateTable(table);
+    }
+
+    /**
+     * Create a new DSL truncate statement.
+     * <p>
+     * Synonym for {@link #truncateTable(Table)}
+     */
+    @Support
+    public static <R extends Record> TruncateIdentityStep<R> truncate(Table<R> table) {
+        return truncateTable(table);
+    }
+
+    /**
+     * Create a new DSL truncate statement.
+     * <p>
+     * Unlike {@link Delete} factory methods in the {@link DSLContext} API, this
+     * creates an unattached, and thus not directly renderable or executable
+     * <code>DELETE</code> statement.
+     * <p>
+     * Example:
+     * <p>
+     * <code><pre>
+     * import static org.jooq.impl.DSL.*;
+     *
+     * // [...]
+     *
+     * truncate(table);
+     * </pre></code>
+     * <h3>Simulation of <code>TRUNCATE</code></h3>
+     * <p>
+     * Most dialects implement the <code>TRUNCATE</code> statement. If it is not
+     * supported, it is emulated using an equivalent <code>DELETE</code>
+     * statement. This is particularly true for these dialects:
+     * <ul>
+     * <li> {@link SQLDialect#FIREBIRD}</li>
+     * <li> {@link SQLDialect#INGRES}</li>
+     * <li> {@link SQLDialect#SQLITE}</li>
+     * </ul>
+     * <h3>Vendor-specific extensions of <code>TRUNCATE</code></h3>
+     * <p>
+     * Some statements also support extensions of the <code>TRUNCATE</code>
+     * statement, such as Postgres:
+     * <p>
+     * <code><pre>
+     * truncate(table)
+     *   .restartIdentity()
+     *   .cascade()
+     * </pre></code>
+     * <p>
+     * These vendor-specific extensions are currently not emulated for those
+     * dialects that do not support them natively.
+     *
+     * @see DSLContext#truncate(String)
+     */
+    @Support
+    public static TruncateIdentityStep<Record> truncateTable(String table) {
+        return dsl().truncateTable(table);
     }
 
     /**
@@ -8082,8 +8160,8 @@ public class DSL {
      * @see DSLContext#truncate(Name)
      */
     @Support
-    public static TruncateIdentityStep<Record> truncate(Name table) {
-        return dsl().truncate(table);
+    public static TruncateIdentityStep<Record> truncateTable(Name table) {
+        return dsl().truncateTable(table);
     }
 
     /**
@@ -8129,8 +8207,8 @@ public class DSL {
      * @see DSLContext#truncate(Table)
      */
     @Support
-    public static <R extends Record> TruncateIdentityStep<R> truncate(Table<R> table) {
-        return dsl().truncate(table);
+    public static <R extends Record> TruncateIdentityStep<R> truncateTable(Table<R> table) {
+        return dsl().truncateTable(table);
     }
 
     // -------------------------------------------------------------------------
@@ -8147,10 +8225,11 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record> QuantifiedSelect<R> all(Select<R> select) {
-        return new QuantifiedSelectImpl<R>(Quantifier.ALL, select);
+        return new QuantifiedSelectImpl<>(Quantifier.ALL, select);
     }
 
     /**
@@ -8166,10 +8245,13 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <T> QuantifiedSelect<Record1<T>> all(T... array) {
-        return all(val(array));
+        if (array instanceof Field[])
+            return all((Field<T>[]) array);
+        return new QuantifiedSelectImpl<>(Quantifier.ALL, val(array));
     }
 
     /**
@@ -8185,10 +8267,34 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static <T> QuantifiedSelect<Record1<T>> all(Field<T[]> array) {
-        return new QuantifiedSelectImpl<Record1<T>>(Quantifier.ALL, array);
+        return new QuantifiedSelectImpl<>(Quantifier.ALL, array);
+    }
+
+    /**
+     * Create an <code>ALL</code> quantified select to be used in quantified
+     * comparison predicate expressions.
+     * <p>
+     * This is natively supported by {@link SQLDialect#POSTGRES}. Other dialects
+     * will render a subselect unnesting the array.
+     *
+     * @see Field#equal(QuantifiedSelect)
+     * @see Field#notEqual(QuantifiedSelect)
+     * @see Field#greaterThan(QuantifiedSelect)
+     * @see Field#greaterOrEqual(QuantifiedSelect)
+     * @see Field#lessThan(QuantifiedSelect)
+     * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
+     */
+    @Support
+
+    @SafeVarargs
+
+    public static <T> QuantifiedSelect<Record1<T>> all(Field<T>... fields) {
+        return new QuantifiedSelectImpl<>(Quantifier.ALL, fields);
     }
 
     /**
@@ -8201,10 +8307,11 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <R extends Record> QuantifiedSelect<R> any(Select<R> select) {
-        return new QuantifiedSelectImpl<R>(Quantifier.ANY, select);
+        return new QuantifiedSelectImpl<>(Quantifier.ANY, select);
     }
 
     /**
@@ -8220,10 +8327,13 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <T> QuantifiedSelect<Record1<T>> any(T... array) {
-        return any(val(array));
+        if (array instanceof Field[])
+            return any((Field<T>[]) array);
+        return new QuantifiedSelectImpl<>(Quantifier.ANY, val(array));
     }
 
     /**
@@ -8239,10 +8349,34 @@ public class DSL {
      * @see Field#greaterOrEqual(QuantifiedSelect)
      * @see Field#lessThan(QuantifiedSelect)
      * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static <T> QuantifiedSelect<Record1<T>> any(Field<T[]> array) {
-        return new QuantifiedSelectImpl<Record1<T>>(Quantifier.ANY, array);
+        return new QuantifiedSelectImpl<>(Quantifier.ANY, array);
+    }
+
+    /**
+     * Create an <code>ANY</code> quantified select to be used in quantified
+     * comparison predicate expressions.
+     * <p>
+     * This is natively supported by {@link SQLDialect#POSTGRES}. Other dialects
+     * will render a subselect unnesting the array.
+     *
+     * @see Field#equal(QuantifiedSelect)
+     * @see Field#notEqual(QuantifiedSelect)
+     * @see Field#greaterThan(QuantifiedSelect)
+     * @see Field#greaterOrEqual(QuantifiedSelect)
+     * @see Field#lessThan(QuantifiedSelect)
+     * @see Field#lessOrEqual(QuantifiedSelect)
+     * @see Field#like(QuantifiedSelect)
+     */
+    @Support
+
+    @SafeVarargs
+
+    public static <T> QuantifiedSelect<Record1<T>> any(Field<T>... fields) {
+        return new QuantifiedSelectImpl<>(Quantifier.ANY, fields);
     }
 
     // -------------------------------------------------------------------------
@@ -8436,6 +8570,7 @@ public class DSL {
     /**
      * Create a collation by its unqualified name.
      */
+    @Support({ HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Collation collation(String collation) {
         return collation(name(collation));
     }
@@ -8443,8 +8578,25 @@ public class DSL {
     /**
      * Create a collation by its qualified name.
      */
+    @Support({ HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Collation collation(Name collation) {
         return new CollationImpl(collation);
+    }
+
+    /**
+     * Create a character set by its unqualified name.
+     */
+    @Support({ MARIADB, MYSQL })
+    public static CharacterSet characterSet(String characterSet) {
+        return characterSet(name(characterSet));
+    }
+
+    /**
+     * Create a character set by its qualified name.
+     */
+    @Support({ MARIADB, MYSQL })
+    public static CharacterSet characterSet(Name characterSet) {
+        return new CharacterSetImpl(characterSet);
     }
 
     /**
@@ -8582,8 +8734,9 @@ public class DSL {
      */
     @Support
     public static Table<?> table(Object[] array) {
-        return table(val(array));
+        return unnest0(val(array));
     }
+
 
 
 
@@ -8604,7 +8757,7 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static Table<?> table(Field<?> cursor) {
-        return unnest(cursor);
+        return unnest0(cursor);
     }
 
     /**
@@ -8638,8 +8791,9 @@ public class DSL {
      */
     @Support
     public static Table<?> unnest(Object[] array) {
-        return unnest(val(array));
+        return unnest0(val(array));
     }
+
 
 
 
@@ -8677,6 +8831,10 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static Table<?> unnest(Field<?> cursor) {
+        return unnest0(cursor);
+    }
+
+    private static Table<?> unnest0(Field<?> cursor) {
         if (cursor == null)
             throw new IllegalArgumentException();
 
@@ -8967,9 +9125,9 @@ public class DSL {
      *              WHERE e.department_id = d.department_id);
      * </pre></code>
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ MYSQL, POSTGRES })
     public static <R extends Record> Table<R> lateral(TableLike<R> table) {
-        return new Lateral<R>(table.asTable());
+        return new Lateral<>(table.asTable());
     }
 
     /**
@@ -8997,7 +9155,7 @@ public class DSL {
      * <p>
      * A <code>Keyword</code> is a {@link QueryPart} that renders a SQL keyword
      * according to the settings specified in
-     * {@link Settings#getRenderKeywordStyle()}. It can be embedded in other
+     * {@link Settings#getRenderKeywordCase()}. It can be embedded in other
      * plain SQL <code>QueryParts</code> as shown in this example:
      * <p>
      * <code><pre>
@@ -9008,6 +9166,7 @@ public class DSL {
      * );
      * </pre></code>
      */
+    @Support
     public static Keyword keyword(String keyword) {
         return new KeywordImpl(keyword);
     }
@@ -9032,13 +9191,14 @@ public class DSL {
      * // This unqualified name here
      * name("book");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [book].[title]
      * </pre></code>
      *
      * @param unqualifiedName The SQL identifier's unqualified name
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name name(String unqualifiedName) {
         return new UnqualifiedName(unqualifiedName);
     }
@@ -9059,13 +9219,14 @@ public class DSL {
      * // This qualified name here
      * name("book", "title");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [book].[title]
      * </pre></code>
      *
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name name(String... qualifiedName) {
         if (qualifiedName == null || qualifiedName.length != 1)
             return new QualifiedName(qualifiedName);
@@ -9093,13 +9254,14 @@ public class DSL {
      * // This qualified name here
      * name(quotedName("book"), unquotedName("title"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [book].title
      * </pre></code>
      *
      * @param nameParts The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name name(Name... nameParts) {
         return new QualifiedName(nameParts);
     }
@@ -9120,13 +9282,14 @@ public class DSL {
      * // This qualified name here
      * name("book", "title");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [book].[title]
      * </pre></code>
      *
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name name(Collection<String> qualifiedName) {
         return name(qualifiedName.toArray(Tools.EMPTY_STRING));
     }
@@ -9141,8 +9304,9 @@ public class DSL {
      * @param unqualifiedName The SQL identifier's unqualified name
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name quotedName(String unqualifiedName) {
-        return new UnqualifiedName(unqualifiedName, true);
+        return new UnqualifiedName(unqualifiedName, Quoted.QUOTED);
     }
 
     /**
@@ -9155,8 +9319,9 @@ public class DSL {
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name quotedName(String... qualifiedName) {
-        return new QualifiedName(qualifiedName, true);
+        return new QualifiedName(qualifiedName, Quoted.QUOTED);
     }
 
     /**
@@ -9169,6 +9334,7 @@ public class DSL {
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name quotedName(Collection<String> qualifiedName) {
         return quotedName(qualifiedName.toArray(Tools.EMPTY_STRING));
     }
@@ -9183,8 +9349,9 @@ public class DSL {
      * @param unqualifiedName The SQL identifier's unqualified name
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name unquotedName(String unqualifiedName) {
-        return new UnqualifiedName(unqualifiedName, false);
+        return new UnqualifiedName(unqualifiedName, Quoted.UNQUOTED);
     }
 
     /**
@@ -9197,11 +9364,12 @@ public class DSL {
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name unquotedName(String... qualifiedName) {
         if (qualifiedName == null || qualifiedName.length != 1)
-            return new QualifiedName(qualifiedName, false);
+            return new QualifiedName(qualifiedName, Quoted.UNQUOTED);
         else
-            return new UnqualifiedName(qualifiedName[0], false);
+            return new UnqualifiedName(qualifiedName[0], Quoted.UNQUOTED);
     }
 
     /**
@@ -9214,6 +9382,7 @@ public class DSL {
      * @param qualifiedName The SQL identifier's qualified name parts
      * @return A {@link QueryPart} that will render the SQL identifier
      */
+    @Support
     public static Name unquotedName(Collection<String> qualifiedName) {
         return unquotedName(qualifiedName.toArray(Tools.EMPTY_STRING));
     }
@@ -9226,6 +9395,7 @@ public class DSL {
      * Compose a list of <code>QueryParts</code> into a new
      * <code>QueryPart</code>, with individual parts being comma-separated.
      */
+    @Support
     public static QueryPart list(QueryPart... parts) {
         return list(Arrays.asList(parts));
     }
@@ -9234,8 +9404,9 @@ public class DSL {
      * Compose a list of <code>QueryParts</code> into a new
      * <code>QueryPart</code>, with individual parts being comma-separated.
      */
+    @Support
     public static QueryPart list(Collection<? extends QueryPart> parts) {
-        return new QueryPartList<QueryPart>(parts);
+        return new QueryPartList<>(parts);
     }
 
     // -------------------------------------------------------------------------
@@ -9250,28 +9421,67 @@ public class DSL {
      * still prefer to associate a {@link Field} type with your
      * <code>DEFAULT</code> value. In that case, use
      * {@link #defaultValue(Class)} or {@link #defaultValue(DataType)} instead.
+     * <p>
+     * This is an alias for {@link #default_()}.
+     *
+     * @see #default_()
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<Object> defaultValue() {
-        return defaultValue(Object.class);
+        return default_();
     }
 
     /**
      * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
      * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     * <p>
+     * This is an alias for {@link #default_(Class)}.
+     *
+     * @see #default_(Class)
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <T> Field<T> defaultValue(Class<T> type) {
-        return defaultValue(getDataType(type));
+        return default_(type);
     }
 
     /**
      * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
      * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     * <p>
+     * This is an alias for {@link #default_(DataType)}.
+     *
+     * @see #default_(DataType)
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <T> Field<T> defaultValue(DataType<T> type) {
-        return new SQLField<T>(type, keyword("default"));
+        return default_(type);
+    }
+
+    /**
+     * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
+     * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     * <p>
+     * This is an alias for {@link #default_(Field)}.
+     *
+     * @see #default_(Field)
+     */
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static <T> Field<T> defaultValue(Field<T> field) {
+        return default_(field);
+    }
+
+    /**
+     * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
+     * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     * <p>
+     * While the <code>DEFAULT</code> keyword works with all data types, you may
+     * still prefer to associate a {@link Field} type with your
+     * <code>DEFAULT</code> value. In that case, use
+     * {@link #defaultValue(Class)} or {@link #defaultValue(DataType)} instead.
+     */
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Object> default_() {
+        return default_(Object.class);
     }
 
     /**
@@ -9279,24 +9489,38 @@ public class DSL {
      * <code>UPDATE</code>, or <code>MERGE</code> statements.
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
-    public static <T> Field<T> defaultValue(Field<T> field) {
-        return new SQLField<T>(field.getDataType(), keyword("default"));
+    public static <T> Field<T> default_(Class<T> type) {
+        return default_(getDataType(type));
+    }
+
+    /**
+     * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
+     * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     */
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static <T> Field<T> default_(DataType<T> type) {
+        return new SQLField<>(type, keyword("default"));
+    }
+
+    /**
+     * Create a <code>DEFAULT</code> keyword for use with <code>INSERT</code>,
+     * <code>UPDATE</code>, or <code>MERGE</code> statements.
+     */
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static <T> Field<T> default_(Field<T> field) {
+        return new SQLField<>(field.getDataType(), keyword("default"));
     }
 
     /**
      * Create a qualified schema, given its schema name.
      * <p>
      * This constructs a schema reference given the schema's qualified name.
-     * jOOQ will render the schema name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This schema...
      * schemaByName("MY_SCHEMA");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA]
      * </pre></code>
      *
@@ -9314,16 +9538,12 @@ public class DSL {
      * Create a qualified catalog, given its catalog name.
      * <p>
      * This constructs a catalog reference given the catalog's qualified name.
-     * jOOQ will render the catalog name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This catalog...
      * catalog(name("MY_CATALOG"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_CATALOG]
      * </pre></code>
      */
@@ -9336,16 +9556,12 @@ public class DSL {
      * Create a qualified schema, given its schema name.
      * <p>
      * This constructs a schema reference given the schema's qualified name.
-     * jOOQ will render the schema name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This schema...
      * schema(name("MY_CATALOG", "MY_SCHEMA"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_CATALOG].[MY_SCHEMA]
      * </pre></code>
      */
@@ -9358,16 +9574,12 @@ public class DSL {
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequenceByName("MY_SCHEMA", "MY_SEQUENCE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      *
@@ -9377,7 +9589,7 @@ public class DSL {
      * @deprecated - [#3843] - 3.6.0 - use {@link #sequence(Name)} instead
      */
     @Deprecated
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static Sequence<BigInteger> sequenceByName(String... qualifiedName) {
         return sequenceByName(BigInteger.class, qualifiedName);
     }
@@ -9386,16 +9598,12 @@ public class DSL {
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequenceByName("MY_SCHEMA", "MY_SEQUENCE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      *
@@ -9406,7 +9614,7 @@ public class DSL {
      * @deprecated - [#3843] - 3.6.0 - use {@link #sequence(Name, Class)} instead
      */
     @Deprecated
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> Sequence<T> sequenceByName(Class<T> type, String... qualifiedName) {
         return sequenceByName(getDataType(type), qualifiedName);
     }
@@ -9415,16 +9623,12 @@ public class DSL {
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequenceByName("MY_SCHEMA", "MY_SEQUENCE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      *
@@ -9435,7 +9639,7 @@ public class DSL {
      * @deprecated - [#3843] - 3.6.0 - use {@link #sequence(Name, DataType)} instead
      */
     @Deprecated
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> Sequence<T> sequenceByName(DataType<T> type, String... qualifiedName) {
         if (qualifiedName == null)
             throw new NullPointerException();
@@ -9446,27 +9650,23 @@ public class DSL {
         String name = qualifiedName[qualifiedName.length - 1];
         Schema schema = qualifiedName.length == 2 ? schemaByName(qualifiedName[0]) : null;
 
-        return new SequenceImpl<T>(name, schema, type);
+        return new SequenceImpl<>(name, schema, type);
     }
 
     /**
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequence(name("MY_SCHEMA", "MY_SEQUENCE"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static Sequence<BigInteger> sequence(Name name) {
         return sequence(name, BigInteger.class);
     }
@@ -9475,20 +9675,16 @@ public class DSL {
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequence(name("MY_SCHEMA", "MY_SEQUENCE"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> Sequence<T> sequence(Name name, Class<T> type) {
         return sequence(name, getDataType(type));
     }
@@ -9497,20 +9693,16 @@ public class DSL {
      * Create a qualified sequence, given its sequence name.
      * <p>
      * This constructs a sequence reference given the sequence's qualified name.
-     * jOOQ will render the sequence name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This sequence...
      * sequence(name("MY_SCHEMA", "MY_SEQUENCE"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_SEQUENCE]
      * </pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, POSTGRES })
     public static <T extends Number> Sequence<T> sequence(Name name, DataType<T> type) {
         if (name == null)
             throw new NullPointerException();
@@ -9518,26 +9710,22 @@ public class DSL {
         if (name.getName().length < 1 || name.getName().length > 2)
             throw new IllegalArgumentException("Must provide a qualified name of length 1 or 2 : " + name);
 
-        String n = name.getName()[name.getName().length - 1];
-        Schema s = name.getName().length == 2 ? schema(name(name.getName()[0])) : null;
+        Name n = name.unqualifiedName();
+        Schema s = name.parts().length == 2 ? schema(name.qualifier()) : null;
 
-        return new SequenceImpl<T>(n, s, type);
+        return new SequenceImpl<>(n, s, type, false);
     }
 
     /**
      * Create a qualified table, given its table name.
      * <p>
      * This constructs a table reference given the table's qualified name. jOOQ
-     * will render the table name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This table...
      * tableByName("MY_SCHEMA", "MY_TABLE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE]
      * </pre></code>
      *
@@ -9556,16 +9744,12 @@ public class DSL {
      * Create a qualified table, given its table name.
      * <p>
      * This constructs a table reference given the table's qualified name. jOOQ
-     * will render the table name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This table...
      * tableByName("MY_SCHEMA", "MY_TABLE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE]
      * </pre></code>
      * <p>
@@ -9574,23 +9758,19 @@ public class DSL {
      */
     @Support
     public static Table<Record> table(Name name) {
-        return new TableImpl<Record>(name);
+        return new TableImpl<>(name);
     }
 
     /**
      * Create a qualified table, given its table name.
      * <p>
      * This constructs a table reference given the table's qualified name. jOOQ
-     * will render the table name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This table...
      * tableByName("MY_SCHEMA", "MY_TABLE");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE]
      * </pre></code>
      * <p>
@@ -9599,23 +9779,19 @@ public class DSL {
      */
     @Support
     public static Table<Record> table(Name name, Comment comment) {
-        return new TableImpl<Record>(name, null, null, null, comment);
+        return new TableImpl<>(name, null, null, null, comment);
     }
 
     /**
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * fieldByName("MY_SCHEMA", "MY_TABLE", "MY_FIELD");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9643,16 +9819,12 @@ public class DSL {
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * fieldByName("MY_SCHEMA", "MY_TABLE", "MY_FIELD");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9681,16 +9853,12 @@ public class DSL {
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * fieldByName("MY_SCHEMA", "MY_TABLE", "MY_FIELD");
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9719,16 +9887,12 @@ public class DSL {
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * field(name("MY_SCHEMA", "MY_TABLE", "MY_FIELD"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9750,16 +9914,12 @@ public class DSL {
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * field(name("MY_SCHEMA", "MY_TABLE", "MY_FIELD"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9781,16 +9941,12 @@ public class DSL {
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * field(name("MY_SCHEMA", "MY_TABLE", "MY_FIELD"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9805,23 +9961,19 @@ public class DSL {
      */
     @Support
     public static <T> Field<T> field(Name name, DataType<T> type) {
-        return new QualifiedField<T>(name, type);
+        return new QualifiedField<>(name, type);
     }
 
     /**
      * Create a qualified field, given its (qualified) field name.
      * <p>
      * This constructs a field reference given the field's qualified name. jOOQ
-     * will render the field name according to your
-     * {@link Settings#getRenderNameStyle()} settings. Choose
-     * {@link RenderNameStyle#QUOTED} to prevent syntax errors and/or SQL
-     * injection.
      * <p>
      * Example: <code><pre>
      * // This field...
      * field(name("MY_SCHEMA", "MY_TABLE", "MY_FIELD"));
      *
-     * // ... will render this SQL on SQL Server with RenderNameStyle.QUOTED set
+     * // ... will render this SQL by default, using the SQL Server dialect
      * [MY_SCHEMA].[MY_TABLE].[MY_FIELD]
      * </pre></code>
      * <p>
@@ -9836,7 +9988,7 @@ public class DSL {
      */
     @Support
     public static <T> Field<T> field(Name name, DataType<T> type, Comment comment) {
-        return new QualifiedField<T>(name, type, comment);
+        return new QualifiedField<>(name, type, comment);
     }
 
     /**
@@ -9876,7 +10028,7 @@ public class DSL {
      *
      * @see DSLContext#begin(Statement...)
      */
-    @Support({ FIREBIRD, MARIADB, POSTGRES })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
     public static Block begin(Statement... statements) {
         return begin(Arrays.asList(statements));
     }
@@ -9886,10 +10038,461 @@ public class DSL {
      *
      * @see DSLContext#begin(Collection)
      */
-    @Support({ FIREBIRD, MARIADB, POSTGRES })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES })
     public static Block begin(Collection<? extends Statement> statements) {
         return DSL.using(new DefaultConfiguration()).begin(statements);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -10117,7 +10720,7 @@ public class DSL {
      */
     @Support
     @PlainSQL
-    public static Query query(SQL sql) {
+    public static RowCountQuery query(SQL sql) {
         return dsl().query(sql);
     }
 
@@ -10141,7 +10744,7 @@ public class DSL {
      */
     @Support
     @PlainSQL
-    public static Query query(String sql) {
+    public static RowCountQuery query(String sql) {
         return dsl().query(sql);
     }
 
@@ -10167,7 +10770,7 @@ public class DSL {
      */
     @Support
     @PlainSQL
-    public static Query query(String sql, Object... bindings) {
+    public static RowCountQuery query(String sql, Object... bindings) {
         return dsl().query(sql, bindings);
     }
 
@@ -10181,7 +10784,7 @@ public class DSL {
      * // The following query
      * query("select {0}, {1} from {2}", val(1), inline("test"), name("DUAL"));
      *
-     * // Will render this SQL on an Oracle database with RenderNameStyle.QUOTED:
+     * // Will render this SQL by default, using Oracle SQL dialect
      * select ?, 'test' from "DUAL"
      * </pre></code>
      * <p>
@@ -10201,7 +10804,7 @@ public class DSL {
      */
     @Support
     @PlainSQL
-    public static Query query(String sql, QueryPart... parts) {
+    public static RowCountQuery query(String sql, QueryPart... parts) {
         return dsl().query(sql, parts);
     }
 
@@ -10232,7 +10835,7 @@ public class DSL {
      * Example (Postgres):
      * <p>
      * <code><pre>
-     * String sql = "FETCH ALL IN \"<unnamed cursor 1>\"";</pre></code> Example
+     * String sql = "FETCH ALL IN \"&lt;unnamed cursor 1&gt;\"";</pre></code> Example
      * (SQLite):
      * <p>
      * <code><pre>
@@ -10280,7 +10883,7 @@ public class DSL {
      * Example (Postgres):
      * <p>
      * <code><pre>
-     * String sql = "FETCH ALL IN \"<unnamed cursor 1>\"";</pre></code> Example
+     * String sql = "FETCH ALL IN \"&lt;unnamed cursor 1&gt;\"";</pre></code> Example
      * (SQLite):
      * <p>
      * <code><pre>
@@ -10329,7 +10932,7 @@ public class DSL {
      * Example (Postgres):
      * <p>
      * <code><pre>
-     * String sql = "FETCH ALL IN \"<unnamed cursor 1>\"";</pre></code> Example
+     * String sql = "FETCH ALL IN \"&lt;unnamed cursor 1&gt;\"";</pre></code> Example
      * (SQLite):
      * <p>
      * <code><pre>
@@ -10362,7 +10965,7 @@ public class DSL {
      * // The following query
      * resultQuery("select {0}, {1} from {2}", val(1), inline("test"), name("DUAL"));
      *
-     * // Will render this SQL on an Oracle database with RenderNameStyle.QUOTED:
+     * // Will render this SQL by default, using Oracle SQL dialect
      * select ?, 'test' from "DUAL"
      * </pre></code>
      * <p>
@@ -10579,7 +11182,7 @@ public class DSL {
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES })
     @PlainSQL
     public static <T extends Number> Sequence<T> sequence(String sql, DataType<T> type) {
-        return new SequenceImpl<T>(sql, null, type, true);
+        return new SequenceImpl<>(sql, null, type, true);
     }
 
     /**
@@ -11004,7 +11607,7 @@ public class DSL {
     @Support
     @PlainSQL
     public static <T> Field<T> function(String name, DataType<T> type, Field<?>... arguments) {
-        return new org.jooq.impl.Function<T>(name, type, nullSafe(arguments));
+        return new org.jooq.impl.Function<>(name, type, nullSafe(arguments));
     }
 
     /**
@@ -11030,7 +11633,7 @@ public class DSL {
      */
     @Support
     public static <T> Field<T> function(Name name, DataType<T> type, Field<?>... arguments) {
-        return new org.jooq.impl.Function<T>(name, type, nullSafe(arguments));
+        return new org.jooq.impl.Function<>(name, type, nullSafe(arguments));
     }
 
     /**
@@ -11119,10 +11722,10 @@ public class DSL {
      * <code>Condition</code> types are expected. An example for this are
      * Postgres's various operators, some of which are missing in the jOOQ API.
      * For instance, the "overlap" operator for arrays:
-     * <code><pre>ARRAY[1,4,3] && ARRAY[2,1]</pre></code>
+     * <code><pre>ARRAY[1,4,3] &amp;&amp; ARRAY[2,1]</pre></code>
      * <p>
      * The above Postgres operator can be expressed as such: <code><pre>
-     * condition("{0} && {1}", array1, array2);
+     * condition("{0} &amp;&amp; {1}", array1, array2);
      * </pre></code>
      * <p>
      * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
@@ -11373,6 +11976,26 @@ public class DSL {
     }
 
     /**
+     * Create a unique condition.
+     * <p>
+     * <code>UNIQUE ([query])</code>
+     */
+    @Support
+    public static Condition unique(Select<?> query) {
+        return new UniqueCondition(query, true);
+    }
+
+    /**
+     * Create a not unique condition.
+     * <p>
+     * <code>NOT UNIQUE ([query])</code>
+     */
+    @Support
+    public static Condition notUnique(Select<?> query) {
+        return new UniqueCondition(query, false);
+    }
+
+    /**
      * Invert a condition.
      * <p>
      * This is the same as calling {@link Condition#not()}
@@ -11437,425 +12060,7 @@ public class DSL {
         return field instanceof Field ? (Field<T>) field : field("{0}", field.getDataType(), field);
     }
 
-    // [jooq-tools] START [row-field]
 
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row1)} as a replacement.
-     *
-     * @see #rowField(Row1)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1> Field<Record1<T1>> field(Row1<T1> row) {
-        return new RowField<Row1<T1>, Record1<T1>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row2)} as a replacement.
-     *
-     * @see #rowField(Row2)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2> Field<Record2<T1, T2>> field(Row2<T1, T2> row) {
-        return new RowField<Row2<T1, T2>, Record2<T1, T2>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row3)} as a replacement.
-     *
-     * @see #rowField(Row3)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3> Field<Record3<T1, T2, T3>> field(Row3<T1, T2, T3> row) {
-        return new RowField<Row3<T1, T2, T3>, Record3<T1, T2, T3>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row4)} as a replacement.
-     *
-     * @see #rowField(Row4)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4> Field<Record4<T1, T2, T3, T4>> field(Row4<T1, T2, T3, T4> row) {
-        return new RowField<Row4<T1, T2, T3, T4>, Record4<T1, T2, T3, T4>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row5)} as a replacement.
-     *
-     * @see #rowField(Row5)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5> Field<Record5<T1, T2, T3, T4, T5>> field(Row5<T1, T2, T3, T4, T5> row) {
-        return new RowField<Row5<T1, T2, T3, T4, T5>, Record5<T1, T2, T3, T4, T5>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row6)} as a replacement.
-     *
-     * @see #rowField(Row6)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6> Field<Record6<T1, T2, T3, T4, T5, T6>> field(Row6<T1, T2, T3, T4, T5, T6> row) {
-        return new RowField<Row6<T1, T2, T3, T4, T5, T6>, Record6<T1, T2, T3, T4, T5, T6>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row7)} as a replacement.
-     *
-     * @see #rowField(Row7)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7> Field<Record7<T1, T2, T3, T4, T5, T6, T7>> field(Row7<T1, T2, T3, T4, T5, T6, T7> row) {
-        return new RowField<Row7<T1, T2, T3, T4, T5, T6, T7>, Record7<T1, T2, T3, T4, T5, T6, T7>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row8)} as a replacement.
-     *
-     * @see #rowField(Row8)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8> Field<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> field(Row8<T1, T2, T3, T4, T5, T6, T7, T8> row) {
-        return new RowField<Row8<T1, T2, T3, T4, T5, T6, T7, T8>, Record8<T1, T2, T3, T4, T5, T6, T7, T8>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row9)} as a replacement.
-     *
-     * @see #rowField(Row9)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Field<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> field(Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row) {
-        return new RowField<Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9>, Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row10)} as a replacement.
-     *
-     * @see #rowField(Row10)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Field<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> field(Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row) {
-        return new RowField<Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row11)} as a replacement.
-     *
-     * @see #rowField(Row11)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Field<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> field(Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row) {
-        return new RowField<Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row12)} as a replacement.
-     *
-     * @see #rowField(Row12)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Field<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> field(Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row) {
-        return new RowField<Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row13)} as a replacement.
-     *
-     * @see #rowField(Row13)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Field<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> field(Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row) {
-        return new RowField<Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>, Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row14)} as a replacement.
-     *
-     * @see #rowField(Row14)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Field<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> field(Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row) {
-        return new RowField<Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>, Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row15)} as a replacement.
-     *
-     * @see #rowField(Row15)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Field<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> field(Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row) {
-        return new RowField<Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>, Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row16)} as a replacement.
-     *
-     * @see #rowField(Row16)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Field<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> field(Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row) {
-        return new RowField<Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>, Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row17)} as a replacement.
-     *
-     * @see #rowField(Row17)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Field<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> field(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row) {
-        return new RowField<Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>, Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row18)} as a replacement.
-     *
-     * @see #rowField(Row18)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Field<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> field(Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row) {
-        return new RowField<Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>, Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row19)} as a replacement.
-     *
-     * @see #rowField(Row19)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Field<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> field(Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row) {
-        return new RowField<Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>, Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row20)} as a replacement.
-     *
-     * @see #rowField(Row20)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Field<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> field(Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row) {
-        return new RowField<Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>, Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row21)} as a replacement.
-     *
-     * @see #rowField(Row21)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Field<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> field(Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row) {
-        return new RowField<Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>, Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>>(row);
-    }
-
-    /**
-     * Experimental method removed again.
-     * <p>
-     * Due to a JDK 8 compiler regression, this overload can cause severe performance issues
-     * with any other single-parameter field() overload. This is why this method has now been
-     * removed again from the public API.
-     * <p>
-     * For details, see <a href="https://github.com/jOOQ/jOOQ/issues/5233">https://github.com/jOOQ/jOOQ/issues/5233</a>.
-     * <p>
-     * Use {@link #rowField(Row22)} as a replacement.
-     *
-     * @see #rowField(Row22)
-     */
-    @Generated("This method was generated using jOOQ-tools")
-    @Support
-    private static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Field<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> field(Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row) {
-        return new RowField<Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>, Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>>(row);
-    }
 
     /**
      * EXPERIMENTAL: Turn a row value expression of degree <code>1</code> into a {@code Field}.
@@ -11864,10 +12069,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> Field<Record1<T1>> rowField(Row1<T1> row) {
-        return new RowField<Row1<T1>, Record1<T1>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11877,10 +12081,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> Field<Record2<T1, T2>> rowField(Row2<T1, T2> row) {
-        return new RowField<Row2<T1, T2>, Record2<T1, T2>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11890,10 +12093,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> Field<Record3<T1, T2, T3>> rowField(Row3<T1, T2, T3> row) {
-        return new RowField<Row3<T1, T2, T3>, Record3<T1, T2, T3>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11903,10 +12105,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> Field<Record4<T1, T2, T3, T4>> rowField(Row4<T1, T2, T3, T4> row) {
-        return new RowField<Row4<T1, T2, T3, T4>, Record4<T1, T2, T3, T4>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11916,10 +12117,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> Field<Record5<T1, T2, T3, T4, T5>> rowField(Row5<T1, T2, T3, T4, T5> row) {
-        return new RowField<Row5<T1, T2, T3, T4, T5>, Record5<T1, T2, T3, T4, T5>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11929,10 +12129,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> Field<Record6<T1, T2, T3, T4, T5, T6>> rowField(Row6<T1, T2, T3, T4, T5, T6> row) {
-        return new RowField<Row6<T1, T2, T3, T4, T5, T6>, Record6<T1, T2, T3, T4, T5, T6>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11942,10 +12141,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> Field<Record7<T1, T2, T3, T4, T5, T6, T7>> rowField(Row7<T1, T2, T3, T4, T5, T6, T7> row) {
-        return new RowField<Row7<T1, T2, T3, T4, T5, T6, T7>, Record7<T1, T2, T3, T4, T5, T6, T7>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11955,10 +12153,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> Field<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> rowField(Row8<T1, T2, T3, T4, T5, T6, T7, T8> row) {
-        return new RowField<Row8<T1, T2, T3, T4, T5, T6, T7, T8>, Record8<T1, T2, T3, T4, T5, T6, T7, T8>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11968,10 +12165,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Field<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> rowField(Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row) {
-        return new RowField<Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9>, Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11981,10 +12177,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Field<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> rowField(Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row) {
-        return new RowField<Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -11994,10 +12189,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Field<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> rowField(Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row) {
-        return new RowField<Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>, Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12007,10 +12201,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Field<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> rowField(Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row) {
-        return new RowField<Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>, Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12020,10 +12213,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Field<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> rowField(Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row) {
-        return new RowField<Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>, Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12033,10 +12225,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Field<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> rowField(Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row) {
-        return new RowField<Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>, Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12046,10 +12237,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Field<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> rowField(Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row) {
-        return new RowField<Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>, Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12059,10 +12249,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Field<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> rowField(Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row) {
-        return new RowField<Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>, Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12072,10 +12261,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Field<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> rowField(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row) {
-        return new RowField<Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>, Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12085,10 +12273,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Field<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> rowField(Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row) {
-        return new RowField<Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>, Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12098,10 +12285,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Field<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> rowField(Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row) {
-        return new RowField<Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>, Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12111,10 +12297,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Field<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> rowField(Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row) {
-        return new RowField<Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>, Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12124,10 +12309,9 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Field<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> rowField(Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row) {
-        return new RowField<Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>, Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>>(row);
+        return new RowField<>(row);
     }
 
     /**
@@ -12137,13 +12321,24 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Field<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> rowField(Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row) {
-        return new RowField<Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>, Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>>(row);
+        return new RowField<>(row);
     }
 
-// [jooq-tools] END [row-field]
+
+
+    /**
+     * EXPERIMENTAL: Turn a row value expression of arbitrary degree into a {@code Field}.
+     * <p>
+     * Note: Not all databases support row value expressions, but many row value
+     * expression operations can be emulated on all databases. See relevant row
+     * value expression method Javadocs for details.
+     */
+    @Support
+    public static Field<Record> rowField(RowN row) {
+        return new RowField<>(row);
+    }
 
     /**
      * Transform a subquery into a correlated subquery.
@@ -12209,26 +12404,86 @@ public class DSL {
         return decode().value(value);
     }
 
+    /**
+     * The T-SQL <code>CHOOSE()</code> function.
+     */
     @Support
     public static <T> Field<T> choose(int index, T... values) {
         return choose(val(index), (Field<T>[]) Tools.fields(values).toArray(EMPTY_FIELD));
     }
 
+    /**
+     * The T-SQL <code>CHOOSE()</code> function.
+     */
     @Support
+
     @SafeVarargs
+
     public static <T> Field<T> choose(int index, Field<T>... values) {
         return choose(val(index), values);
     }
 
+    /**
+     * The T-SQL <code>CHOOSE()</code> function.
+     */
     @Support
     public static <T> Field<T> choose(Field<Integer> index, T... values) {
         return choose(index, (Field<T>[]) Tools.fields(values).toArray(EMPTY_FIELD));
     }
 
+    /**
+     * The T-SQL <code>CHOOSE()</code> function.
+     */
     @Support
+
     @SafeVarargs
+
     public static <T> Field<T> choose(Field<Integer> index, Field<T>... values) {
-        return new Choose<T>(index, values);
+        return new Choose<>(index, values);
+    }
+
+    /**
+     * Initialise a {@link Case} statement.
+     *
+     * @see Case
+     */
+    @Support
+    public static Case case_() {
+        return decode();
+    }
+
+    /**
+     * Initialise a {@link Case} statement.
+     * <p>
+     * This API can be used to create expressions of the type <code><pre>
+     * CASE value WHEN 1 THEN 'one'
+     *            WHEN 2 THEN 'two'
+     *            ELSE        'three'
+     * END
+     * </pre></code>
+     *
+     * @see Case
+     */
+    @Support
+    public static <V> CaseValueStep<V> case_(V value) {
+        return decode().value(value);
+    }
+
+    /**
+     * Initialise a {@link Case} statement.
+     * <p>
+     * This API can be used to create expressions of the type <code><pre>
+     * CASE value WHEN 1 THEN 'one'
+     *            WHEN 2 THEN 'two'
+     *            ELSE        'three'
+     * END
+     * </pre></code>
+     *
+     * @see Case
+     */
+    @Support
+    public static <V> CaseValueStep<V> case_(Field<V> value) {
+        return decode().value(value);
     }
 
     /**
@@ -12240,9 +12495,6 @@ public class DSL {
      *      ELSE            'three'
      * END
      * </pre></code>
-     * <p>
-     * Choose is used as a method name to avoid name clashes with Java's
-     * reserved literal "case".
      */
     @Support
     public static <T> CaseConditionStep<T> when(Condition condition, T result) {
@@ -12258,9 +12510,6 @@ public class DSL {
      *      ELSE            'three'
      * END
      * </pre></code>
-     * <p>
-     * Choose is used as a method name to avoid name clashes with Java's
-     * reserved literal "case".
      */
     @Support
     public static <T> CaseConditionStep<T> when(Condition condition, Field<T> result) {
@@ -12276,9 +12525,6 @@ public class DSL {
      *      ELSE            'three'
      * END
      * </pre></code>
-     * <p>
-     * Choose is used as a method name to avoid name clashes with Java's
-     * reserved literal "case".
      */
     @Support
     public static <T> CaseConditionStep<T> when(Condition condition, Select<? extends Record1<T>> result) {
@@ -12366,7 +12612,7 @@ public class DSL {
      */
     @Support
     public static <Z, T> Field<Z> decode(Field<T> value, Field<T> search, Field<Z> result, Field<?>... more) {
-        return new Decode<T, Z>(nullSafe(value), nullSafe(search), nullSafe(result), nullSafe(more));
+        return new Decode<>(nullSafe(value), nullSafe(search), nullSafe(result), nullSafe(more));
     }
 
     /**
@@ -12501,6 +12747,42 @@ public class DSL {
         return nullSafe(field).coerce(as);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /**
      * Cast a value to the type of another field.
      *
@@ -12616,24 +12898,6 @@ public class DSL {
     }
 
     /**
-     * Cast all fields that need casting.
-     *
-     * @param <T> The generic field type
-     * @param type The type to cast to
-     * @param fields The fields to be cast to a uniform type
-     * @return The cast fields
-     */
-    static <T> Field<T>[] castAll(Class<T> type, Field<?>... fields) {
-        Field<?>[] castFields = new Field<?>[fields.length];
-
-        for (int i = 0; i < fields.length; i++) {
-            castFields[i] = fields[i].cast(type);
-        }
-
-        return (Field<T>[]) castFields;
-    }
-
-    /**
      * The <code>COALESCE(value1, value2, ... , value n)</code> function.
      *
      * @see #coalesce(Field, Field...)
@@ -12664,7 +12928,7 @@ public class DSL {
     // Java 8 is stricter than Java 7 with respect to generics and overload
     // resolution (http://stackoverflow.com/q/5361513/521799)
     static <T> Field<T> coalesce0(Field<T> field, Field<?>... fields) {
-        return new Coalesce<T>(nullSafeDataType(field), nullSafe(combine(field, fields)));
+        return new Coalesce<>(nullSafeDataType(field), nullSafe(combine(field, fields)));
     }
 
     /**
@@ -12813,7 +13077,7 @@ public class DSL {
     // Java 8 is stricter than Java 7 with respect to generics and overload
     // resolution (http://stackoverflow.com/q/5361513/521799)
     static <T> Field<T> nvl0(Field<T> value, Field<T> defaultValue) {
-        return new Nvl<T>(nullSafe(value), nullSafe(defaultValue));
+        return new Nvl<>(nullSafe(value), nullSafe(defaultValue));
     }
 
     /**
@@ -12866,7 +13130,7 @@ public class DSL {
     // Java 8 is stricter than Java 7 with respect to generics and overload
     // resolution (http://stackoverflow.com/q/5361513/521799)
     static <Z> Field<Z> nvl20(Field<?> value, Field<Z> valueIfNotNull, Field<Z> valueIfNull) {
-        return new Nvl2<Z>(nullSafe(value), nullSafe(valueIfNotNull), nullSafe(valueIfNull));
+        return new Nvl2<>(nullSafe(value), nullSafe(valueIfNotNull), nullSafe(valueIfNull));
     }
 
     /**
@@ -12917,7 +13181,7 @@ public class DSL {
     // Java 8 is stricter than Java 7 with respect to generics and overload
     // resolution (http://stackoverflow.com/q/5361513/521799)
     static <T> Field<T> nullif0(Field<T> value, Field<T> other) {
-        return new NullIf<T>(nullSafe(value), nullSafe(other));
+        return new NullIf<>(nullSafe(value), nullSafe(other));
     }
 
     /**
@@ -12961,7 +13225,7 @@ public class DSL {
     // Java 8 is stricter than Java 7 with respect to generics and overload
     // resolution (http://stackoverflow.com/q/5361513/521799)
     static <T> Field<T> iif0(Condition condition, Field<T> ifTrue, Field<T> ifFalse) {
-        return new Iif<T>(condition, nullSafe(ifTrue), nullSafe(ifFalse));
+        return new Iif<>(condition, nullSafe(ifTrue), nullSafe(ifFalse));
     }
 
     // -------------------------------------------------------------------------
@@ -13033,6 +13297,30 @@ public class DSL {
     }
 
     /**
+     * Get the <code>trim(field, characters)</code> or
+     * <code>trim(both characters from field)</code> function.
+     *
+     * @see #trim(Field, Field)
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> trim(String value, String characters) {
+        return trim(Tools.field(value), Tools.field(characters));
+    }
+
+    /**
+     * Get the <code>trim(field, characters)</code> or
+     * <code>trim(both characters from field)</code> function.
+     * <p>
+     * This renders the trim function where available:
+     * <code><pre>trim([field])</pre></code> ... or emulates it elsewhere using
+     * rtrim and ltrim: <code><pre>ltrim(rtrim([field]))</pre></code>
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> trim(Field<String> field, Field<String> characters) {
+        return new Trim(nullSafe(field), nullSafe(characters));
+    }
+
+    /**
      * Get the rtrim(field) function.
      *
      * @see #rtrim(Field)
@@ -13054,6 +13342,29 @@ public class DSL {
     }
 
     /**
+     * Get the <code>rtrim(field, characters)</code> or
+     * <code>trim(trailing characters from field)</code> function.
+     *
+     * @see #rtrim(Field, Field)
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> rtrim(String value, String characters) {
+        return rtrim(Tools.field(value), Tools.field(characters));
+    }
+
+    /**
+     * Get the <code>rtrim(field, characters)</code> or
+     * <code>trim(trailing characters from field)</code> function.
+     * <p>
+     * This renders the rtrim function in all dialects:
+     * <code><pre>rtrim([field])</pre></code>
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> rtrim(Field<String> field, Field<String> characters) {
+        return new RTrim(nullSafe(field), nullSafe(characters));
+    }
+
+    /**
      * Get the ltrim(field) function.
      *
      * @see #ltrim(Field)
@@ -13072,6 +13383,29 @@ public class DSL {
     @Support
     public static Field<String> ltrim(Field<String> field) {
         return new LTrim(nullSafe(field));
+    }
+
+    /**
+     * Get the <code>ltrim(field, characters)</code> or
+     * <code>trim(leading characters from field)</code> function.
+     *
+     * @see #ltrim(Field, Field)
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> ltrim(String value, String characters) {
+        return ltrim(Tools.field(value), Tools.field(characters));
+    }
+
+    /**
+     * Get the <code>ltrim(field, characters)</code> or
+     * <code>trim(leading characters from field)</code> function.
+     * <p>
+     * This renders the ltrim function in all dialects:
+     * <code><pre>ltrim([field])</pre></code>
+     */
+    @Support({ DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<String> ltrim(Field<String> field, Field<String> characters) {
+        return new LTrim(nullSafe(field), nullSafe(characters));
     }
 
     /**
@@ -13201,7 +13535,7 @@ public class DSL {
      *
      * @see #translate(Field, Field, Field)
      */
-    @Support({ POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     public static Field<String> translate(Field<String> text, String from, String to) {
         return translate(text, Tools.field(from), Tools.field(to));
     }
@@ -13209,7 +13543,7 @@ public class DSL {
     /**
      * Get the translate(field, from, to) function.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     public static Field<String> translate(Field<String> text, Field<String> from, Field<String> to) {
         return new Translate(text, from, to);
     }
@@ -13315,7 +13649,7 @@ public class DSL {
      * @see #replace(Field, String, String)
      * @see Field#like(Field, char)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static String escape(String value, char escape) {
         String esc = "" + escape;
         return StringUtils.replace(
@@ -13334,7 +13668,7 @@ public class DSL {
      * @see #replace(Field, String, String)
      * @see Field#like(Field, char)
      */
-    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<String> escape(Field<String> field, char escape) {
         Field<String> replace = field;
 
@@ -13397,7 +13731,7 @@ public class DSL {
      *
      * @see #position(Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, String search) {
         return position(Tools.field(in), Tools.field(search));
     }
@@ -13407,7 +13741,7 @@ public class DSL {
      *
      * @see #position(Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, Field<String> search) {
         return position(Tools.field(in), nullSafe(search));
     }
@@ -13417,7 +13751,7 @@ public class DSL {
      *
      * @see #position(Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, String search) {
         return position(nullSafe(in), Tools.field(search));
     }
@@ -13432,7 +13766,7 @@ public class DSL {
      * instr([in], [search]) or
      * charindex([search], [in])</pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, Field<String> search) {
         return new Position(nullSafe(search), nullSafe(in));
     }
@@ -13442,7 +13776,7 @@ public class DSL {
      *
      * @see #position(Field, Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, String search, int startIndex) {
         return position(Tools.field(in), Tools.field(search), Tools.field(startIndex));
     }
@@ -13452,7 +13786,7 @@ public class DSL {
      *
      * @see #position(Field, Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, Field<String> search, int startIndex) {
         return position(Tools.field(in), nullSafe(search), Tools.field(startIndex));
     }
@@ -13462,7 +13796,7 @@ public class DSL {
      *
      * @see #position(Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, String search, int startIndex) {
         return position(nullSafe(in), Tools.field(search), Tools.field(startIndex));
     }
@@ -13477,7 +13811,7 @@ public class DSL {
      * instr([in], [search]) or
      * charindex([search], [in])</pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, Field<String> search, int startIndex) {
         return position(nullSafe(search), nullSafe(in), Tools.field(startIndex));
     }
@@ -13487,7 +13821,7 @@ public class DSL {
      *
      * @see #position(Field, Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, String search, Field<? extends Number> startIndex) {
         return position(Tools.field(in), Tools.field(search), nullSafe(startIndex));
     }
@@ -13497,7 +13831,7 @@ public class DSL {
      *
      * @see #position(Field, Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(String in, Field<String> search, Field<? extends Number> startIndex) {
         return position(Tools.field(in), nullSafe(search), nullSafe(startIndex));
     }
@@ -13507,7 +13841,7 @@ public class DSL {
      *
      * @see #position(Field, Field)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, String search, Field<? extends Number> startIndex) {
         return position(nullSafe(in), Tools.field(search), nullSafe(startIndex));
     }
@@ -13522,7 +13856,7 @@ public class DSL {
      * instr([in], [search]) or
      * charindex([search], [in])</pre></code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<Integer> position(Field<String> in, Field<String> search, Field<? extends Number> startIndex) {
         return new Position(nullSafe(search), nullSafe(in), nullSafe(startIndex));
     }
@@ -13802,7 +14136,7 @@ public class DSL {
      */
     @Support
     public static Field<Integer> charLength(Field<String> field) {
-        return new org.jooq.impl.Function<Integer>(Term.CHAR_LENGTH, SQLDataType.INTEGER, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.CHAR_LENGTH, SQLDataType.INTEGER, nullSafe(field));
     }
 
     /**
@@ -13822,7 +14156,7 @@ public class DSL {
      */
     @Support
     public static Field<Integer> bitLength(Field<String> field) {
-        return new org.jooq.impl.Function<Integer>(Term.BIT_LENGTH, SQLDataType.INTEGER, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.BIT_LENGTH, SQLDataType.INTEGER, nullSafe(field));
     }
 
     /**
@@ -13842,7 +14176,7 @@ public class DSL {
      */
     @Support
     public static Field<Integer> octetLength(Field<String> field) {
-        return new org.jooq.impl.Function<Integer>(Term.OCTET_LENGTH, SQLDataType.INTEGER, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.OCTET_LENGTH, SQLDataType.INTEGER, nullSafe(field));
     }
 
     // ------------------------------------------------------------------------
@@ -13933,7 +14267,7 @@ public class DSL {
      */
     @Support
     public static Field<Date> currentDate() {
-        return new CurrentDate<Date>(SQLDataType.DATE);
+        return new CurrentDate<>(SQLDataType.DATE);
     }
 
     /**
@@ -13944,7 +14278,7 @@ public class DSL {
      */
     @Support
     public static Field<Time> currentTime() {
-        return new CurrentTime<Time>(SQLDataType.TIME);
+        return new CurrentTime<>(SQLDataType.TIME);
     }
 
     /**
@@ -13955,7 +14289,17 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> currentTimestamp() {
-        return new CurrentTimestamp<Timestamp>(SQLDataType.TIMESTAMP);
+        return new CurrentTimestamp<>(SQLDataType.TIMESTAMP);
+    }
+
+    /**
+     * Get the current_timestamp() function returning a SQL standard
+     * {@link SQLDataType#TIMESTAMP} type with the specified fractional
+     * seconds precision.
+     */
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Timestamp> currentTimestamp(Field<Integer> precision) {
+        return new CurrentTimestamp<>(SQLDataType.TIMESTAMP, precision);
     }
 
     /**
@@ -13964,6 +14308,14 @@ public class DSL {
     @Support
     public static Field<Timestamp> now() {
         return currentTimestamp();
+    }
+
+    /**
+     * Synonym for {@link #currentTimestamp(Field)}.
+     */
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Timestamp> now(Field<Integer> precision) {
+        return currentTimestamp(precision);
     }
 
 
@@ -14026,6 +14378,16 @@ public class DSL {
         return currentTimestamp().cast(SQLDataType.OFFSETDATETIME);
     }
 
+    /**
+     * Get the current_timestamp() function.
+     * <p>
+     * This translates into any dialect
+     */
+    @Support
+    public static Field<Instant> currentInstant() {
+        return currentTimestamp().cast(SQLDataType.INSTANT);
+    }
+
 
     /**
      * Get the date difference in number of days.
@@ -14072,7 +14434,7 @@ public class DSL {
      */
     @Support
     public static Field<Integer> dateDiff(Field<Date> date1, Field<Date> date2) {
-        return new DateDiff<Date>(nullSafe(date1), nullSafe(date2));
+        return new DateDiff<>(nullSafe(date1), nullSafe(date2));
     }
 
     /**
@@ -14136,7 +14498,7 @@ public class DSL {
      */
     @Support
     public static Field<Date> dateAdd(Field<Date> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Date>(nullSafe(date), nullSafe(interval), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14200,7 +14562,7 @@ public class DSL {
      */
     @Support
     public static Field<Date> dateSub(Field<Date> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Date>(nullSafe(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14234,7 +14596,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampAdd(Timestamp date, Number interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(Tools.field(date), Tools.field(interval), datePart);
+        return new DateAdd<>(Tools.field(date), Tools.field(interval), datePart);
     }
 
     /**
@@ -14244,7 +14606,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampAdd(Timestamp date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(Tools.field(date), nullSafe(interval), datePart);
+        return new DateAdd<>(Tools.field(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14254,7 +14616,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampAdd(Field<Timestamp> date, Number interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(nullSafe(date), Tools.field(interval), datePart);
+        return new DateAdd<>(nullSafe(date), Tools.field(interval), datePart);
     }
 
     /**
@@ -14264,7 +14626,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampAdd(Field<Timestamp> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(nullSafe(date), nullSafe(interval), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14298,7 +14660,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampSub(Timestamp date, Number interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(Tools.field(date), Tools.field(interval).neg(), datePart);
+        return new DateAdd<>(Tools.field(date), Tools.field(interval).neg(), datePart);
     }
 
     /**
@@ -14308,7 +14670,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampSub(Timestamp date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(Tools.field(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(Tools.field(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14318,7 +14680,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampSub(Field<Timestamp> date, Number interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(nullSafe(date), Tools.field(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), Tools.field(interval).neg(), datePart);
     }
 
     /**
@@ -14328,7 +14690,7 @@ public class DSL {
      */
     @Support
     public static Field<Timestamp> timestampSub(Field<Timestamp> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<Timestamp>(nullSafe(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14430,7 +14792,7 @@ public class DSL {
      */
     @Support
     public static Field<Integer> localDateDiff(Field<LocalDate> date1, Field<LocalDate> date2) {
-        return new DateDiff<LocalDate>(nullSafe(date1), nullSafe(date2));
+        return new DateDiff<>(nullSafe(date1), nullSafe(date2));
     }
 
     /**
@@ -14494,7 +14856,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDate> localDateAdd(Field<LocalDate> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDate>(nullSafe(date), nullSafe(interval), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14558,7 +14920,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDate> localDateSub(Field<LocalDate> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDate>(nullSafe(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14592,7 +14954,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeAdd(LocalDateTime date, Number interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(Tools.field(date), Tools.field(interval), datePart);
+        return new DateAdd<>(Tools.field(date), Tools.field(interval), datePart);
     }
 
     /**
@@ -14602,7 +14964,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeAdd(LocalDateTime date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(Tools.field(date), nullSafe(interval), datePart);
+        return new DateAdd<>(Tools.field(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14612,7 +14974,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeAdd(Field<LocalDateTime> date, Number interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(nullSafe(date), Tools.field(interval), datePart);
+        return new DateAdd<>(nullSafe(date), Tools.field(interval), datePart);
     }
 
     /**
@@ -14622,7 +14984,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeAdd(Field<LocalDateTime> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(nullSafe(date), nullSafe(interval), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval), datePart);
     }
 
     /**
@@ -14656,7 +15018,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeSub(LocalDateTime date, Number interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(Tools.field(date), Tools.field(interval).neg(), datePart);
+        return new DateAdd<>(Tools.field(date), Tools.field(interval).neg(), datePart);
     }
 
     /**
@@ -14666,7 +15028,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeSub(LocalDateTime date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(Tools.field(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(Tools.field(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14676,7 +15038,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeSub(Field<LocalDateTime> date, Number interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(nullSafe(date), Tools.field(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), Tools.field(interval).neg(), datePart);
     }
 
     /**
@@ -14686,7 +15048,7 @@ public class DSL {
      */
     @Support
     public static Field<LocalDateTime> localDateTimeSub(Field<LocalDateTime> date, Field<? extends Number> interval, DatePart datePart) {
-        return new DateAdd<LocalDateTime>(nullSafe(date), nullSafe(interval).neg(), datePart);
+        return new DateAdd<>(nullSafe(date), nullSafe(interval).neg(), datePart);
     }
 
     /**
@@ -14828,7 +15190,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, POSTGRES })
     public static <T> Field<T> trunc(Field<T> date, DatePart part) {
-        return new TruncDate<T>(date, part);
+        return new TruncDate<>(date, part);
     }
 
     // -------------------------------------------------------------------------
@@ -14865,6 +15227,191 @@ public class DSL {
     @Support
     public static Field<Integer> extract(Field<?> field, DatePart datePart) {
         return new Extract(nullSafe(field), datePart);
+    }
+
+    /**
+     * Get the epoch of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#EPOCH}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> epoch(java.util.Date value) {
+        return extract(value, DatePart.EPOCH);
+    }
+
+
+
+    /**
+     * Get the epoch of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#EPOCH}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> epoch(Temporal value) {
+        return extract(value, DatePart.EPOCH);
+    }
+
+
+
+    /**
+     * Get the epoch of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#EPOCH}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> epoch(Field<?> field) {
+        return extract(field, DatePart.EPOCH);
+    }
+
+    /**
+     * Get the millennium of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#MILLENNIUM}
+     */
+    @Support
+    public static Field<Integer> millennium(java.util.Date value) {
+        return extract(value, DatePart.MILLENNIUM);
+    }
+
+
+
+    /**
+     * Get the millennium of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#MILLENNIUM}
+     */
+    @Support
+    public static Field<Integer> millennium(Temporal value) {
+        return extract(value, DatePart.MILLENNIUM);
+    }
+
+
+
+    /**
+     * Get the millennium of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#MILLENNIUM}
+     */
+    @Support
+    public static Field<Integer> millennium(Field<?> field) {
+        return extract(field, DatePart.MILLENNIUM);
+    }
+
+    /**
+     * Get the century of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#CENTURY}
+     */
+    @Support
+    public static Field<Integer> century(java.util.Date value) {
+        return extract(value, DatePart.CENTURY);
+    }
+
+
+
+    /**
+     * Get the century of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#CENTURY}
+     */
+    @Support
+    public static Field<Integer> century(Temporal value) {
+        return extract(value, DatePart.CENTURY);
+    }
+
+
+
+    /**
+     * Get the century of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#CENTURY}
+     */
+    @Support
+    public static Field<Integer> century(Field<?> field) {
+        return extract(field, DatePart.CENTURY);
+    }
+
+    /**
+     * Get the decade of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#DECADE}
+     */
+    @Support
+    public static Field<Integer> decade(java.util.Date value) {
+        return extract(value, DatePart.DECADE);
+    }
+
+
+
+    /**
+     * Get the decade of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#DECADE}
+     */
+    @Support
+    public static Field<Integer> decade(Temporal value) {
+        return extract(value, DatePart.DECADE);
+    }
+
+
+
+    /**
+     * Get the decade of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#DECADE}
+     */
+    @Support
+    public static Field<Integer> decade(Field<?> field) {
+        return extract(field, DatePart.DECADE);
+    }
+
+    /**
+     * Get the quarter of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#QUARTER}
+     */
+    @Support
+    public static Field<Integer> quarter(java.util.Date value) {
+        return extract(value, DatePart.QUARTER);
+    }
+
+
+
+    /**
+     * Get the quarter of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#QUARTER}
+     */
+    @Support
+    public static Field<Integer> quarter(Temporal value) {
+        return extract(value, DatePart.QUARTER);
+    }
+
+
+
+    /**
+     * Get the quarter of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#QUARTER}
+     */
+    @Support
+    public static Field<Integer> quarter(Field<?> field) {
+        return extract(field, DatePart.QUARTER);
     }
 
     /**
@@ -14942,6 +15489,43 @@ public class DSL {
     }
 
     /**
+     * Get the week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> week(java.util.Date value) {
+        return extract(value, DatePart.WEEK);
+    }
+
+
+
+    /**
+     * Get the week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> week(Temporal value) {
+        return extract(value, DatePart.WEEK);
+    }
+
+
+
+    /**
+     * Get the week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> week(Field<?> field) {
+        return extract(field, DatePart.WEEK);
+    }
+
+    /**
      * Get the day part of a date.
      * <p>
      * This is the same as calling {@link #extract(java.util.Date, DatePart)}
@@ -14976,6 +15560,117 @@ public class DSL {
     @Support
     public static Field<Integer> day(Field<?> field) {
         return extract(field, DatePart.DAY);
+    }
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfWeek(java.util.Date value) {
+        return extract(value, DatePart.DAY_OF_WEEK);
+    }
+
+
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfWeek(Temporal value) {
+        return extract(value, DatePart.DAY_OF_WEEK);
+    }
+
+
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfWeek(Field<?> field) {
+        return extract(field, DatePart.DAY_OF_WEEK);
+    }
+
+    /**
+     * Get the ISO day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#ISO_DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> isoDayOfWeek(java.util.Date value) {
+        return extract(value, DatePart.ISO_DAY_OF_WEEK);
+    }
+
+
+
+    /**
+     * Get the ISO day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#ISO_DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> isoDayOfWeek(Temporal value) {
+        return extract(value, DatePart.ISO_DAY_OF_WEEK);
+    }
+
+
+
+    /**
+     * Get the ISO day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#ISO_DAY_OF_WEEK}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> isoDayOfWeek(Field<?> field) {
+        return extract(field, DatePart.ISO_DAY_OF_WEEK);
+    }
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#DAY_OF_YEAR}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfYear(java.util.Date value) {
+        return extract(value, DatePart.DAY_OF_YEAR);
+    }
+
+
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#DAY_OF_YEAR}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfYear(Temporal value) {
+        return extract(value, DatePart.DAY_OF_YEAR);
+    }
+
+
+
+    /**
+     * Get the day of week part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#DAY_OF_YEAR}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static Field<Integer> dayOfYear(Field<?> field) {
+        return extract(field, DatePart.DAY_OF_YEAR);
     }
 
     /**
@@ -15090,6 +15785,191 @@ public class DSL {
     }
 
     /**
+     * Get the millisecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#MILLISECOND}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> millisecond(java.util.Date value) {
+        return extract(value, DatePart.MILLISECOND);
+    }
+
+
+
+    /**
+     * Get the millisecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#MILLISECOND}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> millisecond(Temporal value) {
+        return extract(value, DatePart.MILLISECOND);
+    }
+
+
+
+    /**
+     * Get the millisecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#MILLISECOND}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> millisecond(Field<?> field) {
+        return extract(field, DatePart.MILLISECOND);
+    }
+
+    /**
+     * Get the microsecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#MICROSECOND}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> microsecond(java.util.Date value) {
+        return extract(value, DatePart.MICROSECOND);
+    }
+
+
+
+    /**
+     * Get the microsecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#MICROSECOND}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> microsecond(Temporal value) {
+        return extract(value, DatePart.MICROSECOND);
+    }
+
+
+
+    /**
+     * Get the microsecond part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#MICROSECOND}
+     */
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<Integer> microsecond(Field<?> field) {
+        return extract(field, DatePart.MICROSECOND);
+    }
+
+    /**
+     * Get the timezone part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#TIMEZONE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezone(java.util.Date value) {
+        return extract(value, DatePart.TIMEZONE);
+    }
+
+
+
+    /**
+     * Get the timezone part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#TIMEZONE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezone(Temporal value) {
+        return extract(value, DatePart.TIMEZONE);
+    }
+
+
+
+    /**
+     * Get the timezone part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#TIMEZONE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezone(Field<?> field) {
+        return extract(field, DatePart.TIMEZONE);
+    }
+
+    /**
+     * Get the timezoneHour part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#TIMEZONE_HOUR}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneHour(java.util.Date value) {
+        return extract(value, DatePart.TIMEZONE_HOUR);
+    }
+
+
+
+    /**
+     * Get the timezoneHour part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#TIMEZONE_HOUR}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneHour(Temporal value) {
+        return extract(value, DatePart.TIMEZONE_HOUR);
+    }
+
+
+
+    /**
+     * Get the timezoneHour part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#TIMEZONE_HOUR}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneHour(Field<?> field) {
+        return extract(field, DatePart.TIMEZONE_HOUR);
+    }
+
+    /**
+     * Get the timezoneMinute part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(java.util.Date, DatePart)}
+     * with {@link DatePart#TIMEZONE_MINUTE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneMinute(java.util.Date value) {
+        return extract(value, DatePart.TIMEZONE_MINUTE);
+    }
+
+
+
+    /**
+     * Get the timezoneMinute part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Temporal, DatePart)}
+     * with {@link DatePart#TIMEZONE_MINUTE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneMinute(Temporal value) {
+        return extract(value, DatePart.TIMEZONE_MINUTE);
+    }
+
+
+
+    /**
+     * Get the timezoneMinute part of a date.
+     * <p>
+     * This is the same as calling {@link #extract(Field, DatePart)}
+     * with {@link DatePart#TIMEZONE_MINUTE}
+     */
+    @Support({ H2, HSQLDB, POSTGRES })
+    public static Field<Integer> timezoneMinute(Field<?> field) {
+        return extract(field, DatePart.TIMEZONE_MINUTE);
+    }
+
+    /**
      * Convert a string value to a <code>DATE</code>.
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
@@ -15110,7 +15990,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<Date> date(Field<? extends java.util.Date> field) {
-        return new DateOrTime<Date>(field, SQLDataType.DATE);
+        return new DateOrTime<>(field, SQLDataType.DATE);
     }
 
     /**
@@ -15134,7 +16014,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<Time> time(Field<? extends java.util.Date> field) {
-        return new DateOrTime<Time>(field, SQLDataType.TIME);
+        return new DateOrTime<>(field, SQLDataType.TIME);
     }
 
     /**
@@ -15158,7 +16038,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<Timestamp> timestamp(Field<? extends java.util.Date> field) {
-        return new DateOrTime<Timestamp>(field, SQLDataType.TIMESTAMP);
+        return new DateOrTime<>(field, SQLDataType.TIMESTAMP);
     }
 
 
@@ -15175,7 +16055,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalDate> localDate(LocalDate value) {
-        return localDate(Tools.field(value));
+        return Tools.field(value);
     }
 
     /**
@@ -15183,7 +16063,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalDate> localDate(Field<LocalDate> field) {
-        return new DateOrTime<LocalDate>(field, SQLDataType.LOCALDATE);
+        return new DateOrTime<>(field, SQLDataType.LOCALDATE);
     }
 
     /**
@@ -15199,7 +16079,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalTime> localTime(LocalTime value) {
-        return localTime(Tools.field(value));
+        return Tools.field(value);
     }
 
     /**
@@ -15207,7 +16087,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalTime> localTime(Field<LocalTime> field) {
-        return new DateOrTime<LocalTime>(field, SQLDataType.LOCALTIME);
+        return new DateOrTime<>(field, SQLDataType.LOCALTIME);
     }
 
     /**
@@ -15223,7 +16103,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalDateTime> localDateTime(LocalDateTime value) {
-        return localDateTime(Tools.field(value));
+        return Tools.field(value);
     }
 
     /**
@@ -15231,7 +16111,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static Field<LocalDateTime> localDateTime(Field<LocalDateTime> field) {
-        return new DateOrTime<LocalDateTime>(field, SQLDataType.LOCALDATETIME);
+        return new DateOrTime<>(field, SQLDataType.LOCALDATETIME);
     }
 
     /**
@@ -15243,7 +16123,7 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetTime> offsetTime(String value) {
         return Tools.field(Convert.convert(value, OffsetTime.class));
     }
@@ -15257,9 +16137,9 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetTime> offsetTime(OffsetTime value) {
-        return offsetTime(Tools.field(value));
+        return Tools.field(value);
     }
 
     /**
@@ -15271,9 +16151,9 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetTime> offsetTime(Field<OffsetTime> field) {
-        return new DateOrTime<OffsetTime>(field, SQLDataType.OFFSETTIME);
+        return new DateOrTime<>(field, SQLDataType.OFFSETTIME);
     }
 
     /**
@@ -15285,7 +16165,7 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetDateTime> offsetDateTime(String value) {
         return Tools.field(Convert.convert(value, OffsetDateTime.class));
     }
@@ -15299,9 +16179,9 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetDateTime> offsetDateTime(OffsetDateTime value) {
-        return offsetDateTime(Tools.field(value));
+        return Tools.field(value);
     }
 
     /**
@@ -15313,9 +16193,51 @@ public class DSL {
      * UTC. Regardless of this fact, the result should be the same
      * {@link Instant} (in UTC) as the input.
      */
-    @Support({ H2, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
     public static Field<OffsetDateTime> offsetDateTime(Field<OffsetDateTime> field) {
-        return new DateOrTime<OffsetDateTime>(field, SQLDataType.OFFSETDATETIME);
+        return new DateOrTime<>(field, SQLDataType.OFFSETDATETIME);
+    }
+
+    /**
+     * Convert a string value to a <code>TIMESTAMP WITH TIME ZONE</code>.
+     * <p>
+     * Depending on whether the database preserves the time zone information
+     * (e.g. {@link SQLDialect#ORACLE}) or not (e.g.
+     * {@link SQLDialect#POSTGRES}), the resulting value might be converted to
+     * UTC. Regardless of this fact, the result should be the same
+     * {@link Instant} (in UTC) as the input.
+     */
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
+    public static Field<Instant> instant(String value) {
+        return Tools.field(Convert.convert(value, Instant.class));
+    }
+
+    /**
+     * Convert a temporal value to a <code>TIMESTAMP WITH TIME ZONE</code>.
+     * <p>
+     * Depending on whether the database preserves the time zone information
+     * (e.g. {@link SQLDialect#ORACLE}) or not (e.g.
+     * {@link SQLDialect#POSTGRES}), the resulting value might be converted to
+     * UTC. Regardless of this fact, the result should be the same
+     * {@link Instant} (in UTC) as the input.
+     */
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
+    public static Field<Instant> instant(Instant value) {
+        return Tools.field(value);
+    }
+
+    /**
+     * Convert a temporal value to a <code>TIMESTAMP WITH TIME ZONE</code>.
+     * <p>
+     * Depending on whether the database preserves the time zone information
+     * (e.g. {@link SQLDialect#ORACLE}) or not (e.g.
+     * {@link SQLDialect#POSTGRES}), the resulting value might be converted to
+     * UTC. Regardless of this fact, the result should be the same
+     * {@link Instant} (in UTC) as the input.
+     */
+    @Support({ H2, HSQLDB, POSTGRES, SQLITE })
+    public static Field<Instant> instant(Field<Instant> field) {
+        return new DateOrTime<>(field, SQLDataType.INSTANT);
     }
 
 
@@ -15360,7 +16282,7 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static Field<Date> toDate(Field<String> value, Field<String> format) {
-        return DSL.field("{to_date}({0}, {1})", SQLDataType.DATE, nullSafe(value), nullSafe(format));
+        return function("to_date", SQLDataType.DATE, value, format);
     }
 
     /**
@@ -15404,7 +16326,7 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static Field<Timestamp> toTimestamp(Field<String> value, Field<String> format) {
-        return DSL.field("{to_timestamp}({0}, {1})", SQLDataType.TIMESTAMP, nullSafe(value), nullSafe(format));
+        return function("to_timestamp", SQLDataType.TIMESTAMP, value, format);
     }
 
 
@@ -15508,7 +16430,7 @@ public class DSL {
      *
      * @see #rollup(FieldOrRow...)
      */
-    @Support({ CUBRID, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, MARIADB, MYSQL, POSTGRES })
     public static GroupField rollup(Field<?>... fields) {
         return rollup((FieldOrRow[]) nullSafe(fields));
     }
@@ -15537,7 +16459,7 @@ public class DSL {
      *            function
      * @return A field to be used in a <code>GROUP BY</code> clause
      */
-    @Support({ CUBRID, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, MARIADB, MYSQL, POSTGRES })
     public static GroupField rollup(FieldOrRow... fields) {
         return new Rollup(fields);
     }
@@ -15547,7 +16469,7 @@ public class DSL {
      *
      * @see #cube(Field...)
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static GroupField cube(Field<?>... fields) {
         return cube((FieldOrRow[]) nullSafe(fields));
     }
@@ -15574,9 +16496,9 @@ public class DSL {
      *            function
      * @return A field to be used in a <code>GROUP BY</code> clause
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static GroupField cube(FieldOrRow... fields) {
-        return field("{cube}({0})", Object.class, new QueryPartList<FieldOrRow>(fields));
+        return field("{cube}({0})", Object.class, new QueryPartList<>(fields));
     }
 
     /**
@@ -15602,13 +16524,12 @@ public class DSL {
      *            function
      * @return A field to be used in a <code>GROUP BY</code> clause
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static GroupField groupingSets(Field<?>... fields) {
         List<Field<?>>[] array = new List[fields.length];
 
-        for (int i = 0; i < fields.length; i++) {
+        for (int i = 0; i < fields.length; i++)
             array[i] = Arrays.<Field<?>>asList(fields[i]);
-        }
 
         return groupingSets(array);
     }
@@ -15636,13 +16557,12 @@ public class DSL {
      *            function
      * @return A field to be used in a <code>GROUP BY</code> clause
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static GroupField groupingSets(Field<?>[]... fieldSets) {
         List<Field<?>>[] array = new List[fieldSets.length];
 
-        for (int i = 0; i < fieldSets.length; i++) {
+        for (int i = 0; i < fieldSets.length; i++)
             array[i] = Arrays.asList(fieldSets[i]);
-        }
 
         return groupingSets(array);
     }
@@ -15670,16 +16590,16 @@ public class DSL {
      *            function
      * @return A field to be used in a <code>GROUP BY</code> clause
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static GroupField groupingSets(Collection<? extends Field<?>>... fieldSets) {
         WrappedList[] array = new WrappedList[fieldSets.length];
 
-        for (int i = 0; i < fieldSets.length; i++) {
-            array[i] = new WrappedList(new QueryPartList<Field<?>>(fieldSets[i]));
-        }
+        for (int i = 0; i < fieldSets.length; i++)
+            array[i] = new WrappedList(new QueryPartList<>(fieldSets[i]));
 
-        return new org.jooq.impl.Function<Object>("grouping sets", SQLDataType.OTHER, array);
+        return new org.jooq.impl.Function<>("grouping sets", SQLDataType.OTHER, array);
     }
+
 
 
 
@@ -15716,9 +16636,9 @@ public class DSL {
      * @see #cube(Field...)
      * @see #rollup(Field...)
      */
-    @Support({ POSTGRES_9_5 })
+    @Support({ POSTGRES })
     public static Field<Integer> grouping(Field<?> field) {
-        return function("grouping", Integer.class, nullSafe(field));
+        return function("grouping", Integer.class, field);
     }
 
     /**
@@ -15739,7 +16659,7 @@ public class DSL {
      */
     @Support({})
     public static Field<Integer> groupingId(Field<?>... fields) {
-        return function("grouping_id", Integer.class, nullSafe(fields));
+        return function("grouping_id", Integer.class, fields);
     }
 
     // ------------------------------------------------------------------------
@@ -15763,13 +16683,13 @@ public class DSL {
      * <p>
      * This function is emulated in most other databases like this (for a
      * TINYINT field): <code><pre>
-     * ([field] &   1) +
-     * ([field] &   2) >> 1 +
-     * ([field] &   4) >> 2 +
-     * ([field] &   8) >> 3 +
-     * ([field] &  16) >> 4 +
+     * ([field] &amp;   1) +
+     * ([field] &amp;   2) &gt;&gt; 1 +
+     * ([field] &amp;   4) &gt;&gt; 2 +
+     * ([field] &amp;   8) &gt;&gt; 3 +
+     * ([field] &amp;  16) &gt;&gt; 4 +
      *  ...
-     * ([field] & 128) >> 7
+     * ([field] &amp; 128) &gt;&gt; 7
      * </pre></code>
      * <p>
      * More efficient algorithms are very welcome
@@ -15797,7 +16717,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitNot(Field<T> field) {
-        return new Neg<T>(nullSafe(field), ExpressionOperator.BIT_NOT);
+        return new Neg<>(nullSafe(field), ExpressionOperator.BIT_NOT);
     }
 
     /**
@@ -15836,13 +16756,13 @@ public class DSL {
      * This is not supported by Derby, Ingres
      * <p>
      * This renders the and operation where available:
-     * <code><pre>[field1] & [field2]</pre></code>
+     * <code><pre>[field1] &amp; [field2]</pre></code>
      * ... or the and function elsewhere:
      * <code><pre>bitand([field1], [field2])</pre></code>
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitAnd(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_AND, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_AND, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -15884,7 +16804,7 @@ public class DSL {
      * This is not supported by Derby, Ingres
      * <p>
      * This renders the not and operation where available:
-     * <code><pre>~([field1] & [field2])</pre></code>
+     * <code><pre>~([field1] &amp; [field2])</pre></code>
      * ... or the not and function elsewhere:
      * <code><pre>bitnot(bitand([field1], [field2]))</pre></code>
      *
@@ -15892,7 +16812,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitNand(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_NAND, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_NAND, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -15937,7 +16857,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitOr(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_OR, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_OR, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -15985,7 +16905,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitNor(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_NOR, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_NOR, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -16030,7 +16950,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitXor(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_XOR, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_XOR, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -16078,7 +16998,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> bitXNor(Field<T> field1, Field<T> field2) {
-        return new Expression<T>(ExpressionOperator.BIT_XNOR, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.BIT_XNOR, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -16125,7 +17045,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> shl(Field<T> field1, Field<? extends Number> field2) {
-        return new Expression<T>(ExpressionOperator.SHL, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.SHL, nullSafe(field1), nullSafe(field2));
     }
 
     /**
@@ -16164,7 +17084,7 @@ public class DSL {
     /**
      * The bitwise right shift operator.
      * <p>
-     * Some dialects natively support this using <code>[field1] >> [field2]</code>.
+     * Some dialects natively support this using <code>[field1] &gt;&gt; [field2]</code>.
      * jOOQ emulates this operator in some dialects using
      * <code>[field1] / power(2, [field2])</code>, where power might also be emulated.
      *
@@ -16172,7 +17092,7 @@ public class DSL {
      */
     @Support({ CUBRID, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T extends Number> Field<T> shr(Field<T> field1, Field<? extends Number> field2) {
-        return new Expression<T>(ExpressionOperator.SHR, nullSafe(field1), nullSafe(field2));
+        return new Expression<>(ExpressionOperator.SHR, nullSafe(field1), nullSafe(field2));
     }
 
     // ------------------------------------------------------------------------
@@ -16182,7 +17102,7 @@ public class DSL {
     /**
      * Get the rand() function.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<BigDecimal> rand() {
         return new Rand();
     }
@@ -16214,7 +17134,7 @@ public class DSL {
      */
     @Support
     public static <T> Field<T> greatest(Field<T> field, Field<?>... others) {
-        return new Greatest<T>(nullSafeDataType(field), nullSafe(combine(field, others)));
+        return new Greatest<>(nullSafeDataType(field), nullSafe(combine(field, others)));
     }
 
     /**
@@ -16244,7 +17164,27 @@ public class DSL {
      */
     @Support
     public static <T> Field<T> least(Field<T> field, Field<?>... others) {
-        return new Least<T>(nullSafeDataType(field), nullSafe(combine(field, others)));
+        return new Least<>(nullSafeDataType(field), nullSafe(combine(field, others)));
+    }
+
+    /**
+     * Negate a field to get its negative value.
+     *
+     * @see Field#neg()
+     */
+    @Support
+    public static <T extends Number> Field<T> neg(Field<T> field) {
+        return field.neg();
+    }
+
+    /**
+     * Negate a field to get its negative value.
+     *
+     * @see Field#neg()
+     */
+    @Support
+    public static <T extends Number> Field<T> minus(Field<T> field) {
+        return field.neg();
     }
 
     /**
@@ -16264,7 +17204,7 @@ public class DSL {
      * <code><pre>sign([field])</pre></code>
      * ... or emulates it elsewhere (without bind variables on values -1, 0, 1):
      * <code><pre>
-     * CASE WHEN [this] > 0 THEN 1
+     * CASE WHEN [this] &gt; 0 THEN 1
      *      WHEN [this] &lt; 0 THEN -1
      *      ELSE 0
      * END
@@ -16292,7 +17232,7 @@ public class DSL {
      */
     @Support
     public static <T extends Number> Field<T> abs(Field<T> field) {
-        return function("abs", nullSafeDataType(field), nullSafe(field));
+        return function("abs", nullSafeDataType(field), field);
     }
 
     /**
@@ -16315,7 +17255,7 @@ public class DSL {
      */
     @Support
     public static <T extends Number> Field<T> round(Field<T> field) {
-        return new Round<T>(nullSafe(field));
+        return new Round<>(nullSafe(field));
     }
 
     /**
@@ -16337,7 +17277,7 @@ public class DSL {
      */
     @Support
     public static <T extends Number> Field<T> round(Field<T> field, int decimals) {
-        return new Round<T>(nullSafe(field), decimals);
+        return new Round<>(nullSafe(field), decimals);
     }
 
     /**
@@ -16360,7 +17300,7 @@ public class DSL {
      */
     @Support
     public static <T extends Number> Field<T> floor(Field<T> field) {
-        return new Floor<T>(nullSafe(field));
+        return new Floor<>(nullSafe(field));
     }
 
     /**
@@ -16384,7 +17324,7 @@ public class DSL {
      */
     @Support
     public static <T extends Number> Field<T> ceil(Field<T> field) {
-        return new Ceil<T>(nullSafe(field));
+        return new Ceil<>(nullSafe(field));
     }
 
     /**
@@ -16472,7 +17412,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static <T extends Number> Field<T> trunc(Field<T> number, Field<Integer> decimals) {
-        return new Trunc<T>(nullSafe(number), nullSafe(decimals));
+        return new Trunc<>(nullSafe(number), nullSafe(decimals));
     }
 
     /**
@@ -16516,7 +17456,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> exp(Field<? extends Number> field) {
-        return function("exp", SQLDataType.NUMERIC, nullSafe(field));
+        return function("exp", SQLDataType.NUMERIC, field);
     }
 
     /**
@@ -16561,6 +17501,19 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> log(Field<? extends Number> field, int base) {
+        return new Ln(nullSafe(field), Tools.field(base));
+    }
+
+    /**
+     * Get the log(field, base) function.
+     * <p>
+     * This renders the log function where available:
+     * <code><pre>log([field])</pre></code> ... or emulates it elsewhere (in
+     * most RDBMS) using the natural logarithm:
+     * <code><pre>ln([field]) / ln([base])</pre></code>
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static Field<BigDecimal> log(Field<? extends Number> field, Field<? extends Number> base) {
         return new Ln(nullSafe(field), base);
     }
 
@@ -16709,7 +17662,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> atan2(Field<? extends Number> x, Field<? extends Number> y) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.ATAN2, SQLDataType.NUMERIC, nullSafe(x), nullSafe(y));
+        return new org.jooq.impl.Function<>(Term.ATAN2, SQLDataType.NUMERIC, nullSafe(x), nullSafe(y));
     }
 
     /**
@@ -16730,7 +17683,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> cos(Field<? extends Number> field) {
-        return function("cos", SQLDataType.NUMERIC, nullSafe(field));
+        return function("cos", SQLDataType.NUMERIC, field);
     }
 
     /**
@@ -16751,7 +17704,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> sin(Field<? extends Number> field) {
-        return function("sin", SQLDataType.NUMERIC, nullSafe(field));
+        return function("sin", SQLDataType.NUMERIC, field);
     }
 
     /**
@@ -16772,7 +17725,7 @@ public class DSL {
      */
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static Field<BigDecimal> tan(Field<? extends Number> field) {
-        return function("tan", SQLDataType.NUMERIC, nullSafe(field));
+        return function("tan", SQLDataType.NUMERIC, field);
     }
 
     /**
@@ -16967,7 +17920,7 @@ public class DSL {
      */
     @Support({ CUBRID })
     public static <T> Field<T> connectByRoot(Field<T> field) {
-        return field("{connect_by_root} {0}", nullSafe(field).getDataType(), field);
+        return field("{connect_by_root} {0}", nullSafeDataType(field), field);
     }
 
     /**
@@ -16977,7 +17930,7 @@ public class DSL {
      */
     @Support({ CUBRID })
     public static Field<String> sysConnectByPath(Field<?> field, String separator) {
-        return field("{sys_connect_by_path}({0}, {1})", String.class, field, inline(separator));
+        return function("sys_connect_by_path", String.class, field, inline(separator));
     }
 
     /**
@@ -16986,7 +17939,7 @@ public class DSL {
      */
     @Support({ CUBRID })
     public static <T> Field<T> prior(Field<T> field) {
-        return new Prior<T>(field);
+        return new Prior<>(field);
     }
 
     // -------------------------------------------------------------------------
@@ -16999,6 +17952,90 @@ public class DSL {
     @Support({ CUBRID })
     public static Field<Integer> rownum() {
         return field("rownum", Integer.class);
+    }
+
+    // -------------------------------------------------------------------------
+    // XXX JSON functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * The JSON array constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSON> jsonArray(Field<?>... fields) {
+        return jsonArray(Arrays.asList(fields));
+    }
+
+    /**
+     * The JSON array constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSON> jsonArray(Collection<? extends Field<?>> fields) {
+        return new JSONArray<>(JSON, fields);
+    }
+
+    /**
+     * The JSONB array constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSONB> jsonbArray(Field<?>... fields) {
+        return jsonbArray(Arrays.asList(fields));
+    }
+
+    /**
+     * The JSONB array constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSONB> jsonbArray(Collection<? extends Field<?>> fields) {
+        return new JSONArray<>(JSONB, fields);
+    }
+
+    /**
+     * A constructor for JSON entries to be used with {@link #jsonObject(JSONEntry...)}.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static <T> JSONEntry<T> jsonEntry(Field<String> key, Field<T> value) {
+        return new JSONEntryImpl<>(key, value);
+    }
+
+    /**
+     * The JSON object constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSON> jsonObject(Field<String> key, Field<?> value) {
+        return jsonObject(jsonEntry(key, value));
+    }
+
+    /**
+     * The JSON object constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSON> jsonObject(JSONEntry<?>... entries) {
+        return jsonObject(Arrays.asList(entries));
+    }
+
+    /**
+     * The JSON object constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSON> jsonObject(Collection<? extends JSONEntry<?>> entries) {
+        return new JSONObject<>(JSON, entries);
+    }
+
+    /**
+     * The JSONB object constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSONB> jsonbObject(JSONEntry<?>... entries) {
+        return jsonbObject(Arrays.asList(entries));
+    }
+
+    /**
+     * The JSONB object constructor.
+     */
+    @Support({ MARIADB, MYSQL, POSTGRES })
+    public static Field<JSONB> jsonbObject(Collection<? extends JSONEntry<?>> entries) {
+        return new JSONObject<>(JSONB, entries);
     }
 
     // -------------------------------------------------------------------------
@@ -17018,7 +18055,7 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<Integer> count(Field<?> field) {
-        return new org.jooq.impl.Function<Integer>("count", SQLDataType.INTEGER, nullSafe(field));
+        return new org.jooq.impl.Function<>("count", SQLDataType.INTEGER, nullSafe(field));
     }
 
     /**
@@ -17026,7 +18063,7 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<Integer> count(SelectFieldOrAsterisk field) {
-        return new org.jooq.impl.Function<Integer>("count", SQLDataType.INTEGER, field("{0}", field));
+        return new org.jooq.impl.Function<>("count", SQLDataType.INTEGER, field("{0}", field));
     }
 
     /**
@@ -17044,17 +18081,17 @@ public class DSL {
     /**
      * Get the count(distinct field) function.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static AggregateFunction<Integer> countDistinct(Field<?> field) {
-        return new org.jooq.impl.Function<Integer>("count", true, SQLDataType.INTEGER, nullSafe(field));
+        return new org.jooq.impl.Function<>("count", true, SQLDataType.INTEGER, nullSafe(field));
     }
 
     /**
      * Get the count(distinct field) function.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static AggregateFunction<Integer> countDistinct(SelectFieldOrAsterisk field) {
-        return new org.jooq.impl.Function<Integer>("count", true, SQLDataType.INTEGER, field("{0}", field));
+        return new org.jooq.impl.Function<>("count", true, SQLDataType.INTEGER, field("{0}", field));
     }
 
     /**
@@ -17064,7 +18101,7 @@ public class DSL {
      * {@link SQLDialect#POSTGRES}, then the primary key is used with
      * {@link #count(Field)}, instead.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static AggregateFunction<Integer> countDistinct(Table<?> table) {
         return new CountTable(table, true);
     }
@@ -17078,9 +18115,10 @@ public class DSL {
      * {@link SQLDialect#POSTGRES} supports this as
      * <code>COUNT(DISTINCT(expr1, expr2))</code>.
      */
-    @Support({ HSQLDB, MYSQL, POSTGRES })
+    @Support({ H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AggregateFunction<Integer> countDistinct(Field<?>... fields) {
-        return new org.jooq.impl.Function<Integer>("count", true, SQLDataType.INTEGER, nullSafe(fields));
+        fields = nullSafe(fields);
+        return fields.length == 0 ? countDistinct(asterisk()) : new org.jooq.impl.Function<>("count", true, SQLDataType.INTEGER, fields);
     }
 
     /**
@@ -17140,7 +18178,7 @@ public class DSL {
      */
     @Support({ HSQLDB, POSTGRES })
     public static <T> ArrayAggOrderByStep<T[]> arrayAgg(Field<T> field) {
-        return new org.jooq.impl.Function<T[]>(Term.ARRAY_AGG, field.getDataType().getArrayDataType(), nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.ARRAY_AGG, field.getDataType().getArrayDataType(), nullSafe(field));
     }
 
     /**
@@ -17148,8 +18186,12 @@ public class DSL {
      */
     @Support({ HSQLDB, POSTGRES })
     public static <T> ArrayAggOrderByStep<T[]> arrayAggDistinct(Field<T> field) {
-        return new org.jooq.impl.Function<T[]>(Term.ARRAY_AGG, true, field.getDataType().getArrayDataType(), nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.ARRAY_AGG, true, field.getDataType().getArrayDataType(), nullSafe(field));
     }
+
+
+
+
 
 
 
@@ -17288,7 +18330,7 @@ public class DSL {
      */
     @Support({ H2, HSQLDB, POSTGRES })
     public static <T> Field<T[]> array(Collection<? extends Field<T>> fields) {
-        return new Array<T>(fields);
+        return new Array<>(fields);
     }
 
     /**
@@ -17296,7 +18338,7 @@ public class DSL {
      */
     @Support
     public static <T> AggregateFunction<T> max(Field<T> field) {
-        return new org.jooq.impl.Function<T>("max", nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>("max", nullSafeDataType(field), nullSafe(field));
     }
 
     /**
@@ -17304,7 +18346,7 @@ public class DSL {
      */
     @Support
     public static <T> AggregateFunction<T> maxDistinct(Field<T> field) {
-        return new org.jooq.impl.Function<T>("max", true, nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>("max", true, nullSafeDataType(field), nullSafe(field));
     }
 
     /**
@@ -17312,7 +18354,7 @@ public class DSL {
      */
     @Support
     public static <T> AggregateFunction<T> min(Field<T> field) {
-        return new org.jooq.impl.Function<T>("min", nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>("min", nullSafeDataType(field), nullSafe(field));
     }
 
     /**
@@ -17320,7 +18362,7 @@ public class DSL {
      */
     @Support
     public static <T> AggregateFunction<T> minDistinct(Field<T> field) {
-        return new org.jooq.impl.Function<T>("min", true, nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>("min", true, nullSafeDataType(field), nullSafe(field));
     }
 
     /**
@@ -17328,7 +18370,7 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<BigDecimal> sum(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("sum", SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("sum", SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17336,7 +18378,43 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<BigDecimal> sumDistinct(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("sum", true, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("sum", true, SQLDataType.NUMERIC, nullSafe(field));
+    }
+
+    /**
+     * Get the product over a numeric field: product(field).
+     * <p>
+     * No database currently supports multiplicative aggregation natively. jOOQ
+     * emulates this using <code>exp(sum(log(arg)))</code> for strictly positive
+     * numbers, and does some additional handling for zero and negative numbers.
+     * <p>
+     * Note that this implementation may introduce rounding errors, even for
+     * integer multiplication.
+     * <p>
+     * More information here: <a href=
+     * "https://blog.jooq.org/2018/09/21/how-to-write-a-multiplication-aggregate-function-in-sql">https://blog.jooq.org/2018/09/21/how-to-write-a-multiplication-aggregate-function-in-sql</a>.
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static AggregateFunction<BigDecimal> product(Field<? extends Number> field) {
+        return new org.jooq.impl.Function<>(Term.PRODUCT, SQLDataType.NUMERIC, nullSafe(field));
+    }
+
+    /**
+     * Get the sum over a numeric field: product(distinct field).
+     * <p>
+     * No database currently supports multiplicative aggregation natively. jOOQ
+     * emulates this using <code>exp(sum(log(arg)))</code> for strictly positive
+     * numbers, and does some additional handling for zero and negative numbers.
+     * <p>
+     * Note that this implementation may introduce rounding errors, even for
+     * integer multiplication.
+     * <p>
+     * More information here: <a href=
+     * "https://blog.jooq.org/2018/09/21/how-to-write-a-multiplication-aggregate-function-in-sql">https://blog.jooq.org/2018/09/21/how-to-write-a-multiplication-aggregate-function-in-sql</a>.
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    public static AggregateFunction<BigDecimal> productDistinct(Field<? extends Number> field) {
+        return new org.jooq.impl.Function<>(Term.PRODUCT, true, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17344,7 +18422,7 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<BigDecimal> avg(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("avg", SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("avg", SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17352,15 +18430,23 @@ public class DSL {
      */
     @Support
     public static AggregateFunction<BigDecimal> avgDistinct(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("avg", true, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("avg", true, SQLDataType.NUMERIC, nullSafe(field));
+    }
+
+    /**
+     * The <code>mode(field)</code> aggregate function.
+     */
+    @Support({ H2, POSTGRES })
+    public static <T> AggregateFunction<T> mode(Field<T> field) {
+        return new org.jooq.impl.Function<>(Term.MODE, nullSafeDataType(field), field);
     }
 
     /**
      * Get the median over a numeric field: median(field).
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, POSTGRES_9_4 })
+    @Support({ CUBRID, H2, HSQLDB, MARIADB, POSTGRES })
     public static AggregateFunction<BigDecimal> median(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.MEDIAN, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.MEDIAN, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17368,7 +18454,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AggregateFunction<BigDecimal> stddevPop(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.STDDEV_POP, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.STDDEV_POP, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17376,7 +18462,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AggregateFunction<BigDecimal> stddevSamp(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.STDDEV_SAMP, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.STDDEV_SAMP, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17384,7 +18470,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AggregateFunction<BigDecimal> varPop(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.VAR_POP, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.VAR_POP, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17392,7 +18478,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static AggregateFunction<BigDecimal> varSamp(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>(Term.VAR_SAMP, SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.VAR_SAMP, SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17407,7 +18493,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrSlope(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_slope", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_slope", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17422,7 +18508,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrIntercept(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_intercept", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_intercept", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17437,7 +18523,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrCount(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_count", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_count", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17452,7 +18538,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrR2(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_r2", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_r2", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17467,7 +18553,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrAvgX(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_avgx", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_avgx", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17482,7 +18568,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrAvgY(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_avgy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_avgy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17497,7 +18583,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrSXX(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_sxx", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_sxx", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17512,7 +18598,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrSYY(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_syy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_syy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17527,7 +18613,7 @@ public class DSL {
      */
     @Support({ POSTGRES })
     public static AggregateFunction<BigDecimal> regrSXY(Field<? extends Number> y, Field<? extends Number> x) {
-        return new org.jooq.impl.Function<BigDecimal>("regr_sxy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
+        return new org.jooq.impl.Function<>("regr_sxy", SQLDataType.NUMERIC, nullSafe(y), nullSafe(x));
     }
 
     /**
@@ -17550,7 +18636,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static OrderedAggregateFunction<String> listAgg(Field<?> field) {
-        return new org.jooq.impl.Function<String>(Term.LIST_AGG, SQLDataType.VARCHAR, nullSafe(field));
+        return new org.jooq.impl.Function<>(Term.LIST_AGG, SQLDataType.VARCHAR, nullSafe(field));
     }
 
     /**
@@ -17573,7 +18659,7 @@ public class DSL {
      */
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     public static OrderedAggregateFunction<String> listAgg(Field<?> field, String separator) {
-        return new org.jooq.impl.Function<String>(Term.LIST_AGG, SQLDataType.VARCHAR, nullSafe(field), inline(separator));
+        return new org.jooq.impl.Function<>(Term.LIST_AGG, SQLDataType.VARCHAR, nullSafe(field), inline(separator));
     }
 
     /**
@@ -17585,6 +18671,7 @@ public class DSL {
      * <li> {@link SQLDialect#CUBRID}</li>
      * <li> {@link SQLDialect#H2}</li>
      * <li> {@link SQLDialect#HSQLDB}</li>
+     * <li> {@link SQLDialect#MEMSQL} (but without <code>ORDER BY</code>)</li>
      * <li> {@link SQLDialect#MYSQL}</li>
      * <li> {@link SQLDialect#SQLITE} (but without <code>ORDER BY</code>)</li>
      * </ul>
@@ -17609,24 +18696,28 @@ public class DSL {
      * <p>
      * This is natively supported by
      * <ul>
-     * <li> {@link SQLDialect#AURORA_MYSQL}</li>
-     * <li> {@link SQLDialect#CUBRID}</li>
-     * <li> {@link SQLDialect#H2}</li>
-     * <li> {@link SQLDialect#HSQLDB}</li>
-     * <li> {@link SQLDialect#MYSQL}</li>
-     * <li> {@link SQLDialect#SQLITE}</li>
+     * <li>{@link SQLDialect#AURORA_MYSQL}</li>
+     * <li>{@link SQLDialect#CUBRID}</li>
+     * <li>{@link SQLDialect#H2}</li>
+     * <li>{@link SQLDialect#HSQLDB}</li>
+     * <li>{@link SQLDialect#MEMSQL}</li>
+     * <li>{@link SQLDialect#MYSQL}</li>
+     * <li>{@link SQLDialect#SQLITE}</li>
      * </ul>
      * <p>
      * It is emulated by the following dialects:
      * <ul>
-     * <li> {@link SQLDialect#DB2}: Using <code>XMLAGG()</code></li>
-     * <li> {@link SQLDialect#ORACLE}: Using <code>LISTAGG()</code></li>
-     * <li> {@link SQLDialect#POSTGRES}: Using <code>STRING_AGG()</code></li>
-     * <li> {@link SQLDialect#SYBASE}: Using <code>LIST()</code></li>
+     * <li>{@link SQLDialect#DB2}: Using <code>XMLAGG()</code></li>
+     * <li>{@link SQLDialect#ORACLE}: Using <code>LISTAGG()</code></li>
+     * <li>{@link SQLDialect#POSTGRES}: Using <code>STRING_AGG()</code></li>
+     * <li>{@link SQLDialect#SYBASE}: Using <code>LIST()</code></li>
      * </ul>
      *
      * @see #listAgg(Field)
+     * @deprecated - [#7956] - 3.12.0 - Use {@link #groupConcat(Field)} and
+     *             {@link GroupConcatSeparatorStep#separator(String)} instead.
      */
+    @Deprecated
     @Support({ CUBRID, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static AggregateFunction<String> groupConcat(Field<?> field, String separator) {
         return new GroupConcat(nullSafe(field)).separator(separator);
@@ -17665,7 +18756,7 @@ public class DSL {
      * The <code>mode() within group (oder by [order clause])</code> ordered
      * aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunctionOfDeferredType mode() {
         return new Mode();
     }
@@ -17674,72 +18765,72 @@ public class DSL {
      * The <code>rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> rank(Field<?>... fields) {
-        return new org.jooq.impl.Function<Integer>("rank", SQLDataType.INTEGER, fields);
+        return new org.jooq.impl.Function<>("rank", SQLDataType.INTEGER, fields);
     }
 
     /**
      * The <code>rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> rank(Collection<? extends Field<?>> fields) {
-        return new org.jooq.impl.Function<Integer>("rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
+        return new org.jooq.impl.Function<>("rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
     }
 
     /**
      * The <code>dense_rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> denseRank(Field<?>... fields) {
-        return new org.jooq.impl.Function<Integer>("dense_rank", SQLDataType.INTEGER, fields);
+        return new org.jooq.impl.Function<>("dense_rank", SQLDataType.INTEGER, fields);
     }
 
     /**
      * The <code>dense_rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> denseRank(Collection<? extends Field<?>> fields) {
-        return new org.jooq.impl.Function<Integer>("dense_rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
+        return new org.jooq.impl.Function<>("dense_rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
     }
 
     /**
      * The <code>percent_rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> percentRank(Field<?>... fields) {
-        return new org.jooq.impl.Function<Integer>("percent_rank", SQLDataType.INTEGER, fields);
+        return new org.jooq.impl.Function<>("percent_rank", SQLDataType.INTEGER, fields);
     }
 
     /**
      * The <code>percent_rank(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<Integer> percentRank(Collection<? extends Field<?>> fields) {
-        return new org.jooq.impl.Function<Integer>("percent_rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
+        return new org.jooq.impl.Function<>("percent_rank", SQLDataType.INTEGER, fields.toArray(EMPTY_QUERYPART));
     }
 
     /**
      * The <code>cume_dist(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> cumeDist(Field<?>... fields) {
-        return new org.jooq.impl.Function<BigDecimal>("cume_dist", SQLDataType.NUMERIC, fields);
+        return new org.jooq.impl.Function<>("cume_dist", SQLDataType.NUMERIC, fields);
     }
 
     /**
      * The <code>cume_dist(expr) within group (order by [order clause])</code>
      * ordered-set aggregate function.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> cumeDist(Collection<? extends Field<?>> fields) {
-        return new org.jooq.impl.Function<BigDecimal>("cume_dist", SQLDataType.NUMERIC, fields.toArray(EMPTY_QUERYPART));
+        return new org.jooq.impl.Function<>("cume_dist", SQLDataType.NUMERIC, fields.toArray(EMPTY_QUERYPART));
     }
 
     /**
@@ -17751,7 +18842,7 @@ public class DSL {
      * this as an aggregate function, {@link SQLDialect#SQLSERVER} and
      * {@link SQLDialect#REDSHIFT} support only its window function variant.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> percentileCont(Number number) {
         return percentileCont(val(number));
     }
@@ -17765,9 +18856,9 @@ public class DSL {
      * this as an aggregate function, {@link SQLDialect#SQLSERVER} and
      * {@link SQLDialect#REDSHIFT} support only its window function variant.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> percentileCont(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("percentile_cont", SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("percentile_cont", SQLDataType.NUMERIC, nullSafe(field));
     }
 
     /**
@@ -17779,7 +18870,7 @@ public class DSL {
      * this as an aggregate function, {@link SQLDialect#SQLSERVER} and
      * {@link SQLDialect#REDSHIFT} support only its window function variant.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> percentileDisc(Number number) {
         return percentileDisc(val(number));
     }
@@ -17793,9 +18884,9 @@ public class DSL {
      * this as an aggregate function, {@link SQLDialect#SQLSERVER} and
      * {@link SQLDialect#REDSHIFT} support only its window function variant.
      */
-    @Support({ POSTGRES_9_4 })
+    @Support({ H2, POSTGRES })
     public static OrderedAggregateFunction<BigDecimal> percentileDisc(Field<? extends Number> field) {
-        return new org.jooq.impl.Function<BigDecimal>("percentile_disc", SQLDataType.NUMERIC, nullSafe(field));
+        return new org.jooq.impl.Function<>("percentile_disc", SQLDataType.NUMERIC, nullSafe(field));
     }
 
     // -------------------------------------------------------------------------
@@ -17805,7 +18896,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>PARTITION BY</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationOrderByStep partitionBy(Field<?>... fields) {
         return new WindowSpecificationImpl().partitionBy(fields);
     }
@@ -17813,7 +18904,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>PARTITION BY</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationOrderByStep partitionBy(Collection<? extends Field<?>> fields) {
         return new WindowSpecificationImpl().partitionBy(fields);
     }
@@ -17821,7 +18912,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with an <code>ORDER BY</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsStep orderBy(Field<?>... fields) {
         return new WindowSpecificationImpl().orderBy(fields);
     }
@@ -17829,7 +18920,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with an <code>ORDER BY</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsStep orderBy(OrderField<?>... fields) {
         return new WindowSpecificationImpl().orderBy(fields);
     }
@@ -17837,7 +18928,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with an <code>ORDER BY</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsStep orderBy(Collection<? extends OrderField<?>> fields) {
         return new WindowSpecificationImpl().orderBy(fields);
     }
@@ -17845,47 +18936,47 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rowsUnboundedPreceding() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rowsUnboundedPreceding() {
         return new WindowSpecificationImpl().rowsUnboundedPreceding();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rowsPreceding(int number) {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rowsPreceding(int number) {
         return new WindowSpecificationImpl().rowsPreceding(number);
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rowsCurrentRow() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rowsCurrentRow() {
         return new WindowSpecificationImpl().rowsCurrentRow();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rowsUnboundedFollowing() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rowsUnboundedFollowing() {
         return new WindowSpecificationImpl().rowsUnboundedFollowing();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rowsFollowing(int number) {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rowsFollowing(int number) {
         return new WindowSpecificationImpl().rowsFollowing(number);
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rowsBetweenUnboundedPreceding() {
         return new WindowSpecificationImpl().rowsBetweenUnboundedPreceding();
     }
@@ -17893,7 +18984,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rowsBetweenPreceding(int number) {
         return new WindowSpecificationImpl().rowsBetweenPreceding(number);
     }
@@ -17901,7 +18992,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rowsBetweenCurrentRow() {
         return new WindowSpecificationImpl().rowsBetweenCurrentRow();
     }
@@ -17909,7 +19000,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rowsBetweenUnboundedFollowing() {
         return new WindowSpecificationImpl().rowsBetweenUnboundedFollowing();
     }
@@ -17917,7 +19008,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>ROWS</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rowsBetweenFollowing(int number) {
         return new WindowSpecificationImpl().rowsBetweenFollowing(number);
     }
@@ -17925,47 +19016,47 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rangeUnboundedPreceding() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rangeUnboundedPreceding() {
         return new WindowSpecificationImpl().rangeUnboundedPreceding();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rangePreceding(int number) {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rangePreceding(int number) {
         return new WindowSpecificationImpl().rangePreceding(number);
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rangeCurrentRow() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rangeCurrentRow() {
         return new WindowSpecificationImpl().rangeCurrentRow();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rangeUnboundedFollowing() {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rangeUnboundedFollowing() {
         return new WindowSpecificationImpl().rangeUnboundedFollowing();
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
-    public static WindowSpecificationFinalStep rangeFollowing(int number) {
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep rangeFollowing(int number) {
         return new WindowSpecificationImpl().rangeFollowing(number);
     }
 
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rangeBetweenUnboundedPreceding() {
         return new WindowSpecificationImpl().rangeBetweenUnboundedPreceding();
     }
@@ -17973,7 +19064,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rangeBetweenPreceding(int number) {
         return new WindowSpecificationImpl().rangeBetweenPreceding(number);
     }
@@ -17981,7 +19072,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rangeBetweenCurrentRow() {
         return new WindowSpecificationImpl().rangeBetweenCurrentRow();
     }
@@ -17989,7 +19080,7 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rangeBetweenUnboundedFollowing() {
         return new WindowSpecificationImpl().rangeBetweenUnboundedFollowing();
     }
@@ -17997,9 +19088,89 @@ public class DSL {
     /**
      * Create a {@link WindowSpecification} with a <code>RANGE</code> clause.
      */
-    @Support({ MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowSpecificationRowsAndStep rangeBetweenFollowing(int number) {
         return new WindowSpecificationImpl().rangeBetweenFollowing(number);
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep groupsUnboundedPreceding() {
+        return new WindowSpecificationImpl().groupsUnboundedPreceding();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep groupsPreceding(int number) {
+        return new WindowSpecificationImpl().groupsPreceding(number);
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep groupsCurrentRow() {
+        return new WindowSpecificationImpl().groupsCurrentRow();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep groupsUnboundedFollowing() {
+        return new WindowSpecificationImpl().groupsUnboundedFollowing();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationExcludeStep groupsFollowing(int number) {
+        return new WindowSpecificationImpl().groupsFollowing(number);
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationRowsAndStep groupsBetweenUnboundedPreceding() {
+        return new WindowSpecificationImpl().groupsBetweenUnboundedPreceding();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationRowsAndStep groupsBetweenPreceding(int number) {
+        return new WindowSpecificationImpl().groupsBetweenPreceding(number);
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationRowsAndStep groupsBetweenCurrentRow() {
+        return new WindowSpecificationImpl().groupsBetweenCurrentRow();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationRowsAndStep groupsBetweenUnboundedFollowing() {
+        return new WindowSpecificationImpl().groupsBetweenUnboundedFollowing();
+    }
+
+    /**
+     * Create a {@link WindowSpecification} with a <code>GROUPS</code> clause.
+     */
+    @Support({ H2, POSTGRES, SQLITE })
+    public static WindowSpecificationRowsAndStep groupsBetweenFollowing(int number) {
+        return new WindowSpecificationImpl().groupsBetweenFollowing(number);
     }
 
     // -------------------------------------------------------------------------
@@ -18015,55 +19186,55 @@ public class DSL {
      * {@link SQLDialect#HSQLDB} can emulate this function using
      * <code>ROWNUM()</code>
      */
-    @Support({ CUBRID, DERBY, FIREBIRD_3_0, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support
     public static WindowOverStep<Integer> rowNumber() {
-        return new org.jooq.impl.Function<Integer>(ROW_NUMBER, SQLDataType.INTEGER);
+        return new org.jooq.impl.Function<>(ROW_NUMBER, SQLDataType.INTEGER);
     }
 
     /**
      * The <code>rank() over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<Integer> rank() {
-        return new org.jooq.impl.Function<Integer>("rank", SQLDataType.INTEGER);
+        return new org.jooq.impl.Function<>(RANK, SQLDataType.INTEGER);
     }
 
     /**
      * The <code>dense_rank() over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<Integer> denseRank() {
-        return new org.jooq.impl.Function<Integer>("dense_rank", SQLDataType.INTEGER);
+        return new org.jooq.impl.Function<>(DENSE_RANK, SQLDataType.INTEGER);
     }
 
     /**
      * The <code>precent_rank() over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<BigDecimal> percentRank() {
-        return new org.jooq.impl.Function<BigDecimal>("percent_rank", SQLDataType.NUMERIC);
+        return new org.jooq.impl.Function<>(PERCENT_RANK, SQLDataType.NUMERIC);
     }
 
     /**
      * The <code>cume_dist() over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<BigDecimal> cumeDist() {
-        return new org.jooq.impl.Function<BigDecimal>("cume_dist", SQLDataType.NUMERIC);
+        return new org.jooq.impl.Function<>(CUME_DIST, SQLDataType.NUMERIC);
     }
 
     /**
      * The <code>ntile([number]) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<Integer> ntile(int number) {
-        return new org.jooq.impl.Function<Integer>("ntile", SQLDataType.INTEGER, inline(number));
+        return new org.jooq.impl.Function<>(NTILE, SQLDataType.INTEGER, inline(number));
     }
 
     /**
      * The <code>ratio_to_report([expression]) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<BigDecimal> ratioToReport(Number number) {
         return ratioToReport(Tools.field(number));
     }
@@ -18071,7 +19242,7 @@ public class DSL {
     /**
      * The <code>ratio_to_report([expression]) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static WindowOverStep<BigDecimal> ratioToReport(Field<? extends Number> field) {
         return new RatioToReport(nullSafe(field));
     }
@@ -18079,23 +19250,23 @@ public class DSL {
     /**
      * The <code>first_value(field) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> firstValue(Field<T> field) {
-        return new org.jooq.impl.Function<T>("first_value", nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>(FIRST_VALUE, nullSafeDataType(field), nullSafe(field));
     }
 
     /**
      * The <code>last_value(field) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lastValue(Field<T> field) {
-        return new org.jooq.impl.Function<T>("last_value", nullSafeDataType(field), nullSafe(field));
+        return new org.jooq.impl.Function<>(LAST_VALUE, nullSafeDataType(field), nullSafe(field));
     }
 
     /**
      * The <code>nth_value(field) over ([analytic clause])</code> function.
      */
-    @Support({ FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowFromFirstLastStep<T> nthValue(Field<T> field, int nth) {
         return nthValue(field, val(nth));
     }
@@ -18103,25 +19274,25 @@ public class DSL {
     /**
      * The <code>nth_value(field) over ([analytic clause])</code> function.
      */
-    @Support({ FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowFromFirstLastStep<T> nthValue(Field<T> field, Field<Integer> nth) {
-        return new org.jooq.impl.Function<T>("nth_value", nullSafeDataType(field), nullSafe(field), nullSafe(nth));
+        return new org.jooq.impl.Function<>(NTH_VALUE, nullSafeDataType(field), nullSafe(field), nullSafe(nth));
     }
 
     /**
      * The <code>lead(field) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lead(Field<T> field) {
-        return new LeadLag<T>("lead", nullSafe(field));
+        return new LeadLag<>(LEAD, nullSafe(field));
     }
 
     /**
      * The <code>lead(field, offset) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lead(Field<T> field, int offset) {
-        return new LeadLag<T>("lead", nullSafe(field), offset);
+        return new LeadLag<>(LEAD, nullSafe(field), offset);
     }
 
     /**
@@ -18129,7 +19300,7 @@ public class DSL {
      * <code>lead(field, offset, defaultValue) over ([analytic clause])</code>
      * function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lead(Field<T> field, int offset, T defaultValue) {
         return lead(nullSafe(field), offset, Tools.field(defaultValue, field));
     }
@@ -18139,25 +19310,25 @@ public class DSL {
      * <code>lead(field, offset, defaultValue) over ([analytic clause])</code>
      * function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lead(Field<T> field, int offset, Field<T> defaultValue) {
-        return new LeadLag<T>("lead", nullSafe(field), offset, nullSafe(defaultValue));
+        return new LeadLag<>(LEAD, nullSafe(field), offset, nullSafe(defaultValue));
     }
 
     /**
      * The <code>lag(field) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lag(Field<T> field) {
-        return new LeadLag<T>("lag", nullSafe(field));
+        return new LeadLag<>(LAG, nullSafe(field));
     }
 
     /**
      * The <code>lag(field, offset) over ([analytic clause])</code> function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MARIADB, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lag(Field<T> field, int offset) {
-        return new LeadLag<T>("lag", nullSafe(field), offset);
+        return new LeadLag<>(LAG, nullSafe(field), offset);
     }
 
     /**
@@ -18165,7 +19336,7 @@ public class DSL {
      * <code>lag(field, offset, defaultValue) over ([analytic clause])</code>
      * function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lag(Field<T> field, int offset, T defaultValue) {
         return lag(nullSafe(field), offset, Tools.field(defaultValue, field));
     }
@@ -18175,9 +19346,9 @@ public class DSL {
      * <code>lag(field, offset, defaultValue) over ([analytic clause])</code>
      * function.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, MYSQL_8_0, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, MYSQL, POSTGRES, SQLITE })
     public static <T> WindowIgnoreNullsStep<T> lag(Field<T> field, int offset, Field<T> defaultValue) {
-        return new LeadLag<T>("lag", nullSafe(field), offset, nullSafe(defaultValue));
+        return new LeadLag<>(LAG, nullSafe(field), offset, nullSafe(defaultValue));
     }
 
     // -------------------------------------------------------------------------
@@ -18225,7 +19396,7 @@ public class DSL {
      */
     @Support
     public static <T> Param<T> param(DataType<T> type) {
-        return new Val<T>(null, type);
+        return new Val<>(null, type);
     }
 
     /**
@@ -18280,7 +19451,7 @@ public class DSL {
      */
     @Support
     public static <T> Param<T> param(String name, DataType<T> type) {
-        return new Val<T>(null, type, name);
+        return new Val<>(null, type, name);
     }
 
     /**
@@ -18313,7 +19484,7 @@ public class DSL {
      */
     @Support
     public static <T> Param<T> param(String name, T value) {
-        return new Val<T>(value, Tools.field(value).getDataType(), name);
+        return new Val<>(value, Tools.field(value).getDataType(), name);
     }
 
     /**
@@ -18333,6 +19504,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> value(byte value) {
         return value((Object) value, SQLDataType.TINYINT);
     }
@@ -18343,6 +19515,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> value(Byte value) {
         return value((Object) value, SQLDataType.TINYINT);
     }
@@ -18353,6 +19526,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UByte> value(UByte value) {
         return value((Object) value, SQLDataType.TINYINTUNSIGNED);
     }
@@ -18363,6 +19537,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> value(short value) {
         return value((Object) value, SQLDataType.SMALLINT);
     }
@@ -18373,6 +19548,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> value(Short value) {
         return value((Object) value, SQLDataType.SMALLINT);
     }
@@ -18383,6 +19559,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UShort> value(UShort value) {
         return value((Object) value, SQLDataType.SMALLINTUNSIGNED);
     }
@@ -18393,6 +19570,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> value(int value) {
         return value((Object) value, SQLDataType.INTEGER);
     }
@@ -18403,6 +19581,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> value(Integer value) {
         return value((Object) value, SQLDataType.INTEGER);
     }
@@ -18413,6 +19592,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UInteger> value(UInteger value) {
         return value((Object) value, SQLDataType.INTEGERUNSIGNED);
     }
@@ -18423,6 +19603,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> value(long value) {
         return value((Object) value, SQLDataType.BIGINT);
     }
@@ -18433,6 +19614,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> value(Long value) {
         return value((Object) value, SQLDataType.BIGINT);
     }
@@ -18443,6 +19625,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<ULong> value(ULong value) {
         return value((Object) value, SQLDataType.BIGINTUNSIGNED);
     }
@@ -18453,6 +19636,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> value(float value) {
         return value((Object) value, SQLDataType.REAL);
     }
@@ -18463,6 +19647,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> value(Float value) {
         return value((Object) value, SQLDataType.REAL);
     }
@@ -18473,6 +19658,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> value(double value) {
         return value((Object) value, SQLDataType.DOUBLE);
     }
@@ -18483,6 +19669,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> value(Double value) {
         return value((Object) value, SQLDataType.DOUBLE);
     }
@@ -18493,6 +19680,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> value(boolean value) {
         return value((Object) value, SQLDataType.BOOLEAN);
     }
@@ -18503,6 +19691,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> value(Boolean value) {
         return value((Object) value, SQLDataType.BOOLEAN);
     }
@@ -18513,6 +19702,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<BigDecimal> value(BigDecimal value) {
         return value((Object) value, SQLDataType.DECIMAL);
     }
@@ -18523,6 +19713,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<BigInteger> value(BigInteger value) {
         return value((Object) value, SQLDataType.DECIMAL_INTEGER);
     }
@@ -18533,6 +19724,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<byte[]> value(byte[] value) {
         return value((Object) value, SQLDataType.VARBINARY);
     }
@@ -18543,6 +19735,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<String> value(String value) {
         return value((Object) value, SQLDataType.VARCHAR);
     }
@@ -18553,6 +19746,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Date> value(Date value) {
         return value((Object) value, SQLDataType.DATE);
     }
@@ -18563,6 +19757,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Time> value(Time value) {
         return value((Object) value, SQLDataType.TIME);
     }
@@ -18573,6 +19768,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Timestamp> value(Timestamp value) {
         return value((Object) value, SQLDataType.TIMESTAMP);
     }
@@ -18584,6 +19780,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDate> value(LocalDate value) {
         return value((Object) value, SQLDataType.LOCALDATE);
     }
@@ -18594,6 +19791,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalTime> value(LocalTime value) {
         return value((Object) value, SQLDataType.LOCALTIME);
     }
@@ -18604,6 +19802,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDateTime> value(LocalDateTime value) {
         return value((Object) value, SQLDataType.LOCALDATETIME);
     }
@@ -18614,6 +19813,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetTime> value(OffsetTime value) {
         return value((Object) value, SQLDataType.OFFSETTIME);
     }
@@ -18624,8 +19824,20 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetDateTime> value(OffsetDateTime value) {
         return value((Object) value, SQLDataType.OFFSETDATETIME);
+    }
+
+    /**
+     * A synonym for {@link #val(Object)} to be used in Scala and Groovy, where
+     * <code>val</code> is a reserved keyword.
+     *
+     * @see #val(Object)
+     */
+    @Support
+    public static Param<Instant> value(Instant value) {
+        return value((Object) value, SQLDataType.INSTANT);
     }
 
 
@@ -18635,6 +19847,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UUID> value(UUID value) {
         return value((Object) value, SQLDataType.UUID);
     }
@@ -18711,6 +19924,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> inline(byte value) {
         return inline((Object) value, SQLDataType.TINYINT);
     }
@@ -18731,6 +19945,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> inline(Byte value) {
         return inline((Object) value, SQLDataType.TINYINT);
     }
@@ -18751,6 +19966,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<UByte> inline(UByte value) {
         return inline((Object) value, SQLDataType.TINYINTUNSIGNED);
     }
@@ -18771,6 +19987,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> inline(short value) {
         return inline((Object) value, SQLDataType.SMALLINT);
     }
@@ -18791,6 +20008,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> inline(Short value) {
         return inline((Object) value, SQLDataType.SMALLINT);
     }
@@ -18811,6 +20029,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<UShort> inline(UShort value) {
         return inline((Object) value, SQLDataType.SMALLINTUNSIGNED);
     }
@@ -18831,6 +20050,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> inline(int value) {
         return inline((Object) value, SQLDataType.INTEGER);
     }
@@ -18851,6 +20071,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> inline(Integer value) {
         return inline((Object) value, SQLDataType.INTEGER);
     }
@@ -18871,6 +20092,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<UInteger> inline(UInteger value) {
         return inline((Object) value, SQLDataType.INTEGERUNSIGNED);
     }
@@ -18891,6 +20113,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> inline(long value) {
         return inline((Object) value, SQLDataType.BIGINT);
     }
@@ -18911,6 +20134,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> inline(Long value) {
         return inline((Object) value, SQLDataType.BIGINT);
     }
@@ -18931,6 +20155,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<ULong> inline(ULong value) {
         return inline((Object) value, SQLDataType.BIGINTUNSIGNED);
     }
@@ -18951,6 +20176,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> inline(float value) {
         return inline((Object) value, SQLDataType.REAL);
     }
@@ -18971,6 +20197,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> inline(Float value) {
         return inline((Object) value, SQLDataType.REAL);
     }
@@ -18991,6 +20218,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> inline(double value) {
         return inline((Object) value, SQLDataType.DOUBLE);
     }
@@ -19011,6 +20239,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> inline(Double value) {
         return inline((Object) value, SQLDataType.DOUBLE);
     }
@@ -19031,6 +20260,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> inline(boolean value) {
         return inline((Object) value, SQLDataType.BOOLEAN);
     }
@@ -19051,6 +20281,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> inline(Boolean value) {
         return inline((Object) value, SQLDataType.BOOLEAN);
     }
@@ -19071,6 +20302,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<BigDecimal> inline(BigDecimal value) {
         return inline((Object) value, SQLDataType.DECIMAL);
     }
@@ -19091,6 +20323,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<BigInteger> inline(BigInteger value) {
         return inline((Object) value, SQLDataType.DECIMAL_INTEGER);
     }
@@ -19111,6 +20344,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<byte[]> inline(byte[] value) {
         return inline((Object) value, SQLDataType.VARBINARY);
     }
@@ -19131,6 +20365,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<String> inline(String value) {
         return inline((Object) value, SQLDataType.VARCHAR);
     }
@@ -19151,6 +20386,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Date> inline(Date value) {
         return inline((Object) value, SQLDataType.DATE);
     }
@@ -19171,6 +20407,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Time> inline(Time value) {
         return inline((Object) value, SQLDataType.TIME);
     }
@@ -19191,6 +20428,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<Timestamp> inline(Timestamp value) {
         return inline((Object) value, SQLDataType.TIMESTAMP);
     }
@@ -19212,6 +20450,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDate> inline(LocalDate value) {
         return inline((Object) value, SQLDataType.LOCALDATE);
     }
@@ -19232,6 +20471,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalTime> inline(LocalTime value) {
         return inline((Object) value, SQLDataType.LOCALTIME);
     }
@@ -19252,6 +20492,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDateTime> inline(LocalDateTime value) {
         return inline((Object) value, SQLDataType.LOCALDATETIME);
     }
@@ -19272,6 +20513,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetTime> inline(OffsetTime value) {
         return inline((Object) value, SQLDataType.OFFSETTIME);
     }
@@ -19292,8 +20534,30 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetDateTime> inline(OffsetDateTime value) {
         return inline((Object) value, SQLDataType.OFFSETDATETIME);
+    }
+
+    /**
+     * Create a bind value that is always inlined.
+     * <p>
+     * The resulting bind value is always inlined, regardless of the
+     * {@link Settings#getStatementType()} property of the rendering factory.
+     * Unlike with {@link #field(String)}, you can expect <code>value</code> to
+     * be properly escaped for SQL syntax correctness and SQL injection
+     * prevention. For example:
+     * <ul>
+     * <li><code>inline("abc'def")</code> renders <code>'abc''def'</code></li>
+     * <li><code>field("abc'def")</code> renders <code>abc'def</code></li>
+     * </ul>
+     *
+     * @see #inline(Object)
+     * @see #val(Object)
+     */
+    @Support
+    public static Param<Instant> inline(Instant value) {
+        return inline((Object) value, SQLDataType.INSTANT);
     }
 
 
@@ -19313,6 +20577,7 @@ public class DSL {
      * @see #inline(Object)
      * @see #val(Object)
      */
+    @Support
     public static Param<UUID> inline(UUID value) {
         return inline((Object) value, SQLDataType.UUID);
     }
@@ -19465,6 +20730,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> val(byte value) {
         return val((Object) value, SQLDataType.TINYINT);
     }
@@ -19474,6 +20740,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Byte> val(Byte value) {
         return val((Object) value, SQLDataType.TINYINT);
     }
@@ -19483,6 +20750,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UByte> val(UByte value) {
         return val((Object) value, SQLDataType.TINYINTUNSIGNED);
     }
@@ -19492,6 +20760,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> val(short value) {
         return val((Object) value, SQLDataType.SMALLINT);
     }
@@ -19501,6 +20770,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Short> val(Short value) {
         return val((Object) value, SQLDataType.SMALLINT);
     }
@@ -19510,6 +20780,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UShort> val(UShort value) {
         return val((Object) value, SQLDataType.SMALLINTUNSIGNED);
     }
@@ -19519,6 +20790,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> val(int value) {
         return val((Object) value, SQLDataType.INTEGER);
     }
@@ -19528,6 +20800,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Integer> val(Integer value) {
         return val((Object) value, SQLDataType.INTEGER);
     }
@@ -19537,6 +20810,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UInteger> val(UInteger value) {
         return val((Object) value, SQLDataType.INTEGERUNSIGNED);
     }
@@ -19546,6 +20820,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> val(long value) {
         return val((Object) value, SQLDataType.BIGINT);
     }
@@ -19555,6 +20830,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Long> val(Long value) {
         return val((Object) value, SQLDataType.BIGINT);
     }
@@ -19564,6 +20840,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<ULong> val(ULong value) {
         return val((Object) value, SQLDataType.BIGINTUNSIGNED);
     }
@@ -19573,6 +20850,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> val(float value) {
         return val((Object) value, SQLDataType.REAL);
     }
@@ -19582,6 +20860,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Float> val(Float value) {
         return val((Object) value, SQLDataType.REAL);
     }
@@ -19591,6 +20870,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> val(double value) {
         return val((Object) value, SQLDataType.DOUBLE);
     }
@@ -19600,6 +20880,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Double> val(Double value) {
         return val((Object) value, SQLDataType.DOUBLE);
     }
@@ -19609,6 +20890,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> val(boolean value) {
         return val((Object) value, SQLDataType.BOOLEAN);
     }
@@ -19618,6 +20900,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Boolean> val(Boolean value) {
         return val((Object) value, SQLDataType.BOOLEAN);
     }
@@ -19627,6 +20910,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<BigDecimal> val(BigDecimal value) {
         return val((Object) value, SQLDataType.DECIMAL);
     }
@@ -19636,6 +20920,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<BigInteger> val(BigInteger value) {
         return val((Object) value, SQLDataType.DECIMAL_INTEGER);
     }
@@ -19645,6 +20930,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<byte[]> val(byte[] value) {
         return val((Object) value, SQLDataType.VARBINARY);
     }
@@ -19654,6 +20940,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<String> val(String value) {
         return val((Object) value, SQLDataType.VARCHAR);
     }
@@ -19663,6 +20950,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Date> val(Date value) {
         return val((Object) value, SQLDataType.DATE);
     }
@@ -19672,6 +20960,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Time> val(Time value) {
         return val((Object) value, SQLDataType.TIME);
     }
@@ -19681,6 +20970,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<Timestamp> val(Timestamp value) {
         return val((Object) value, SQLDataType.TIMESTAMP);
     }
@@ -19691,6 +20981,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDate> val(LocalDate value) {
         return val((Object) value, SQLDataType.LOCALDATE);
     }
@@ -19700,6 +20991,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalTime> val(LocalTime value) {
         return val((Object) value, SQLDataType.LOCALTIME);
     }
@@ -19709,6 +21001,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<LocalDateTime> val(LocalDateTime value) {
         return val((Object) value, SQLDataType.LOCALDATETIME);
     }
@@ -19718,6 +21011,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetTime> val(OffsetTime value) {
         return val((Object) value, SQLDataType.OFFSETTIME);
     }
@@ -19727,8 +21021,19 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<OffsetDateTime> val(OffsetDateTime value) {
         return val((Object) value, SQLDataType.OFFSETDATETIME);
+    }
+
+    /**
+     * Get a bind value.
+     *
+     * @see #val(Object)
+     */
+    @Support
+    public static Param<Instant> val(Instant value) {
+        return val((Object) value, SQLDataType.INSTANT);
     }
 
 
@@ -19737,6 +21042,7 @@ public class DSL {
      *
      * @see #val(Object)
      */
+    @Support
     public static Param<UUID> val(UUID value) {
         return val((Object) value, SQLDataType.UUID);
     }
@@ -19798,7 +21104,7 @@ public class DSL {
         // The default behaviour
         else {
             T converted = type.convert(value);
-            return new Val<T>(converted, mostSpecific(converted, type));
+            return new Val<>(converted, mostSpecific(converted, type));
         }
     }
 
@@ -19851,12 +21157,11 @@ public class DSL {
         return new Fields(fields);
     }
 
-    // [jooq-tools] START [record-type]
+
 
     /**
      * Create a {@link RecordType} of degree <code>1</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1> RecordType<Record1<T1>> recordType(Field<T1> field1) {
         return new Fields(field1);
     }
@@ -19864,7 +21169,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>2</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2> RecordType<Record2<T1, T2>> recordType(Field<T1> field1, Field<T2> field2) {
         return new Fields(field1, field2);
     }
@@ -19872,7 +21176,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>3</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3> RecordType<Record3<T1, T2, T3>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3) {
         return new Fields(field1, field2, field3);
     }
@@ -19880,7 +21183,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>4</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4> RecordType<Record4<T1, T2, T3, T4>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
         return new Fields(field1, field2, field3, field4);
     }
@@ -19888,7 +21190,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>5</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5> RecordType<Record5<T1, T2, T3, T4, T5>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
         return new Fields(field1, field2, field3, field4, field5);
     }
@@ -19896,7 +21197,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>6</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6> RecordType<Record6<T1, T2, T3, T4, T5, T6>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
         return new Fields(field1, field2, field3, field4, field5, field6);
     }
@@ -19904,7 +21204,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>7</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7> RecordType<Record7<T1, T2, T3, T4, T5, T6, T7>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7);
     }
@@ -19912,7 +21211,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>8</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8> RecordType<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8);
     }
@@ -19920,7 +21218,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>9</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> RecordType<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9);
     }
@@ -19928,7 +21225,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>10</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> RecordType<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10);
     }
@@ -19936,7 +21232,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>11</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> RecordType<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11);
     }
@@ -19944,7 +21239,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>12</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> RecordType<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12);
     }
@@ -19952,7 +21246,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>13</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> RecordType<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13);
     }
@@ -19960,7 +21253,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>14</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> RecordType<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14);
     }
@@ -19968,7 +21260,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>15</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> RecordType<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15);
     }
@@ -19976,7 +21267,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>16</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> RecordType<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16);
     }
@@ -19984,7 +21274,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>17</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> RecordType<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17);
     }
@@ -19992,7 +21281,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>18</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> RecordType<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18);
     }
@@ -20000,7 +21288,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>19</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> RecordType<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19);
     }
@@ -20008,7 +21295,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>20</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> RecordType<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20);
     }
@@ -20016,7 +21302,6 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>21</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> RecordType<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21);
     }
@@ -20024,14 +21309,13 @@ public class DSL {
     /**
      * Create a {@link RecordType} of degree <code>22</code>.
      */
-    @Generated("This method was generated using jOOQ-tools")
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> RecordType<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> recordType(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
         return new Fields(field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22);
     }
 
-// [jooq-tools] END [record-type]
 
-    // [jooq-tools] START [row-value]
+
+
 
     /**
      * Create a row value expression of degree <code>1</code>.
@@ -20040,7 +21324,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> Row1<T1> row(T1 t1) {
         return row(Tools.field(t1));
@@ -20053,7 +21336,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> Row2<T1, T2> row(T1 t1, T2 t2) {
         return row(Tools.field(t1), Tools.field(t2));
@@ -20066,7 +21348,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> Row3<T1, T2, T3> row(T1 t1, T2 t2, T3 t3) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3));
@@ -20079,7 +21360,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> Row4<T1, T2, T3, T4> row(T1 t1, T2 t2, T3 t3, T4 t4) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4));
@@ -20092,7 +21372,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> Row5<T1, T2, T3, T4, T5> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5));
@@ -20105,7 +21384,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> Row6<T1, T2, T3, T4, T5, T6> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6));
@@ -20118,7 +21396,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> Row7<T1, T2, T3, T4, T5, T6, T7> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7));
@@ -20131,7 +21408,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> Row8<T1, T2, T3, T4, T5, T6, T7, T8> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8));
@@ -20144,7 +21420,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9));
@@ -20157,7 +21432,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10));
@@ -20170,7 +21444,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11));
@@ -20183,7 +21456,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12));
@@ -20196,7 +21468,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13));
@@ -20209,7 +21480,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14));
@@ -20222,7 +21492,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15));
@@ -20235,7 +21504,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16));
@@ -20248,7 +21516,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17));
@@ -20261,7 +21528,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17), Tools.field(t18));
@@ -20274,7 +21540,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17), Tools.field(t18), Tools.field(t19));
@@ -20287,7 +21552,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17), Tools.field(t18), Tools.field(t19), Tools.field(t20));
@@ -20300,7 +21564,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20, T21 t21) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17), Tools.field(t18), Tools.field(t19), Tools.field(t20), Tools.field(t21));
@@ -20313,16 +21576,15 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row(T1 t1, T2 t2, T3 t3, T4 t4, T5 t5, T6 t6, T7 t7, T8 t8, T9 t9, T10 t10, T11 t11, T12 t12, T13 t13, T14 t14, T15 t15, T16 t16, T17 t17, T18 t18, T19 t19, T20 t20, T21 t21, T22 t22) {
         return row(Tools.field(t1), Tools.field(t2), Tools.field(t3), Tools.field(t4), Tools.field(t5), Tools.field(t6), Tools.field(t7), Tools.field(t8), Tools.field(t9), Tools.field(t10), Tools.field(t11), Tools.field(t12), Tools.field(t13), Tools.field(t14), Tools.field(t15), Tools.field(t16), Tools.field(t17), Tools.field(t18), Tools.field(t19), Tools.field(t20), Tools.field(t21), Tools.field(t22));
     }
 
-// [jooq-tools] END [row-value]
+
 
     /**
-     * Create a row value expression of degree <code>N > 22</code>.
+     * Create a row value expression of degree <code>N &gt; 22</code>.
      * <p>
      * Note: Not all databases support row value expressions, but many row value
      * expression operations can be emulated on all databases. See relevant row
@@ -20333,7 +21595,7 @@ public class DSL {
         return row(Tools.fields(values).toArray(EMPTY_FIELD));
     }
 
-// [jooq-tools] START [row-expression]
+
 
     /**
      * Create a row value expression of degree <code>1</code>.
@@ -20342,7 +21604,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> Row1<T1> row(Field<T1> t1) {
         return new RowImpl(t1);
@@ -20355,7 +21616,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> Row2<T1, T2> row(Field<T1> t1, Field<T2> t2) {
         return new RowImpl(t1, t2);
@@ -20368,7 +21628,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> Row3<T1, T2, T3> row(Field<T1> t1, Field<T2> t2, Field<T3> t3) {
         return new RowImpl(t1, t2, t3);
@@ -20381,7 +21640,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> Row4<T1, T2, T3, T4> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4) {
         return new RowImpl(t1, t2, t3, t4);
@@ -20394,7 +21652,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> Row5<T1, T2, T3, T4, T5> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5) {
         return new RowImpl(t1, t2, t3, t4, t5);
@@ -20407,7 +21664,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> Row6<T1, T2, T3, T4, T5, T6> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6) {
         return new RowImpl(t1, t2, t3, t4, t5, t6);
@@ -20420,7 +21676,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> Row7<T1, T2, T3, T4, T5, T6, T7> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7);
@@ -20433,7 +21688,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> Row8<T1, T2, T3, T4, T5, T6, T7, T8> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8);
@@ -20446,7 +21700,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9);
@@ -20459,7 +21712,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10);
@@ -20472,7 +21724,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11);
@@ -20485,7 +21736,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12);
@@ -20498,7 +21748,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13);
@@ -20511,7 +21760,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14);
@@ -20524,7 +21772,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15);
@@ -20537,7 +21784,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16);
@@ -20550,7 +21796,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17);
@@ -20563,7 +21808,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17, Field<T18> t18) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18);
@@ -20576,7 +21820,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17, Field<T18> t18, Field<T19> t19) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19);
@@ -20589,7 +21832,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17, Field<T18> t18, Field<T19> t19, Field<T20> t20) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20);
@@ -20602,7 +21844,6 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17, Field<T18> t18, Field<T19> t19, Field<T20> t20, Field<T21> t21) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21);
@@ -20615,16 +21856,15 @@ public class DSL {
      * expression operations can be emulated on all databases. See relevant row
      * value expression method Javadocs for details.
      */
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row(Field<T1> t1, Field<T2> t2, Field<T3> t3, Field<T4> t4, Field<T5> t5, Field<T6> t6, Field<T7> t7, Field<T8> t8, Field<T9> t9, Field<T10> t10, Field<T11> t11, Field<T12> t12, Field<T13> t13, Field<T14> t14, Field<T15> t15, Field<T16> t16, Field<T17> t17, Field<T18> t18, Field<T19> t19, Field<T20> t20, Field<T21> t21, Field<T22> t22) {
         return new RowImpl(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16, t17, t18, t19, t20, t21, t22);
     }
 
-// [jooq-tools] END [row-expression]
+
 
     /**
-     * Create a row value expression of degree <code>N > 22</code>.
+     * Create a row value expression of degree <code>N &gt; 22</code>.
      * <p>
      * Note: Not all databases support row value expressions, but many row value
      * expression operations can be emulated on all databases. See relevant row
@@ -20636,7 +21876,7 @@ public class DSL {
     }
 
     /**
-     * Create a row value expression of degree <code>N > 22</code>.
+     * Create a row value expression of degree <code>N &gt; 22</code>.
      * <p>
      * Note: Not all databases support row value expressions, but many row value
      * expression operations can be emulated on all databases. See relevant row
@@ -20644,7 +21884,7 @@ public class DSL {
      */
     @Support
     public static RowN row(Collection<?> values) {
-        Collection<Field<?>> fields = new ArrayList<Field<?>>(values.size());
+        Collection<Field<?>> fields = new ArrayList<>(values.size());
 
         for (Object o : values)
             fields.add(o instanceof Field<?> ? (Field<?>) o : val(o));
@@ -20695,7 +21935,7 @@ public class DSL {
         return new Values<Record>(rows).as("v", columns);
     }
 
-// [jooq-tools] START [values]
+
 
     /**
      * Create a <code>VALUES()</code> expression of degree <code>1</code>.
@@ -20726,7 +21966,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1> Table<Record1<T1>> values(Row1<T1>... rows) {
         return new Values<Record1<T1>>(rows).as("v", "c1");
@@ -20761,7 +22000,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2> Table<Record2<T1, T2>> values(Row2<T1, T2>... rows) {
         return new Values<Record2<T1, T2>>(rows).as("v", "c1", "c2");
@@ -20796,7 +22034,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3> Table<Record3<T1, T2, T3>> values(Row3<T1, T2, T3>... rows) {
         return new Values<Record3<T1, T2, T3>>(rows).as("v", "c1", "c2", "c3");
@@ -20831,7 +22068,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4> Table<Record4<T1, T2, T3, T4>> values(Row4<T1, T2, T3, T4>... rows) {
         return new Values<Record4<T1, T2, T3, T4>>(rows).as("v", "c1", "c2", "c3", "c4");
@@ -20866,7 +22102,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5> Table<Record5<T1, T2, T3, T4, T5>> values(Row5<T1, T2, T3, T4, T5>... rows) {
         return new Values<Record5<T1, T2, T3, T4, T5>>(rows).as("v", "c1", "c2", "c3", "c4", "c5");
@@ -20901,7 +22136,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6> Table<Record6<T1, T2, T3, T4, T5, T6>> values(Row6<T1, T2, T3, T4, T5, T6>... rows) {
         return new Values<Record6<T1, T2, T3, T4, T5, T6>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6");
@@ -20936,7 +22170,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7> Table<Record7<T1, T2, T3, T4, T5, T6, T7>> values(Row7<T1, T2, T3, T4, T5, T6, T7>... rows) {
         return new Values<Record7<T1, T2, T3, T4, T5, T6, T7>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7");
@@ -20971,7 +22204,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8> Table<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> values(Row8<T1, T2, T3, T4, T5, T6, T7, T8>... rows) {
         return new Values<Record8<T1, T2, T3, T4, T5, T6, T7, T8>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8");
@@ -21006,7 +22238,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9> Table<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> values(Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9>... rows) {
         return new Values<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9");
@@ -21041,7 +22272,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> Table<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> values(Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>... rows) {
         return new Values<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10");
@@ -21076,7 +22306,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> Table<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> values(Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>... rows) {
         return new Values<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11");
@@ -21111,7 +22340,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> Table<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> values(Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>... rows) {
         return new Values<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12");
@@ -21146,7 +22374,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> Table<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> values(Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>... rows) {
         return new Values<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13");
@@ -21181,7 +22408,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> Table<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> values(Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>... rows) {
         return new Values<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14");
@@ -21216,7 +22442,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> Table<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> values(Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>... rows) {
         return new Values<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15");
@@ -21251,7 +22476,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> Table<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> values(Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>... rows) {
         return new Values<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16");
@@ -21286,7 +22510,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> Table<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> values(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>... rows) {
         return new Values<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17");
@@ -21321,7 +22544,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> Table<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> values(Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>... rows) {
         return new Values<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18");
@@ -21356,7 +22578,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> Table<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> values(Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>... rows) {
         return new Values<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19");
@@ -21391,7 +22612,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> Table<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> values(Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>... rows) {
         return new Values<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20");
@@ -21426,7 +22646,6 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> Table<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> values(Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>... rows) {
         return new Values<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20", "c21");
@@ -21461,13 +22680,12 @@ public class DSL {
 
     @SafeVarargs
 
-    @Generated("This method was generated using jOOQ-tools")
     @Support
     public static <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> Table<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> values(Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>... rows) {
         return new Values<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>>(rows).as("v", "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17", "c18", "c19", "c20", "c21", "c22");
     }
 
-// [jooq-tools] END [values]
+
 
     // -------------------------------------------------------------------------
     // XXX Literals
@@ -21624,7 +22842,7 @@ public class DSL {
     /**
      * Get the <code>current_user()</code> function.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<String> currentUser() {
         return new CurrentUser();
     }
@@ -21632,7 +22850,7 @@ public class DSL {
     /**
      * Get the <code>current_schema()</code> function.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     public static Field<String> currentSchema() {
         return new CurrentSchema();
     }
@@ -21644,7 +22862,7 @@ public class DSL {
 
     @Support
     public static <T extends Number> Field<T> widthBucket(Field<T> field, Field<T> low, Field<T> high, Field<Integer> buckets) {
-        return new WidthBucket<T>(field, low, high, buckets);
+        return new WidthBucket<>(field, low, high, buckets);
     }
 
     // -------------------------------------------------------------------------

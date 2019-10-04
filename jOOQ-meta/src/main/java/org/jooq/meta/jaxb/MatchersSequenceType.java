@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -14,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -29,10 +24,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatchersSequenceType implements Serializable
+public class MatchersSequenceType implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String expression;
     protected MatcherRule sequenceIdentifier;
@@ -40,21 +35,13 @@ public class MatchersSequenceType implements Serializable
     /**
      * This sequence matcher applies to all unqualified or qualified sequence names matched by this expression. If left empty, this matcher applies to all sequences.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getExpression() {
         return expression;
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This sequence matcher applies to all unqualified or qualified sequence names matched by this expression. If left empty, this matcher applies to all sequences.
      *
      */
     public void setExpression(String value) {
@@ -64,51 +51,48 @@ public class MatchersSequenceType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Sequence} identifier.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getSequenceIdentifier() {
         return sequenceIdentifier;
     }
 
     /**
-     * Sets the value of the sequenceIdentifier property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Sequence} identifier.
      *
      */
     public void setSequenceIdentifier(MatcherRule value) {
         this.sequenceIdentifier = value;
     }
 
+    /**
+     * This sequence matcher applies to all unqualified or qualified sequence names matched by this expression. If left empty, this matcher applies to all sequences.
+     *
+     */
     public MatchersSequenceType withExpression(String value) {
         setExpression(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Sequence} identifier.
+     *
+     */
     public MatchersSequenceType withSequenceIdentifier(MatcherRule value) {
         setSequenceIdentifier(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("expression", expression);
+        builder.append("sequenceIdentifier", sequenceIdentifier);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        if (sequenceIdentifier!= null) {
-            sb.append("<sequenceIdentifier>");
-            sb.append(sequenceIdentifier);
-            sb.append("</sequenceIdentifier>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

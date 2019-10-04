@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -14,6 +7,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -29,10 +24,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class MatchersTableType implements Serializable
+public class MatchersTableType implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String expression;
     protected MatcherRule tableClass;
@@ -57,21 +52,13 @@ public class MatchersTableType implements Serializable
     /**
      * This table matcher applies to all unqualified or qualified table names matched by this expression. If left empty, this matcher applies to all tables.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getExpression() {
         return expression;
     }
 
     /**
-     * Sets the value of the expression property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This table matcher applies to all unqualified or qualified table names matched by this expression. If left empty, this matcher applies to all tables.
      *
      */
     public void setExpression(String value) {
@@ -81,21 +68,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Table} object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getTableClass() {
         return tableClass;
     }
 
     /**
-     * Sets the value of the tableClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Table} object.
      *
      */
     public void setTableClass(MatcherRule value) {
@@ -105,21 +84,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.Table} identifier.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getTableIdentifier() {
         return tableIdentifier;
     }
 
     /**
-     * Sets the value of the tableIdentifier property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.Table} identifier.
      *
      */
     public void setTableIdentifier(MatcherRule value) {
@@ -129,21 +100,13 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides additional interfaces that a generated {@link org.jooq.Table} should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getTableImplements() {
         return tableImplements;
     }
 
     /**
-     * Sets the value of the tableImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated {@link org.jooq.Table} should implement.
      *
      */
     public void setTableImplements(String value) {
@@ -153,21 +116,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.TableRecord} object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getRecordClass() {
         return recordClass;
     }
 
     /**
-     * Sets the value of the recordClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.TableRecord} object.
      *
      */
     public void setRecordClass(MatcherRule value) {
@@ -177,21 +132,13 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides additional interfaces that a generated {@link org.jooq.TableRecord} should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getRecordImplements() {
         return recordImplements;
     }
 
     /**
-     * Sets the value of the recordImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated {@link org.jooq.TableRecord} should implement.
      *
      */
     public void setRecordImplements(String value) {
@@ -201,21 +148,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated interface implemented by the {@link org.jooq.TableRecord} and/or the POJO.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getInterfaceClass() {
         return interfaceClass;
     }
 
     /**
-     * Sets the value of the interfaceClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated interface implemented by the {@link org.jooq.TableRecord} and/or the POJO.
      *
      */
     public void setInterfaceClass(MatcherRule value) {
@@ -225,21 +164,13 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides additional interfaces that a generated interface (which is implemented by the {@link org.jooq.TableRecord} and/or POJO) should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getInterfaceImplements() {
         return interfaceImplements;
     }
 
     /**
-     * Sets the value of the interfaceImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated interface (which is implemented by the {@link org.jooq.TableRecord} and/or POJO) should implement.
      *
      */
     public void setInterfaceImplements(String value) {
@@ -249,21 +180,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated {@link org.jooq.DAO} object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getDaoClass() {
         return daoClass;
     }
 
     /**
-     * Sets the value of the daoClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated {@link org.jooq.DAO} object.
      *
      */
     public void setDaoClass(MatcherRule value) {
@@ -273,21 +196,13 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides additional interfaces that a generated {@link org.jooq.DAO} should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getDaoImplements() {
         return daoImplements;
     }
 
     /**
-     * Sets the value of the daoImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated {@link org.jooq.DAO} should implement.
      *
      */
     public void setDaoImplements(String value) {
@@ -297,21 +212,13 @@ public class MatchersTableType implements Serializable
     /**
      * This rule influences the naming of the generated POJOs object.
      *
-     * @return
-     *     possible object is
-     *     {@link MatcherRule }
-     *
      */
     public MatcherRule getPojoClass() {
         return pojoClass;
     }
 
     /**
-     * Sets the value of the pojoClass property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link MatcherRule }
+     * This rule influences the naming of the generated POJOs object.
      *
      */
     public void setPojoClass(MatcherRule value) {
@@ -321,21 +228,13 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides a super class that a generated POJO should extend.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getPojoExtends() {
         return pojoExtends;
     }
 
     /**
-     * Sets the value of the pojoExtends property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides a super class that a generated POJO should extend.
      *
      */
     public void setPojoExtends(String value) {
@@ -345,161 +244,158 @@ public class MatchersTableType implements Serializable
     /**
      * This string provides additional interfaces that a generated POJO should implement.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getPojoImplements() {
         return pojoImplements;
     }
 
     /**
-     * Sets the value of the pojoImplements property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * This string provides additional interfaces that a generated POJO should implement.
      *
      */
     public void setPojoImplements(String value) {
         this.pojoImplements = value;
     }
 
+    /**
+     * This table matcher applies to all unqualified or qualified table names matched by this expression. If left empty, this matcher applies to all tables.
+     *
+     */
     public MatchersTableType withExpression(String value) {
         setExpression(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Table} object.
+     *
+     */
     public MatchersTableType withTableClass(MatcherRule value) {
         setTableClass(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.Table} identifier.
+     *
+     */
     public MatchersTableType withTableIdentifier(MatcherRule value) {
         setTableIdentifier(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated {@link org.jooq.Table} should implement.
+     *
+     */
     public MatchersTableType withTableImplements(String value) {
         setTableImplements(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.TableRecord} object.
+     *
+     */
     public MatchersTableType withRecordClass(MatcherRule value) {
         setRecordClass(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated {@link org.jooq.TableRecord} should implement.
+     *
+     */
     public MatchersTableType withRecordImplements(String value) {
         setRecordImplements(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated interface implemented by the {@link org.jooq.TableRecord} and/or the POJO.
+     *
+     */
     public MatchersTableType withInterfaceClass(MatcherRule value) {
         setInterfaceClass(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated interface (which is implemented by the {@link org.jooq.TableRecord} and/or POJO) should implement.
+     *
+     */
     public MatchersTableType withInterfaceImplements(String value) {
         setInterfaceImplements(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated {@link org.jooq.DAO} object.
+     *
+     */
     public MatchersTableType withDaoClass(MatcherRule value) {
         setDaoClass(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated {@link org.jooq.DAO} should implement.
+     *
+     */
     public MatchersTableType withDaoImplements(String value) {
         setDaoImplements(value);
         return this;
     }
 
+    /**
+     * This rule influences the naming of the generated POJOs object.
+     *
+     */
     public MatchersTableType withPojoClass(MatcherRule value) {
         setPojoClass(value);
         return this;
     }
 
+    /**
+     * This string provides a super class that a generated POJO should extend.
+     *
+     */
     public MatchersTableType withPojoExtends(String value) {
         setPojoExtends(value);
         return this;
     }
 
+    /**
+     * This string provides additional interfaces that a generated POJO should implement.
+     *
+     */
     public MatchersTableType withPojoImplements(String value) {
         setPojoImplements(value);
         return this;
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("expression", expression);
+        builder.append("tableClass", tableClass);
+        builder.append("tableIdentifier", tableIdentifier);
+        builder.append("tableImplements", tableImplements);
+        builder.append("recordClass", recordClass);
+        builder.append("recordImplements", recordImplements);
+        builder.append("interfaceClass", interfaceClass);
+        builder.append("interfaceImplements", interfaceImplements);
+        builder.append("daoClass", daoClass);
+        builder.append("daoImplements", daoImplements);
+        builder.append("pojoClass", pojoClass);
+        builder.append("pojoExtends", pojoExtends);
+        builder.append("pojoImplements", pojoImplements);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (expression!= null) {
-            sb.append("<expression>");
-            sb.append(expression);
-            sb.append("</expression>");
-        }
-        if (tableClass!= null) {
-            sb.append("<tableClass>");
-            sb.append(tableClass);
-            sb.append("</tableClass>");
-        }
-        if (tableIdentifier!= null) {
-            sb.append("<tableIdentifier>");
-            sb.append(tableIdentifier);
-            sb.append("</tableIdentifier>");
-        }
-        if (tableImplements!= null) {
-            sb.append("<tableImplements>");
-            sb.append(tableImplements);
-            sb.append("</tableImplements>");
-        }
-        if (recordClass!= null) {
-            sb.append("<recordClass>");
-            sb.append(recordClass);
-            sb.append("</recordClass>");
-        }
-        if (recordImplements!= null) {
-            sb.append("<recordImplements>");
-            sb.append(recordImplements);
-            sb.append("</recordImplements>");
-        }
-        if (interfaceClass!= null) {
-            sb.append("<interfaceClass>");
-            sb.append(interfaceClass);
-            sb.append("</interfaceClass>");
-        }
-        if (interfaceImplements!= null) {
-            sb.append("<interfaceImplements>");
-            sb.append(interfaceImplements);
-            sb.append("</interfaceImplements>");
-        }
-        if (daoClass!= null) {
-            sb.append("<daoClass>");
-            sb.append(daoClass);
-            sb.append("</daoClass>");
-        }
-        if (daoImplements!= null) {
-            sb.append("<daoImplements>");
-            sb.append(daoImplements);
-            sb.append("</daoImplements>");
-        }
-        if (pojoClass!= null) {
-            sb.append("<pojoClass>");
-            sb.append(pojoClass);
-            sb.append("</pojoClass>");
-        }
-        if (pojoExtends!= null) {
-            sb.append("<pojoExtends>");
-            sb.append(pojoExtends);
-            sb.append("</pojoExtends>");
-        }
-        if (pojoImplements!= null) {
-            sb.append("<pojoImplements>");
-            sb.append(pojoImplements);
-            sb.append("</pojoImplements>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

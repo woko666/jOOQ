@@ -199,7 +199,7 @@ public class CSVParser {
             }
         }
 
-        List<String> tokensOnThisLine = new ArrayList<String>();
+        List<String> tokensOnThisLine = new ArrayList<>();
         StringBuilder sb = new StringBuilder(INITIAL_READ_SIZE);
         boolean inQuotes = false;
         if (pending != null) {
@@ -318,7 +318,7 @@ public class CSVParser {
     }
 
     /**
-     * precondition: sb.length() > 0
+     * precondition: sb.length() &gt; 0
      *
      * @param sb A sequence of characters to examine
      * @return true if every character in the sequence is whitespace

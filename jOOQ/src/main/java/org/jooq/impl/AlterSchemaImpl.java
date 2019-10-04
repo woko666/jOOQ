@@ -56,7 +56,7 @@ import org.jooq.Schema;
 /**
  * @author Lukas Eder
  */
-final class AlterSchemaImpl extends AbstractQuery implements
+final class AlterSchemaImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for ALTER SCHEMA behaviour
     AlterSchemaStep,
@@ -82,6 +82,10 @@ final class AlterSchemaImpl extends AbstractQuery implements
         this.schema = schema;
         this.ifExists = ifExists;
     }
+
+    final Schema  $schema()   { return schema; }
+    final boolean $ifExists() { return ifExists; }
+    final Schema  $renameTo() { return renameTo; }
 
     // ------------------------------------------------------------------------
     // XXX: DSL API

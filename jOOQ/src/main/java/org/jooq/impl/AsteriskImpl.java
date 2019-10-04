@@ -37,24 +37,58 @@
  */
 package org.jooq.impl;
 
+import static org.jooq.impl.Keywords.K_EXCEPT;
+
+import java.util.Arrays;
+
 import org.jooq.Asterisk;
-import org.jooq.Clause;
 import org.jooq.Context;
+import org.jooq.Field;
+import org.jooq.Name;
 
 /**
  * @author Lukas Eder
  */
 final class AsteriskImpl extends AbstractQueryPart implements Asterisk {
 
-    static final AsteriskImpl INSTANCE = new AsteriskImpl();
+    /**
+     * Generated UI
+     */
+    private static final long     serialVersionUID = 6298415939984684260L;
+    static final AsteriskImpl     INSTANCE         = new AsteriskImpl(new QueryPartList<>());
+    final QueryPartList<Field<?>> fields;
+
+    private AsteriskImpl(QueryPartList<Field<?>> fields) {
+        this.fields = fields;
+    }
 
     @Override
     public final void accept(Context<?> ctx) {
         ctx.sql('*');
+
+        // [#7921] H2 has native support for EXCEPT. Emulations are implemented
+        //         in SelectQueryImpl
+        if (!fields.isEmpty())
+            ctx.sql(' ').visit(K_EXCEPT).sql(" (").visit(fields).sql(')');
     }
 
     @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+    public final Asterisk except(String... fieldNames) {
+        return except(Tools.fieldsByName(fieldNames));
+    }
+
+    @Override
+    public final Asterisk except(Name... fieldNames) {
+        return except(Tools.fieldsByName(fieldNames));
+    }
+
+    @Override
+    public final Asterisk except(Field<?>... f) {
+        QueryPartList<Field<?>> list = new QueryPartList<>();
+
+        list.addAll(fields);
+        list.addAll(Arrays.asList(f));
+
+        return new AsteriskImpl(list);
     }
 }

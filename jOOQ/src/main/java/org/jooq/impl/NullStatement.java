@@ -37,13 +37,13 @@
  */
 package org.jooq.impl;
 
+// ...
 import static org.jooq.impl.DSL.falseCondition;
 import static org.jooq.impl.DSL.one;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.Keywords.K_IF;
 import static org.jooq.impl.Keywords.K_NULL;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 
 /**
@@ -69,14 +69,14 @@ final class NullStatement extends AbstractStatement {
 
 
 
+
+
+
+
+
             default:
-                ctx.visit(K_NULL);
+                ctx.visit(K_NULL).sql(';');
                 break;
         }
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
     }
 }

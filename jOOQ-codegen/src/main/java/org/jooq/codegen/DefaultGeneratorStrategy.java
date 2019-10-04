@@ -40,6 +40,7 @@ package org.jooq.codegen;
 import static java.util.Arrays.asList;
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -51,6 +52,7 @@ import org.jooq.meta.ArrayDefinition;
 import org.jooq.meta.CatalogDefinition;
 import org.jooq.meta.Definition;
 import org.jooq.meta.DomainDefinition;
+import org.jooq.meta.EmbeddableDefinition;
 import org.jooq.meta.EnumDefinition;
 import org.jooq.meta.ForeignKeyDefinition;
 import org.jooq.meta.IndexDefinition;
@@ -59,6 +61,7 @@ import org.jooq.meta.RoutineDefinition;
 import org.jooq.meta.SchemaDefinition;
 import org.jooq.meta.TableDefinition;
 import org.jooq.meta.UDTDefinition;
+import org.jooq.meta.UniqueKeyDefinition;
 // ...
 import org.jooq.tools.StringUtils;
 
@@ -138,6 +141,13 @@ public class DefaultGeneratorStrategy extends AbstractGeneratorStrategy {
         //         In order to have non-ambiguous identifiers, we need to include the table name.
         else if (definition instanceof IndexDefinition && asList(MYSQL, MARIADB).contains(definition.getDatabase().getDialect().family()))
             return ((IndexDefinition) definition).getTable().getOutputName().toUpperCase() + "_" + definition.getOutputName().toUpperCase();
+
+
+
+
+
+
+
         else
             return definition.getOutputName().toUpperCase();
     }
@@ -193,7 +203,7 @@ public class DefaultGeneratorStrategy extends AbstractGeneratorStrategy {
 
     @Override
     public List<String> getJavaClassImplements(Definition definition, Mode mode) {
-        return new ArrayList<String>();
+        return new ArrayList<>();
     }
 
     @Override
@@ -286,15 +296,12 @@ public class DefaultGeneratorStrategy extends AbstractGeneratorStrategy {
                       .replace('.', '_')
         ));
 
-        if (mode == Mode.RECORD) {
+        if (mode == Mode.RECORD)
             result.append("Record");
-        }
-        else if (mode == Mode.DAO) {
+        else if (mode == Mode.DAO)
             result.append("Dao");
-        }
-        else if (mode == Mode.INTERFACE) {
+        else if (mode == Mode.INTERFACE)
             result.insert(0, "I");
-        }
 
         return result.toString();
     }
@@ -302,6 +309,11 @@ public class DefaultGeneratorStrategy extends AbstractGeneratorStrategy {
     private String getSubPackage(Definition definition) {
         if (definition instanceof TableDefinition) {
             return "tables";
+        }
+
+        // [#2530] Embeddable types
+        else if (definition instanceof EmbeddableDefinition) {
+            return "embeddables";
         }
 
         // [#799] UDT's are also packages

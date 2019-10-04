@@ -49,6 +49,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -62,9 +63,24 @@ import static org.jooq.SQLDialect.SQLITE;
 import java.util.List;
 
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.DSL;
 
 /**
- * A {@link Query} that can provide a {@link Result} after execution
+ * A <code>SELECT</code> statement.
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select(ACTOR.FIRST_NAME, ACTOR.LAST_NAME)
+ *    .from(ACTOR)
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link DSL#select(SelectFieldOrAsterisk...)},
+ * or {@link DSLContext#selectQuery()} and overloads.
  *
  * @param <R> The record type being returned by this query
  * @author Lukas Eder
@@ -73,36 +89,72 @@ public interface Select<R extends Record> extends ResultQuery<R>, TableLike<R>, 
 
     /**
      * Apply the <code>UNION</code> set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support
     Select<R> union(Select<? extends R> select);
 
     /**
      * Apply the <code>UNION ALL</code> set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support
     Select<R> unionAll(Select<? extends R> select);
 
     /**
      * Apply the <code>EXCEPT</code> (or <code>MINUS</code>) set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     Select<R> except(Select<? extends R> select);
 
     /**
      * Apply the <code>EXCEPT ALL</code> set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support({ CUBRID, DERBY, HSQLDB, POSTGRES })
     Select<R> exceptAll(Select<? extends R> select);
 
     /**
      * Apply the <code>INTERSECT</code> set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     Select<R> intersect(Select<? extends R> select);
 
     /**
      * Apply the <code>INTERSECT ALL</code> set operation.
+     *
+     * @throws IllegalArgumentException If the argument select has the same
+     *             identity as this select. The jOOQ 3.x API is mutable, which
+     *             means that calls to the DSL API mutate this instance. Adding
+     *             this instance as an set operation argument would lead to a
+     *             {@link StackOverflowError} when generating the SQL.
      */
     @Support({ CUBRID, DERBY, HSQLDB, POSTGRES })
     Select<R> intersectAll(Select<? extends R> select);

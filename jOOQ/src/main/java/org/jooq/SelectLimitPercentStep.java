@@ -37,6 +37,7 @@
  */
 package org.jooq;
 
+import static org.jooq.SQLDialect.H2;
 // ...
 // ...
 
@@ -55,9 +56,9 @@ package org.jooq;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -102,13 +103,9 @@ package org.jooq;
  */
 public interface SelectLimitPercentStep<R extends Record> extends SelectWithTiesStep<R> {
 
-
-
-
-
-
-
-
-
-
+    /**
+     * Add the <code>PERCENT</code> clause to a <code>LIMIT</code> clause.
+     */
+    @Support({ H2 })
+    SelectWithTiesStep<R> percent();
 }

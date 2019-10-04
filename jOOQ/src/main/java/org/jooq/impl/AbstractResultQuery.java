@@ -39,7 +39,6 @@ package org.jooq.impl;
 
 import static java.sql.ResultSet.CONCUR_UPDATABLE;
 import static java.sql.ResultSet.TYPE_SCROLL_SENSITIVE;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.Executors.newSingleThreadExecutor;
 // ...
 import static org.jooq.SQLDialect.CUBRID;
@@ -51,13 +50,15 @@ import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.Tools.blocking;
 import static org.jooq.impl.Tools.consumeResultSets;
 import static org.jooq.impl.Tools.executeStatementAndGetFirstResultSet;
-import static org.jooq.impl.Tools.DataKey.DATA_LOCK_ROWS_FOR_UPDATE;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_LOCK_ROWS_FOR_UPDATE;
 
 import java.lang.reflect.Array;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.EnumSet;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+// ...
 import java.util.concurrent.Future;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -82,6 +84,27 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record10;
+import org.jooq.Record11;
+import org.jooq.Record12;
+import org.jooq.Record13;
+import org.jooq.Record14;
+import org.jooq.Record15;
+import org.jooq.Record16;
+import org.jooq.Record17;
+import org.jooq.Record18;
+import org.jooq.Record19;
+import org.jooq.Record2;
+import org.jooq.Record20;
+import org.jooq.Record21;
+import org.jooq.Record22;
+import org.jooq.Record3;
+import org.jooq.Record4;
+import org.jooq.Record5;
+import org.jooq.Record6;
+import org.jooq.Record7;
+import org.jooq.Record8;
+import org.jooq.Record9;
 import org.jooq.RecordHandler;
 import org.jooq.RecordMapper;
 import org.jooq.Result;
@@ -104,18 +127,23 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID      = -5588344253566055707L;
-    private static final JooqLogger          log                   = JooqLogger.getLogger(AbstractResultQuery.class);
-    private static final EnumSet<SQLDialect> NO_SUPPORT_FOR_UPDATE = EnumSet.of(CUBRID);
+    private static final long                serialVersionUID                  = -5588344253566055707L;
+    private static final JooqLogger          log                               = JooqLogger.getLogger(AbstractResultQuery.class);
+
+    private static final Set<SQLDialect>     NO_SUPPORT_FOR_UPDATE             = SQLDialect.supported(CUBRID);
+    private static final Set<SQLDialect>     REPORT_FETCH_SIZE_WITH_AUTOCOMMIT = SQLDialect.supported(POSTGRES);
 
     private int                              maxRows;
     private int                              fetchSize;
     private int                              resultSetConcurrency;
     private int                              resultSetType;
     private int                              resultSetHoldability;
+    private Table<?>                         coerceTable;
+    private Collection<? extends Field<?>>   coerceFields;
     private transient boolean                lazy;
     private transient boolean                many;
     private transient Cursor<R>              cursor;
+    private transient boolean                autoclosing           = true;
     private Result<R>                        result;
     private ResultsImpl                      results;
 
@@ -141,6 +169,12 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
     @Override
     public final ResultQuery<R> bind(int index, Object value) {
         return (ResultQuery<R>) super.bind(index, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public final ResultQuery<R> poolable(boolean poolable) {
+        return (ResultQuery<R>) super.poolable(poolable);
     }
 
     @SuppressWarnings("unchecked")
@@ -239,15 +273,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
             ctx.statement(ctx.connection().prepareStatement(ctx.sql()));
         }
 
-        // [#1263] [#4753] Allow for negative fetch sizes to support some non-standard
-        // MySQL feature, where Integer.MIN_VALUE is used
-        int f = SettingsTools.getFetchSize(fetchSize, ctx.settings());
-        if (f != 0) {
-            if (log.isDebugEnabled())
-                log.debug("Setting fetch size", f);
-
-            ctx.statement().setFetchSize(f);
-        }
+        Tools.setFetchSize(ctx, fetchSize);
 
         // [#1854] [#4753] Set the max number of rows for this result query
         int m = SettingsTools.getMaxRows(maxRows, ctx.settings());
@@ -262,7 +288,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
         // [#4511] [#4753] PostgreSQL doesn't like fetchSize with autoCommit == true
         int f = SettingsTools.getFetchSize(fetchSize, ctx.settings());
-        if (asList(POSTGRES).contains(ctx.family()) && f != 0 && ctx.connection().getAutoCommit())
+        if (REPORT_FETCH_SIZE_WITH_AUTOCOMMIT.contains(ctx.dialect()) && f != 0 && ctx.connection().getAutoCommit())
             log.info("Fetch Size", "A fetch size of " + f + " was set on a auto-commit PostgreSQL connection, which is not recommended. See http://jdbc.postgresql.org/documentation/head/query.html#query-with-cursor");
 
         SQLException e = executeStatementAndGetFirstResultSet(ctx, rendered.skipUpdateCounts);
@@ -291,7 +317,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
             }
 
             Field<?>[] fields = getFields(ctx.resultSet().getMetaData());
-            cursor = new CursorImpl<R>(ctx, listener, fields, intern.internIndexes(fields), keepStatement(), keepResultSet(), getRecordType(), SettingsTools.getMaxRows(maxRows, ctx.settings()));
+            cursor = new CursorImpl<>(ctx, listener, fields, intern.internIndexes(fields), keepStatement(), keepResultSet(), getRecordType(), SettingsTools.getMaxRows(maxRows, ctx.settings()), autoclosing);
 
             if (!lazy) {
                 result = cursor.fetch();
@@ -318,6 +344,10 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
      */
     abstract boolean isForUpdate();
 
+    final Collection<? extends Field<?>> coerce() {
+        return coerceFields;
+    }
+
     @Override
     public final Result<R> fetch() {
         execute();
@@ -336,6 +366,66 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
 
 
+
+
+
+
+
+
+
+
+
+    @Override
+    public final void subscribe(org.reactivestreams.Subscriber<? super R> subscriber) {
+        subscriber.onSubscribe(new org.reactivestreams.Subscription() {
+            Cursor<R> c;
+            ArrayDeque<R> buffer;
+
+            @Override
+            public void request(long n) {
+                int i = (int) Math.min(n, Integer.MAX_VALUE);
+
+                try {
+                    if (c == null)
+                        c = fetchLazyNonAutoClosing();
+
+                    if (buffer == null)
+                        buffer = new ArrayDeque<>();
+
+                    if (buffer.size() < i)
+                        buffer.addAll(c.fetchNext(i - buffer.size()));
+
+                    boolean complete = buffer.size() < i;
+                    while (!buffer.isEmpty()) {
+                        subscriber.onNext(buffer.pollFirst());
+                    }
+
+                    if (complete)
+                        doComplete();
+                }
+                catch (Throwable t) {
+                    subscriber.onError(t);
+                    doComplete();
+                }
+            }
+
+            private void doComplete() {
+                close();
+                subscriber.onComplete();
+            }
+
+            private void close() {
+                if (c != null)
+                    c.close();
+            }
+
+            @Override
+            public void cancel() {
+                close();
+            }
+        });
+    }
+
     @Override
     public final CompletionStage<Result<R>> fetchAsync() {
         return fetchAsync(Tools.configuration(this).executorProvider().provide());
@@ -348,7 +438,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
     @Override
     public final Stream<R> fetchStream() {
-        return fetchLazy().stream();
+        return Stream.of(1).flatMap(i -> fetchLazy().stream());
     }
 
     @Override
@@ -363,12 +453,12 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
     @Override
     public final Stream<R> stream() {
-        return fetchLazy().stream();
+        return fetchStream();
     }
 
     @Override
     public final <X, A> X collect(Collector<? super R, A, X> collector) {
-        try (Cursor<R> c = fetchLazy()) {
+        try (Cursor<R> c = fetchLazyNonAutoClosing()) {
             return c.collect(collector);
         }
     }
@@ -378,6 +468,24 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
     @Override
     public final Cursor<R> fetchLazy() {
         return fetchLazy(fetchSize);
+    }
+
+    /**
+     * When we manage the lifecycle of a returned {@link Cursor} internally in
+     * jOOQ, then the cursor must not be auto-closed.
+     */
+    final Cursor<R> fetchLazyNonAutoClosing() {
+        final boolean previousAutoClosing = autoclosing;
+
+        // [#3515] TODO: Avoid modifying a Query's per-execution state
+        autoclosing = false;
+
+        try {
+            return fetchLazy();
+        }
+        finally {
+            autoclosing = previousAutoClosing;
+        }
     }
 
     @Override
@@ -542,7 +650,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
     @Override
     public final R fetchOne() {
-        return Tools.fetchOne(fetchLazy(), hasLimit1());
+        return Tools.fetchOne(fetchLazyNonAutoClosing(), hasLimit1());
     }
 
     @Override
@@ -637,7 +745,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
     @Override
     public final R fetchSingle() {
-        return Tools.fetchSingle(fetchLazy(), hasLimit1());
+        return Tools.fetchSingle(fetchLazyNonAutoClosing(), hasLimit1());
     }
 
     @Override
@@ -823,7 +931,7 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
 
     @Override
     public final R fetchAny() {
-        Cursor<R> c = fetchLazy();
+        Cursor<R> c = fetchLazyNonAutoClosing();
 
         try {
             return c.fetchNext();
@@ -1425,15 +1533,16 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
         return fetch().intoSet(field, converter);
     }
 
-    /**
-     * Subclasses may override this method
-     * <p>
-     * {@inheritDoc}
-     */
+    @SuppressWarnings("unchecked")
     @Override
-    public Class<? extends R> getRecordType() {
-        return null;
+    public final Class<? extends R> getRecordType() {
+        if (coerceTable != null)
+            return (Class<? extends R>) coerceTable.getRecordType();
+
+        return getRecordType0();
     }
+
+    abstract Class<? extends R> getRecordType0();
 
     @Override
     public final <T> List<T> fetchInto(Class<? extends T> type) {
@@ -1460,14 +1569,14 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
     public final org.jooq.FutureResult<R> fetchLater() {
         ExecutorService executor = newSingleThreadExecutor();
         Future<Result<R>> future = executor.submit(new ResultQueryCallable());
-        return new FutureResultImpl<R>(future, executor);
+        return new FutureResultImpl<>(future, executor);
     }
 
     @Override
     @Deprecated
     public final org.jooq.FutureResult<R> fetchLater(ExecutorService executor) {
         Future<Result<R>> future = executor.submit(new ResultQueryCallable());
-        return new FutureResultImpl<R>(future);
+        return new FutureResultImpl<>(future);
     }
 
     @Override
@@ -1490,9 +1599,165 @@ abstract class AbstractResultQuery<R extends Record> extends AbstractQuery imple
     private final boolean hasLimit1() {
         if (this instanceof SelectQueryImpl) {
             Limit l = ((SelectQueryImpl) this).getLimit();
-            return !l.withTies()                                          && l.limitOne();
+            return !l.withTies() && !l.percent() && l.limitOne();
         }
 
         return false;
     }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public final <X extends Record> ResultQuery<X> coerce(Table<X> table) {
+        this.coerceTable = table;
+        return (ResultQuery<X>) coerce(Arrays.asList(table.fields()));
+    }
+
+    @Override
+    public final ResultQuery<Record> coerce(Field<?>... fields) {
+        return coerce(Arrays.asList(fields));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public final ResultQuery<Record> coerce(Collection<? extends Field<?>> fields) {
+        this.coerceFields = fields;
+        return (ResultQuery<Record>) this;
+    }
+
+
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1> ResultQuery<Record1<T1>> coerce(Field<T1> field1) {
+        return (ResultQuery) coerce(new Field[] { field1 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2> ResultQuery<Record2<T1, T2>> coerce(Field<T1> field1, Field<T2> field2) {
+        return (ResultQuery) coerce(new Field[] { field1, field2 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3> ResultQuery<Record3<T1, T2, T3>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4> ResultQuery<Record4<T1, T2, T3, T4>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5> ResultQuery<Record5<T1, T2, T3, T4, T5>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6> ResultQuery<Record6<T1, T2, T3, T4, T5, T6>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7> ResultQuery<Record7<T1, T2, T3, T4, T5, T6, T7>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8> ResultQuery<Record8<T1, T2, T3, T4, T5, T6, T7, T8>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9> ResultQuery<Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> ResultQuery<Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> ResultQuery<Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> ResultQuery<Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> ResultQuery<Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> ResultQuery<Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> ResultQuery<Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> ResultQuery<Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> ResultQuery<Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> ResultQuery<Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> ResultQuery<Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> ResultQuery<Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> ResultQuery<Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21 });
+    }
+
+    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> ResultQuery<Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> coerce(Field<T1> field1, Field<T2> field2, Field<T3> field3, Field<T4> field4, Field<T5> field5, Field<T6> field6, Field<T7> field7, Field<T8> field8, Field<T9> field9, Field<T10> field10, Field<T11> field11, Field<T12> field12, Field<T13> field13, Field<T14> field14, Field<T15> field15, Field<T16> field16, Field<T17> field17, Field<T18> field18, Field<T19> field19, Field<T20> field20, Field<T21> field21, Field<T22> field22) {
+        return (ResultQuery) coerce(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
+    }
+
+
+
 }

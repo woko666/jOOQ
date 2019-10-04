@@ -62,7 +62,7 @@ import java.util.Collection;
  *
  * @author Lukas Eder
  */
-public interface CreateTableColumnStep extends CreateTableConstraintStep {
+public interface CreateTableColumnStep extends CreateTableAsStep<Record>, CreateTableConstraintStep {
 
     /**
      * Add a column to the column list of the <code>CREATE TABLE</code>
@@ -101,6 +101,28 @@ public interface CreateTableColumnStep extends CreateTableConstraintStep {
      */
     @Support
     CreateTableColumnStep columns(Field<?>... fields);
+
+    /**
+     * Add several columns to the column list of the <code>CREATE TABLE</code>
+     * statement.
+     * <p>
+     * This is the same as calling {@link #column(Field, DataType)} for each
+     * column. Lacking an explicit data type, this makes sense only for a
+     * <code>CREATE TABLE AS SELECT...</code> statement.
+     */
+    @Support
+    CreateTableColumnStep columns(Name... fields);
+
+    /**
+     * Add several columns to the column list of the <code>CREATE TABLE</code>
+     * statement.
+     * <p>
+     * This is the same as calling {@link #column(Field, DataType)} for each
+     * column. Lacking an explicit data type, this makes sense only for a
+     * <code>CREATE TABLE AS SELECT...</code> statement.
+     */
+    @Support
+    CreateTableColumnStep columns(String... fields);
 
     /**
      * Add several columns to the column list of the <code>CREATE TABLE</code>

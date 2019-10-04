@@ -40,6 +40,7 @@ package org.jooq.meta.h2;
 import static org.jooq.impl.DSL.choose;
 import static org.jooq.impl.DSL.inline;
 import static org.jooq.impl.DSL.name;
+import static org.jooq.impl.DSL.noCondition;
 import static org.jooq.impl.DSL.zero;
 import static org.jooq.meta.h2.information_schema.tables.Columns.COLUMNS;
 import static org.jooq.tools.StringUtils.defaultString;
@@ -72,7 +73,7 @@ public class H2TableDefinition extends AbstractTableDefinition {
 
     @Override
     public List<ColumnDefinition> getElements0() throws SQLException {
-        List<ColumnDefinition> result = new ArrayList<ColumnDefinition>();
+        List<ColumnDefinition> result = new ArrayList<>();
 
         // [#7206] H2 defaults to these precision/scale values when a DECIMAL/NUMERIC type
         //         does not have any precision/scale. What works in H2 works in almost no
@@ -97,8 +98,12 @@ public class H2TableDefinition extends AbstractTableDefinition {
             .from(COLUMNS)
             .where(Columns.TABLE_SCHEMA.equal(getSchema().getName()))
             .and(Columns.TABLE_NAME.equal(getName()))
-            .orderBy(Columns.ORDINAL_POSITION)
-            .fetch()) {
+            .and(!getDatabase().getIncludeInvisibleColumns()
+                ? ((H2Database) getDatabase()).is1_4_198()
+                    ? Columns.IS_VISIBLE.eq(inline("TRUE"))
+                    : Columns.COLUMN_TYPE.notLike(inline("%INVISIBLE%"))
+                : noCondition())
+            .orderBy(Columns.ORDINAL_POSITION)) {
 
             // [#5331] AUTO_INCREMENT (MySQL style)
             // [#5331] DEFAULT nextval('sequence') (PostgreSQL style)
@@ -107,13 +112,21 @@ public class H2TableDefinition extends AbstractTableDefinition {
                    null != record.get(Columns.SEQUENCE_NAME)
                 || defaultString(record.get(Columns.COLUMN_DEFAULT)).trim().toLowerCase().startsWith("nextval");
 
+
+            // [#7644] H2 puts DATETIME_PRECISION in NUMERIC_SCALE column
+            boolean isTimestamp = record.get(Columns.TYPE_NAME).trim().toLowerCase().startsWith("timestamp");
+
             DataTypeDefinition type = new DefaultDataTypeDefinition(
                 getDatabase(),
                 getSchema(),
                 record.get(Columns.TYPE_NAME),
                 record.get(Columns.CHARACTER_MAXIMUM_LENGTH),
-                record.get(Columns.NUMERIC_PRECISION),
-                record.get(Columns.NUMERIC_SCALE),
+                isTimestamp
+                    ? record.get(Columns.NUMERIC_SCALE)
+                    : record.get(Columns.NUMERIC_PRECISION),
+                isTimestamp
+                    ? 0
+                    : record.get(Columns.NUMERIC_SCALE),
                 record.get(Columns.IS_NULLABLE, boolean.class),
                 isIdentity ? null : record.get(Columns.COLUMN_DEFAULT),
                 name(getSchema().getName(), getName() + "_" + record.get(Columns.COLUMN_NAME)));

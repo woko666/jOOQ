@@ -6,10 +6,9 @@
     <parent>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-parent</artifactId>
-        <version>3.11.0</version>
+        <version>3.13.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.jooq</groupId>
     <artifactId>jooq-meta</artifactId>
     <name>jOOQ Meta</name>
 
@@ -49,5 +48,14 @@
             <groupId>org.jooq</groupId>
             <artifactId>jooq</artifactId>
         </dependency>
+
+
+
+
+
+
+
+
+
     </dependencies>
 </project>

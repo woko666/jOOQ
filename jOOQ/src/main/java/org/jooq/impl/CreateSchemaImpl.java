@@ -48,24 +48,27 @@ import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 // ...
 // ...
-import static org.jooq.impl.Keywords.K_CREATE_SCHEMA;
+// ...
+import static org.jooq.impl.Keywords.K_CREATE;
+import static org.jooq.impl.Keywords.K_DATABASE;
 import static org.jooq.impl.Keywords.K_EXEC;
 import static org.jooq.impl.Keywords.K_IF_NOT_EXISTS;
+import static org.jooq.impl.Keywords.K_SCHEMA;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.CreateSchemaFinalStep;
-import org.jooq.Record;
+// ...
 import org.jooq.SQLDialect;
 import org.jooq.Schema;
 
 /**
  * @author Lukas Eder
  */
-final class CreateSchemaImpl<R extends Record> extends AbstractQuery implements
+final class CreateSchemaImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for CREATE SCHEMA behaviour
     CreateSchemaFinalStep {
@@ -74,9 +77,14 @@ final class CreateSchemaImpl<R extends Record> extends AbstractQuery implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID         = 8904572826501186329L;
-    private static final Clause[]            CLAUSES                  = { CREATE_SCHEMA };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_NOT_EXISTS = EnumSet.of(DERBY, FIREBIRD);
+    private static final long                serialVersionUID           = 8904572826501186329L;
+    private static final Clause[]            CLAUSES                    = { CREATE_SCHEMA };
+    private static final Set<SQLDialect>     NO_SUPPORT_IF_NOT_EXISTS   = SQLDialect.supported(DERBY, FIREBIRD);
+
+
+
+
+
 
     private final Schema                     schema;
     private final boolean                    ifNotExists;
@@ -87,6 +95,9 @@ final class CreateSchemaImpl<R extends Record> extends AbstractQuery implements
         this.schema = schema;
         this.ifNotExists = ifNotExists;
     }
+
+    final Schema  $schema()      { return schema; }
+    final boolean $ifNotExists() { return ifNotExists; }
 
     // ------------------------------------------------------------------------
     // XXX: DSL API
@@ -131,7 +142,14 @@ final class CreateSchemaImpl<R extends Record> extends AbstractQuery implements
 
     private final void accept1(Context<?> ctx) {
         ctx.start(CREATE_SCHEMA_NAME)
-           .visit(K_CREATE_SCHEMA);
+           .visit(K_CREATE);
+
+
+
+
+
+
+            ctx.sql(' ').visit(K_SCHEMA);
 
         if (ifNotExists && supportsIfNotExists(ctx))
             ctx.sql(' ').visit(K_IF_NOT_EXISTS);

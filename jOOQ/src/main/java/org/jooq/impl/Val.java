@@ -39,11 +39,14 @@ package org.jooq.impl;
 
 import static org.jooq.conf.ParamType.NAMED;
 import static org.jooq.conf.ParamType.NAMED_OR_INLINED;
+import static org.jooq.impl.Tools.embeddedFields;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_LIST_ALREADY_INDENTED;
 
 import java.sql.SQLException;
 
 import org.jooq.Context;
 import org.jooq.DataType;
+import org.jooq.EmbeddableRecord;
 import org.jooq.RenderContext;
 import org.jooq.conf.ParamType;
 import org.jooq.exception.DataAccessException;
@@ -54,7 +57,7 @@ import org.jooq.tools.StringUtils;
  */
 final class Val<T> extends AbstractParam<T> {
 
-    private static final long   serialVersionUID = 6807729087019209084L;
+    private static final long serialVersionUID = 6807729087019209084L;
 
     Val(T value, DataType<T> type) {
         super(value, type);
@@ -70,14 +73,21 @@ final class Val<T> extends AbstractParam<T> {
 
     @Override
     public void accept(Context<?> ctx) {
-        if (ctx instanceof RenderContext) {
+        if (EmbeddableRecord.class.isAssignableFrom(getType())) {
+            Object previous = ctx.data(DATA_LIST_ALREADY_INDENTED);
+
+            ctx.data(DATA_LIST_ALREADY_INDENTED, true);
+            ctx.visit(new QueryPartList<>(embeddedFields(this)));
+            ctx.data(DATA_LIST_ALREADY_INDENTED, previous);
+        }
+        else if (ctx instanceof RenderContext) {
             ParamType paramType = ctx.paramType();
 
             if (isInline(ctx))
                 ctx.paramType(ParamType.INLINED);
 
             try {
-                getBinding().sql(new DefaultBindingSQLContext<T>(ctx.configuration(), ctx.data(), (RenderContext) ctx, value, getBindVariable(ctx)));
+                getBinding().sql(new DefaultBindingSQLContext<>(ctx.configuration(), ctx.data(), (RenderContext) ctx, value, getBindVariable(ctx)));
             }
             catch (SQLException e) {
                 throw new DataAccessException("Error while generating SQL for Binding", e);
@@ -101,11 +111,12 @@ final class Val<T> extends AbstractParam<T> {
     final String getBindVariable(Context<?> ctx) {
         if (ctx.paramType() == NAMED || ctx.paramType() == NAMED_OR_INLINED) {
             int index = ctx.nextIndex();
+            String prefix = StringUtils.defaultIfNull(ctx.settings().getRenderNamedParamPrefix(), ":");
 
             if (StringUtils.isBlank(getParamName()))
-                return ":" + index;
+                return prefix + index;
             else
-                return ":" + getParamName();
+                return prefix + getParamName();
         }
         else {
             return "?";

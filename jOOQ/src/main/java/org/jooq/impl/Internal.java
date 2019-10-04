@@ -37,11 +37,15 @@
  */
 package org.jooq.impl;
 
+import org.jooq.Binding;
+import org.jooq.Converter;
+import org.jooq.DataType;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.OrderField;
+import org.jooq.Parameter;
 import org.jooq.Record;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -55,7 +59,15 @@ import org.jooq.UniqueKey;
  *
  * @author Lukas Eder
  */
+@org.jooq.Internal
 public final class Internal {
+
+    /**
+     * Factory method for embeddable types.
+     */
+    public static final <R extends Record, T extends Record> TableField<R, T> createEmbeddable(Name name, Class<T> recordType, Table<R> table, TableField<R, ?>... fields) {
+        return new EmbeddableTableField<>(name, recordType, table, fields);
+    }
 
     /**
      * Factory method for indexes.
@@ -75,7 +87,7 @@ public final class Internal {
      * Factory method for identities.
      */
     public static final <R extends Record, T> Identity<R, T> createIdentity(Table<R> table, TableField<R, T> field) {
-        return new IdentityImpl<R, T>(table, field);
+        return new IdentityImpl<>(table, field);
     }
 
     /**
@@ -85,7 +97,7 @@ public final class Internal {
     @SafeVarargs
 
     public static final <R extends Record> UniqueKey<R> createUniqueKey(Table<R> table, TableField<R, ?>... fields) {
-        return new UniqueKeyImpl<R>(table, fields);
+        return new UniqueKeyImpl<>(table, fields);
     }
 
     /**
@@ -95,7 +107,7 @@ public final class Internal {
     @SafeVarargs
 
     public static final <R extends Record> UniqueKey<R> createUniqueKey(Table<R> table, String name, TableField<R, ?>... fields) {
-        return new UniqueKeyImpl<R>(table, name, fields);
+        return new UniqueKeyImpl<>(table, name, fields);
     }
 
     /**
@@ -115,7 +127,7 @@ public final class Internal {
     @SafeVarargs
 
     public static final <R extends Record, U extends Record> ForeignKey<R, U> createForeignKey(UniqueKey<U> key, Table<R> table, String name, TableField<R, ?>... fields) {
-        ForeignKey<R, U> result = new ReferenceImpl<R, U>(key, table, name, fields);
+        ForeignKey<R, U> result = new ReferenceImpl<>(key, table, name, fields);
 
         if (key instanceof UniqueKeyImpl)
             ((UniqueKeyImpl<U>) key).references.add(result);
@@ -123,6 +135,9 @@ public final class Internal {
         return result;
     }
 
+    /**
+     * Factory method for path aliases.
+     */
     public static final Name createPathAlias(Table<?> child, ForeignKey<?, ?> path) {
         Name name = DSL.name(path.getName());
 
@@ -136,6 +151,40 @@ public final class Internal {
         }
 
         return DSL.name("alias_" + Tools.hash(name));
+    }
+
+    /**
+     * Factory method for parameters.
+     */
+    public static final <T> Parameter<T> createParameter(String name, DataType<T> type, boolean isDefaulted, boolean isUnnamed) {
+        return createParameter(name, type, isDefaulted, isUnnamed, null, null);
+    }
+
+    /**
+     * Factory method for parameters.
+     */
+    public static final <T, U> Parameter<U> createParameter(String name, DataType<T> type, boolean isDefaulted, boolean isUnnamed, Converter<T, U> converter) {
+        return createParameter(name, type, isDefaulted, isUnnamed, converter, null);
+    }
+
+    /**
+     * Factory method for parameters.
+     */
+    public static final <T, U> Parameter<U> createParameter(String name, DataType<T> type, boolean isDefaulted, boolean isUnnamed, Binding<T, U> binding) {
+        return createParameter(name, type, isDefaulted, isUnnamed, null, binding);
+    }
+
+    /**
+     * Factory method for parameters.
+     */
+    @SuppressWarnings("unchecked")
+    public static final <T, X, U> Parameter<U> createParameter(String name, DataType<T> type, boolean isDefaulted, boolean isUnnamed, Converter<X, U> converter, Binding<T, X> binding) {
+        final Binding<T, U> actualBinding = DefaultBinding.newBinding(converter, type, binding);
+        final DataType<U> actualType = converter == null && binding == null
+            ? (DataType<U>) type
+            : type.asConvertedDataType(actualBinding);
+
+        return new ParameterImpl<>(name, actualType, actualBinding, isDefaulted, isUnnamed);
     }
 
     private Internal() {}

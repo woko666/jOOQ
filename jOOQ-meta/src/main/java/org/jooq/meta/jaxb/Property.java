@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -15,6 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -31,10 +26,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class Property implements Serializable
+public class Property implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(required = true)
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String key;
@@ -42,50 +37,18 @@ public class Property implements Serializable
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String value;
 
-    /**
-     * Gets the value of the key property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getKey() {
         return key;
     }
 
-    /**
-     * Sets the value of the key property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setKey(String value) {
         this.key = value;
     }
 
-    /**
-     * Gets the value of the value property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getValue() {
         return value;
     }
 
-    /**
-     * Sets the value of the value property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setValue(String value) {
         this.value = value;
     }
@@ -101,19 +64,16 @@ public class Property implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("key", key);
+        builder.append("value", value);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (key!= null) {
-            sb.append("<key>");
-            sb.append(key);
-            sb.append("</key>");
-        }
-        if (value!= null) {
-            sb.append("<value>");
-            sb.append(value);
-            sb.append("</value>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

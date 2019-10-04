@@ -42,6 +42,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jooq.Catalog;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Schema;
@@ -52,7 +53,6 @@ import org.jooq.impl.DSL;
 import org.jooq.meta.AbstractDatabase;
 import org.jooq.meta.ArrayDefinition;
 import org.jooq.meta.CatalogDefinition;
-import org.jooq.meta.ColumnDefinition;
 import org.jooq.meta.DataTypeDefinition;
 import org.jooq.meta.DefaultDataTypeDefinition;
 import org.jooq.meta.DefaultRelations;
@@ -73,7 +73,8 @@ import org.jooq.meta.UDTDefinition;
  */
 public class JDBCDatabase extends AbstractDatabase {
 
-    private List<Schema> schemas;
+    private List<Catalog> catalogs;
+    private List<Schema>  schemas;
 
     @Override
     protected DSLContext create0() {
@@ -96,12 +97,9 @@ public class JDBCDatabase extends AbstractDatabase {
                     if (t != null) {
                         UniqueKey<?> key = table.getPrimaryKey();
 
-                        if (key != null) {
-                            for (Field<?> field : key.getFields()) {
-                                ColumnDefinition c = t.getColumn(field.getName());
-                                relations.addPrimaryKey("PK_" + key.getTable().getName(), c);
-                            }
-                        }
+                        if (key != null)
+                            for (Field<?> field : key.getFields())
+                                relations.addPrimaryKey("PK_" + key.getTable().getName(), t, t.getColumn(field.getName()));
                     }
                 }
             }
@@ -118,29 +116,49 @@ public class JDBCDatabase extends AbstractDatabase {
 
     @Override
     protected List<CatalogDefinition> getCatalogs0() throws SQLException {
-        List<CatalogDefinition> result = new ArrayList<CatalogDefinition>();
-        result.add(new CatalogDefinition(this, "", ""));
+        List<CatalogDefinition> result = new ArrayList<>();
+
+        for (Catalog catalog : getCatalogsFromMeta())
+            result.add(new CatalogDefinition(this, catalog.getName(), ""));
+
         return result;
+    }
+
+    private List<Catalog> getCatalogsFromMeta() {
+        if (catalogs == null) {
+            catalogs = new ArrayList<>();
+
+            for (Catalog catalog : create().meta().getCatalogs())
+                catalogs.add(catalog);
+        }
+
+        return catalogs;
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
 
         for (Schema schema : getSchemasFromMeta()) {
-            result.add(new SchemaDefinition(this, schema.getName(), ""));
+            if (schema.getCatalog() != null) {
+                if (getCatalog(schema.getCatalog().getName()) != null) {
+                    result.add(new SchemaDefinition(this, schema.getName(), "", getCatalog(schema.getCatalog().getName())));
+                }
+            }
+            else
+                result.add(new SchemaDefinition(this, schema.getName(), ""));
         }
+
 
         return result;
     }
 
     private List<Schema> getSchemasFromMeta() {
         if (schemas == null) {
-            schemas = new ArrayList<Schema>();
+            schemas = new ArrayList<>();
 
             for (Schema schema : create().meta().getSchemas())
-                if (getInputSchemata().contains(schema.getName()))
-                    schemas.add(schema);
+                schemas.add(schema);
         }
 
         return schemas;
@@ -148,7 +166,7 @@ public class JDBCDatabase extends AbstractDatabase {
 
     @Override
     protected List<SequenceDefinition> getSequences0() throws SQLException {
-        List<SequenceDefinition> result = new ArrayList<SequenceDefinition>();
+        List<SequenceDefinition> result = new ArrayList<>();
 
         for (Schema schema : getSchemasFromMeta()) {
             for (Sequence<?> sequence : schema.getSequences()) {
@@ -170,16 +188,14 @@ public class JDBCDatabase extends AbstractDatabase {
 
     @Override
     protected List<TableDefinition> getTables0() throws SQLException {
-        List<TableDefinition> result = new ArrayList<TableDefinition>();
+        List<TableDefinition> result = new ArrayList<>();
 
         for (Schema schema : getSchemasFromMeta()) {
             SchemaDefinition sd = getSchema(schema.getName());
 
-            if (sd != null) {
-                for (Table<?> table : schema.getTables()) {
+            if (sd != null)
+                for (Table<?> table : schema.getTables())
                     result.add(new JDBCTableDefinition(sd, table));
-                }
-            }
         }
 
         return result;
@@ -187,37 +203,37 @@ public class JDBCDatabase extends AbstractDatabase {
 
     @Override
     protected List<EnumDefinition> getEnums0() throws SQLException {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>();
+        List<EnumDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<DomainDefinition> getDomains0() throws SQLException {
-        List<DomainDefinition> result = new ArrayList<DomainDefinition>();
+        List<DomainDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<UDTDefinition> getUDTs0() throws SQLException {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<ArrayDefinition> getArrays0() throws SQLException {
-        List<ArrayDefinition> result = new ArrayList<ArrayDefinition>();
+        List<ArrayDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<RoutineDefinition> getRoutines0() throws SQLException {
-        List<RoutineDefinition> result = new ArrayList<RoutineDefinition>();
+        List<RoutineDefinition> result = new ArrayList<>();
         return result;
     }
 
     @Override
     protected List<PackageDefinition> getPackages0() throws SQLException {
-        List<PackageDefinition> result = new ArrayList<PackageDefinition>();
+        List<PackageDefinition> result = new ArrayList<>();
         return result;
     }
 }

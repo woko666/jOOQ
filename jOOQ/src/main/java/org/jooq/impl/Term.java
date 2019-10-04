@@ -37,7 +37,9 @@
  */
 package org.jooq.impl;
 
+import org.jooq.Keyword;
 import org.jooq.Name;
+// ...
 import org.jooq.SQLDialect;
 
 /**
@@ -48,12 +50,7 @@ import org.jooq.SQLDialect;
  */
 enum Term {
 
-    ARRAY_AGG {
-        @Override
-        public String translate(SQLDialect dialect) {
-            return "array_agg";
-        }
-    },
+    ARRAY_AGG,
     ATAN2 {
         @Override
         public String translate(SQLDialect dialect) {
@@ -73,6 +70,7 @@ enum Term {
         @Override
         public String translate(SQLDialect dialect) {
             switch (dialect.family()) {
+
 
 
 
@@ -128,14 +126,17 @@ enum Term {
 
 
 
-
-
-
-
+    CUME_DIST,
+    DENSE_RANK,
+    FIRST_VALUE,
+    LAG,
+    LAST_VALUE,
+    LEAD,
     LIST_AGG {
         @Override
         public String translate(SQLDialect dialect) {
             switch (dialect.family()) {
+
 
 
 
@@ -168,12 +169,22 @@ enum Term {
             return "listagg";
         }
     },
-    MEDIAN {
+    MEDIAN,
+    MODE {
         @Override
         public String translate(SQLDialect dialect) {
-            return "median";
+            switch (dialect.family()) {
+
+
+
+
+                default:
+                    return "mode";
+            }
         }
     },
+    NTH_VALUE,
+    NTILE,
     OCTET_LENGTH {
         @Override
         public String translate(SQLDialect dialect) {
@@ -201,6 +212,9 @@ enum Term {
             return "octet_length";
         }
     },
+    PERCENT_RANK,
+    PRODUCT,
+    RANK,
     ROW_NUMBER {
         @Override
         public String translate(SQLDialect dialect) {
@@ -299,10 +313,14 @@ enum Term {
 
     ;
 
-    private final Name name;
+    private final Name    name;
+    private final Keyword keyword;
+    private final String  translation;
 
     private Term() {
         this.name = DSL.name(name());
+        this.keyword = DSL.keyword(name());
+        this.translation = name().toLowerCase();
     }
 
     @Override
@@ -314,8 +332,16 @@ enum Term {
         return name;
     }
 
+    public Keyword toKeyword() {
+        return keyword;
+    }
+
     /**
-     * Translate the term to its dialect-specific variant
+     * Translate the term to its dialect-specific variant.
+     *
+     * @param dialect The dialect to translate to
      */
-    abstract String translate(SQLDialect dialect);
+    String translate(SQLDialect dialect) {
+        return translation;
+    }
 }

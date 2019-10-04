@@ -38,8 +38,12 @@
 
 package org.jooq.meta;
 
+import static org.jooq.SQLDialect.CUBRID;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.SQLITE;
 import static org.jooq.impl.DSL.falseCondition;
 import static org.jooq.meta.AbstractTypedElementDefinition.customType;
+import static org.jooq.tools.StringUtils.defaultIfEmpty;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -47,6 +51,7 @@ import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -55,17 +60,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.DSLContext;
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListenerProvider;
 import org.jooq.Name;
 import org.jooq.Query;
+import org.jooq.Record;
 import org.jooq.SQLDialect;
+import org.jooq.Schema;
 import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.conf.Settings;
 import org.jooq.conf.SettingsTools;
 import org.jooq.exception.DataAccessException;
@@ -73,13 +83,16 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultExecuteListener;
 import org.jooq.impl.DefaultExecuteListenerProvider;
 import org.jooq.impl.SQLDataType;
-import org.jooq.meta.jaxb.Catalog;
+import org.jooq.meta.jaxb.CatalogMappingType;
 import org.jooq.meta.jaxb.CustomType;
+import org.jooq.meta.jaxb.Embeddable;
+import org.jooq.meta.jaxb.EmbeddableField;
 import org.jooq.meta.jaxb.EnumType;
 import org.jooq.meta.jaxb.ForcedType;
+import org.jooq.meta.jaxb.ForcedTypeObjectType;
 import org.jooq.meta.jaxb.Nullability;
 import org.jooq.meta.jaxb.RegexFlag;
-import org.jooq.meta.jaxb.Schema;
+import org.jooq.meta.jaxb.SchemaMappingType;
 // ...
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StopWatch;
@@ -93,7 +106,8 @@ import org.jooq.tools.csv.CSVReader;
  */
 public abstract class AbstractDatabase implements Database {
 
-    private static final JooqLogger                                          log = JooqLogger.getLogger(AbstractDatabase.class);
+    private static final JooqLogger                                          log                                  = JooqLogger.getLogger(AbstractDatabase.class);
+    private static final Set<SQLDialect>                                     NO_SUPPORT_SCHEMATA                  = SQLDialect.supported(CUBRID, FIREBIRD, SQLITE);
 
     // -------------------------------------------------------------------------
     // Configuration elements
@@ -102,12 +116,15 @@ public abstract class AbstractDatabase implements Database {
     private Properties                                                       properties;
     private SQLDialect                                                       dialect;
     private Connection                                                       connection;
-    private List<RegexFlag>                                                  regexFlags;
+    private boolean                                                          regexMatchesPartialQualification;
+    private boolean                                                          sqlMatchesPartialQualification;
     private List<Filter>                                                     filters;
     private String[]                                                         excludes;
     private String[]                                                         includes                             = { ".*" };
     private boolean                                                          includeExcludeColumns;
+    private boolean                                                          includeInvisibleColumns              = true;
     private boolean                                                          includeTables                        = true;
+    private boolean                                                          includeEmbeddables                   = true;
     private boolean                                                          includeRoutines                      = true;
     private boolean                                                          includeTriggerRoutines               = false;
     private boolean                                                          includePackages                      = true;
@@ -117,6 +134,7 @@ public abstract class AbstractDatabase implements Database {
     private boolean                                                          includeUDTs                          = true;
     private boolean                                                          includeSequences                     = true;
     private boolean                                                          includeIndexes                       = true;
+    private boolean                                                          includeCheckConstraints              = true;
     private boolean                                                          includePrimaryKeys                   = true;
     private boolean                                                          includeUniqueKeys                    = true;
     private boolean                                                          includeForeignKeys                   = true;
@@ -127,19 +145,23 @@ public abstract class AbstractDatabase implements Database {
     private String[]                                                         overridePrimaryKeys;
     private String[]                                                         syntheticIdentities;
     private boolean                                                          supportsUnsignedTypes;
+    private boolean                                                          integerDisplayWidths;
     private boolean                                                          ignoreProcedureReturnValues;
     private boolean                                                          dateAsTimestamp;
-    private List<Catalog>                                                    configuredCatalogs                   = new ArrayList<Catalog>();
-    private List<Schema>                                                     configuredSchemata                   = new ArrayList<Schema>();
+    private boolean                                                          javaTimeTypes                        = true;
+    private List<CatalogMappingType>                                         configuredCatalogs                   = new ArrayList<>();
+    private List<SchemaMappingType>                                          configuredSchemata                   = new ArrayList<>();
     private List<CustomType>                                                 configuredCustomTypes;
     private List<EnumType>                                                   configuredEnumTypes;
     private List<ForcedType>                                                 configuredForcedTypes;
+    private List<Embeddable>                                                 configuredEmbeddables;
     private SchemaVersionProvider                                            schemaVersionProvider;
     private CatalogVersionProvider                                           catalogVersionProvider;
     private Comparator<Definition>                                           orderProvider;
     private boolean                                                          includeRelations                     = true;
     private boolean                                                          tableValuedFunctions                 = true;
     private int                                                              logSlowQueriesAfterSeconds;
+    private int                                                              logSlowResultsAfterSeconds;
 
     // -------------------------------------------------------------------------
     // Loaded definitions
@@ -157,6 +179,7 @@ public abstract class AbstractDatabase implements Database {
     private List<ForeignKeyDefinition>                                       foreignKeys;
     private List<CheckConstraintDefinition>                                  checkConstraints;
     private List<TableDefinition>                                            tables;
+    private List<EmbeddableDefinition>                                       embeddables;
     private List<EnumDefinition>                                             enums;
     private List<DomainDefinition>                                           domains;
     private List<UDTDefinition>                                              udts;
@@ -173,6 +196,8 @@ public abstract class AbstractDatabase implements Database {
     private transient Map<SchemaDefinition, List<ForeignKeyDefinition>>      foreignKeysBySchema;
     private transient Map<SchemaDefinition, List<CheckConstraintDefinition>> checkConstraintsBySchema;
     private transient Map<SchemaDefinition, List<TableDefinition>>           tablesBySchema;
+    private transient Map<SchemaDefinition, List<EmbeddableDefinition>>      embeddablesBySchema;
+    private transient Map<TableDefinition, List<EmbeddableDefinition>>       embeddablesByTable;
     private transient Map<SchemaDefinition, List<EnumDefinition>>            enumsBySchema;
     private transient Map<SchemaDefinition, List<UDTDefinition>>             udtsBySchema;
     private transient Map<SchemaDefinition, List<ArrayDefinition>>           arraysBySchema;
@@ -184,23 +209,26 @@ public abstract class AbstractDatabase implements Database {
     private final List<Definition>                                           all;
     private final List<Definition>                                           included;
     private final List<Definition>                                           excluded;
-    private final Map<Table<?>, Boolean>                                     exists;
-    private final Map<String, Pattern>                                       patterns;
+    private final Map<Table<?>, Boolean>                                     existTables;
+    private final Map<TableField<?, ?>, Boolean>                             existFields;
+    private final Patterns                                                   patterns;
+    private final Statements                                                 statements;
 
     protected AbstractDatabase() {
-        exists = new HashMap<Table<?>, Boolean>();
-        patterns = new HashMap<String, Pattern>();
-        filters = new ArrayList<Filter>();
-        all = new ArrayList<Definition>();
-        included = new ArrayList<Definition>();
-        excluded = new ArrayList<Definition>();
+        existTables = new HashMap<>();
+        existFields = new HashMap<>();
+        patterns = new Patterns();
+        statements = new Statements();
+        filters = new ArrayList<>();
+        all = new ArrayList<>();
+        included = new ArrayList<>();
+        excluded = new ArrayList<>();
     }
 
     @Override
     public final SQLDialect getDialect() {
-        if (dialect == null) {
+        if (dialect == null)
             dialect = create().configuration().dialect();
-        }
 
         return dialect;
     }
@@ -208,6 +236,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final void setConnection(Connection connection) {
         this.connection = connection;
+        this.statements.dslContext(create());
     }
 
     @Override
@@ -233,7 +262,7 @@ public abstract class AbstractDatabase implements Database {
 
         // [#6226] This is mostly due to a wrong Maven groupId
         catch (NoSuchFieldError e) {
-            log.error("NoSuchFieldError may happen when the jOOQ Open Source Edition (Maven groupId 'org.jooq') is used with a commercial SQLDialect. Use an appropriate groupId instead: 'org.jooq.trial', 'org.jooq.pro', or 'org.jooq.pro-java-6'. See also: https://www.jooq.org/doc/latest/manual/getting-started/tutorials/jooq-in-7-steps/jooq-in-7-steps-step1/");
+            log.error("NoSuchFieldError may happen when the jOOQ Open Source Edition (Maven groupId 'org.jooq') is used with a commercial SQLDialect. Use an appropriate groupId instead: 'org.jooq.trial', 'org.jooq.pro', 'org.jooq.pro-java-6', or 'org.jooq.pro-java-8'. See also: https://www.jooq.org/doc/latest/manual/getting-started/tutorials/jooq-in-7-steps/jooq-in-7-steps-step1/");
             throw e;
         }
 
@@ -270,7 +299,7 @@ public abstract class AbstractDatabase implements Database {
 
                 @Override
                 public void executeStart(ExecuteContext ctx) {
-                    ctx.data("org.jooq.meta.AbstractDatabase.watch", new StopWatch());
+                    ctx.data("org.jooq.meta.AbstractDatabase.SQLPerformanceWarning.execute", new StopWatch());
                 }
 
                 @Override
@@ -279,7 +308,7 @@ public abstract class AbstractDatabase implements Database {
                     if (s <= 0)
                         return;
 
-                    StopWatch watch = (StopWatch) ctx.data("org.jooq.meta.AbstractDatabase.watch");
+                    StopWatch watch = (StopWatch) ctx.data("org.jooq.meta.AbstractDatabase.SQLPerformanceWarning.execute");
 
                     if (watch.split() > TimeUnit.SECONDS.toNanos(s)) {
                         watch.splitWarn("Slow SQL");
@@ -288,7 +317,34 @@ public abstract class AbstractDatabase implements Database {
                             "Slow SQL",
                             "jOOQ Meta executed a slow query (slower than " + s + " seconds, configured by configuration/generator/database/logSlowQueriesAfterSeconds)"
                           + "\n\n"
-                          + "Please report this bug here: https://github.com/jOOQ/jOOQ/issues/new\n\n```sql\n"
+                          + "If you think this is a bug in jOOQ, please report it here: https://github.com/jOOQ/jOOQ/issues/new\n\n```sql\n"
+                          + formatted(ctx.query())
+                          + "```\n",
+                            new SQLPerformanceWarning());
+                    }
+                }
+
+                @Override
+                public void fetchStart(ExecuteContext ctx) {
+                    ctx.data("org.jooq.meta.AbstractDatabase.SQLPerformanceWarning.fetch", new StopWatch());
+                }
+
+                @Override
+                public void fetchEnd(ExecuteContext ctx) {
+                    int s = getLogSlowResultsAfterSeconds();
+                    if (s <= 0)
+                        return;
+
+                    StopWatch watch = (StopWatch) ctx.data("org.jooq.meta.AbstractDatabase.SQLPerformanceWarning.fetch");
+
+                    if (watch.split() > TimeUnit.SECONDS.toNanos(s)) {
+                        watch.splitWarn("Slow Result Fetching");
+
+                        log.warn(
+                            "Slow Result Fetching",
+                            "jOOQ Meta fetched a slow result (slower than " + s + " seconds, configured by configuration/generator/database/logSlowResultsAfterSeconds)"
+                          + "\n\n"
+                          + "If you think this is a bug in jOOQ, please report it here: https://github.com/jOOQ/jOOQ/issues/new\n\n```sql\n"
                           + formatted(ctx.query())
                           + "```\n",
                             new SQLPerformanceWarning());
@@ -306,7 +362,7 @@ public abstract class AbstractDatabase implements Database {
                       ? ctx.exception().getMessage()
                       : "No exception available")
                       + "\n\n"
-                      + "Please report this bug here: https://github.com/jOOQ/jOOQ/issues/new\n\n```sql\n"
+                      + "If you think this is a bug in jOOQ, please report it here: https://github.com/jOOQ/jOOQ/issues/new\n\n```sql\n"
                       + formatted(ctx.query())
                       + "```\n");
                 }
@@ -320,27 +376,119 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public final boolean exists(Table<?> table) {
-        Boolean result = exists.get(table);
+    public final boolean exists(TableField<?, ?> field) {
+        Boolean result = existFields.get(field);
 
-        if (result == null) {
-            try {
-                create(true)
-                    .selectOne()
-                    .from(table)
-                    .where(falseCondition())
-                    .fetch();
-
-                result = true;
-            }
-            catch (DataAccessException e) {
-                result = false;
-            }
-
-            exists.put(table, result);
-        }
+        if (result == null)
+            existFields.put(field, result = exists0(field));
 
         return result;
+    }
+
+    /**
+     * [#8972] Subclasses may override this method for a more efficient implementation.
+     */
+    protected boolean exists0(TableField<?, ?> field) {
+        try {
+            create(true)
+                .select(field)
+                .from(field.getTable())
+                .where(falseCondition())
+                .fetch();
+
+            return true;
+        }
+        catch (DataAccessException e) {
+            return false;
+        }
+    }
+
+    /**
+     * A utility method to look up a field in a single dictionary view.
+     *
+     * @param find The field to look up
+     * @param in The dictionary view
+     * @param schemaQualifier The column in the dictionary view qualifying the schema
+     * @param tableQualifier The column in the dictionary view qualifying the table
+     * @param columnQualifier The column in the dictionary view qualifying the column
+     */
+    protected final <R extends Record> boolean exists1(
+        TableField<?, ?> find,
+        Table<R> in,
+        TableField<R, String> schemaQualifier,
+        TableField<R, String> tableQualifier,
+        TableField<R, String> columnQualifier
+    ) {
+        Condition condition = columnQualifier.eq(find.getName());
+
+        Table<?> table = find.getTable();
+        condition = condition.and(tableQualifier.eq(table.getName()));
+
+        Schema schema = table.getSchema();
+        if (schema != null)
+            condition = condition.and(schemaQualifier.eq(schema.getName()));
+
+        return create().fetchExists(in, condition);
+    }
+
+    @Override
+    public final boolean existAll(TableField<?, ?>... f) {
+        for (TableField<?, ?> field : f)
+            if (!exists(field))
+                return false;
+
+        return true;
+    }
+
+    @Override
+    public final boolean exists(Table<?> table) {
+        Boolean result = existTables.get(table);
+
+        if (result == null)
+            existTables.put(table, result = exists0(table));
+
+        return result;
+    }
+
+    /**
+     * [#8972] Subclasses may override this method for a more efficient implementation.
+     */
+    protected boolean exists0(Table<?> table) {
+        try {
+            create(true)
+                .selectOne()
+                .from(table)
+                .where(falseCondition())
+                .fetch();
+
+            return true;
+        }
+        catch (DataAccessException e) {
+            return false;
+        }
+    }
+
+    /**
+     * A utility method to look up a table in a single dictionary view.
+     *
+     * @param find The table to look up
+     * @param in The dictionary view
+     * @param schemaQualifier The column in the dictionary view qualifying the schema
+     * @param tableQualifier The column in the dictionary view qualifying the table
+     */
+    protected final <R extends Record> boolean exists1(
+        Table<?> find,
+        Table<R> in,
+        TableField<R, String> schemaQualifier,
+        TableField<R, String> tableQualifier
+    ) {
+        Condition condition = tableQualifier.eq(find.getName());
+
+        Schema schema = find.getSchema();
+        if (schema != null)
+            condition = condition.and(schemaQualifier.eq(schema.getName()));
+
+        return create().fetchExists(in, condition);
     }
 
     @Override
@@ -352,46 +500,44 @@ public abstract class AbstractDatabase implements Database {
         return true;
     }
 
-    final Pattern pattern(String regex) {
-        Pattern pattern = patterns.get(regex);
+    final boolean matches(Pattern pattern, Definition definition) {
+        if (pattern == null)
+            return false;
 
-        if (pattern == null) {
-            int flags = 0;
+        if (!getRegexMatchesPartialQualification())
+            return pattern.matcher(definition.getName()).matches()
+                || pattern.matcher(definition.getQualifiedName()).matches();
 
-            List<RegexFlag> list = new ArrayList<RegexFlag>(getRegexFlags());
+        List<Name> parts = Arrays.asList(definition.getQualifiedNamePart().parts());
 
-            // [#3860] This should really be handled by JAXB, but apparently, @XmlList and @XmlElement(defaultValue=...)
-            // cannot be combined: http://stackoverflow.com/q/27528698/521799
-            if (list.isEmpty()) {
-                list.add(RegexFlag.COMMENTS);
-                list.add(RegexFlag.CASE_INSENSITIVE);
-            }
+        for (int i = parts.size() - 1; i >= 0; i--)
+            if (pattern.matcher(DSL.name(parts.subList(i, parts.size()).toArray(new Name[0])).unquotedName().toString()).matches())
+                return true;
 
-            for (RegexFlag flag : list) {
-                switch (flag) {
-                    case CANON_EQ:                flags |= Pattern.CANON_EQ;                break;
-                    case CASE_INSENSITIVE:        flags |= Pattern.CASE_INSENSITIVE;        break;
-                    case COMMENTS:                flags |= Pattern.COMMENTS;                break;
-                    case DOTALL:                  flags |= Pattern.DOTALL;                  break;
-                    case LITERAL:                 flags |= Pattern.LITERAL;                 break;
-                    case MULTILINE:               flags |= Pattern.MULTILINE;               break;
-                    case UNICODE_CASE:            flags |= Pattern.UNICODE_CASE;            break;
-                    case UNICODE_CHARACTER_CLASS: flags |= 0x100;                           break; // Pattern.UNICODE_CHARACTER_CLASS: Java 1.7 only
-                    case UNIX_LINES:              flags |= Pattern.UNIX_LINES;              break;
-                }
-            }
+        return false;
+    }
 
-            pattern = Pattern.compile(regex, flags);
-            patterns.put(regex, pattern);
-        }
+    final boolean matches(Set<?> set, Definition definition) {
+        if (set == null)
+            return false;
 
-        return pattern;
+        if (!getSqlMatchesPartialQualification())
+            return set.contains(definition.getName())
+                || set.contains(definition.getQualifiedName());
+
+        List<Name> parts = Arrays.asList(definition.getQualifiedNamePart().parts());
+
+        for (int i = parts.size() - 1; i >= 0; i--)
+            if (set.contains(DSL.name(parts.subList(i, parts.size()).toArray(new Name[0])).unquotedName().toString()))
+                return true;
+
+        return false;
     }
 
     @Override
     public final List<CatalogDefinition> getCatalogs() {
         if (catalogs == null) {
-            catalogs = new ArrayList<CatalogDefinition>();
+            catalogs = new ArrayList<>();
 
             try {
                 catalogs = getCatalogs0();
@@ -441,7 +587,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<SchemaDefinition> getSchemata() {
         if (schemata == null) {
-            schemata = new ArrayList<SchemaDefinition>();
+            schemata = new ArrayList<>();
 
             try {
                 schemata = getSchemata0();
@@ -458,10 +604,14 @@ public abstract class AbstractDatabase implements Database {
                     it.remove();
             }
 
-            if (schemata.isEmpty())
+            if (schemata.isEmpty()) {
                 log.warn(
                     "No schemata were loaded",
                     "Please check your connection settings, and whether your database (and your database version!) is really supported by jOOQ. Also, check the case-sensitivity in your configured <inputSchema/> elements : " + inputSchemataPerCatalog);
+
+                if (NO_SUPPORT_SCHEMATA.contains(getDialect().family()))
+                    log.warn("No schemata were loaded", "The database you're using (" + getClass().getName() + ") does not support schemata. Consider removing all <inputSchema/> and related configuration : " + inputSchemataPerCatalog);
+            }
         }
 
         return schemata;
@@ -469,7 +619,7 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public final List<SchemaDefinition> getSchemata(CatalogDefinition catalog) {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> result = new ArrayList<>();
 
         for (SchemaDefinition schema : getSchemata())
             if (catalog.equals(schema.getCatalog()))
@@ -490,7 +640,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<String> getInputCatalogs() {
         if (inputCatalogs == null) {
-            inputCatalogs = new ArrayList<String>();
+            inputCatalogs = new ArrayList<>();
 
             // [#1312] Allow for ommitting inputSchema configuration. Generate
             // All catalogs instead
@@ -504,7 +654,7 @@ public abstract class AbstractDatabase implements Database {
                 }
             }
             else {
-                for (Catalog catalog : configuredCatalogs) {
+                for (CatalogMappingType catalog : configuredCatalogs) {
 
 
 
@@ -521,8 +671,8 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<String> getInputSchemata() {
         if (inputSchemataPerCatalog == null) {
-            inputSchemata = new ArrayList<String>();
-            inputSchemataPerCatalog = new LinkedHashMap<String, List<String>>();
+            inputSchemata = new ArrayList<>();
+            inputSchemataPerCatalog = new LinkedHashMap<>();
 
             // [#1312] Allow for ommitting inputSchema configuration. Generate all schemata instead.
             if (configuredSchemata.size() == 1 && StringUtils.isBlank(configuredSchemata.get(0).getInputSchema())) {
@@ -535,7 +685,7 @@ public abstract class AbstractDatabase implements Database {
             else if (configuredCatalogs.isEmpty()) {
                 inputSchemataPerCatalog.put("", inputSchemata);
 
-                for (Schema schema : configuredSchemata) {
+                for (SchemaMappingType schema : configuredSchemata) {
 
 
 
@@ -550,8 +700,8 @@ public abstract class AbstractDatabase implements Database {
                 }
             }
             else {
-                for (Catalog catalog : configuredCatalogs) {
-                    for (Schema schema : catalog.getSchemata()) {
+                for (CatalogMappingType catalog : configuredCatalogs) {
+                    for (SchemaMappingType schema : catalog.getSchemata()) {
                         String inputSchema;
 
 
@@ -577,7 +727,7 @@ public abstract class AbstractDatabase implements Database {
                             List<String> list = inputSchemataPerCatalog.get(inputCatalog);
 
                             if (list == null) {
-                                list = new ArrayList<String>();
+                                list = new ArrayList<>();
                                 inputSchemataPerCatalog.put(inputCatalog, list);
                             }
 
@@ -598,7 +748,7 @@ public abstract class AbstractDatabase implements Database {
                 List<String> list = inputSchemataPerCatalog.get(schema.getCatalog().getName());
 
                 if (list == null) {
-                    list = new ArrayList<String>();
+                    list = new ArrayList<>();
                     inputSchemataPerCatalog.put(schema.getCatalog().getName(), list);
                 }
 
@@ -628,7 +778,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     @Deprecated
     public String getOutputCatalog(String inputCatalog) {
-        for (Catalog catalog : configuredCatalogs)
+        for (CatalogMappingType catalog : configuredCatalogs)
             if (inputCatalog.equals(catalog.getInputCatalog()))
                 return catalog.getOutputCatalog();
 
@@ -638,7 +788,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     @Deprecated
     public String getOutputSchema(String inputSchema) {
-        for (Schema schema : configuredSchemata)
+        for (SchemaMappingType schema : configuredSchemata)
             if (inputSchema.equals(schema.getInputSchema()))
                 return schema.getOutputSchema();
 
@@ -647,9 +797,9 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public String getOutputSchema(String inputCatalog, String inputSchema) {
-        for (Catalog catalog : configuredCatalogs)
+        for (CatalogMappingType catalog : configuredCatalogs)
             if (inputCatalog.equals(catalog.getInputCatalog()))
-                for (Schema schema : catalog.getSchemata())
+                for (SchemaMappingType schema : catalog.getSchemata())
                     if (inputSchema.equals(schema.getInputSchema()))
                         return schema.getOutputSchema();
 
@@ -657,12 +807,12 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
-    public final void setConfiguredCatalogs(List<Catalog> catalogs) {
+    public final void setConfiguredCatalogs(List<CatalogMappingType> catalogs) {
         this.configuredCatalogs = catalogs;
     }
 
     @Override
-    public final void setConfiguredSchemata(List<Schema> schemata) {
+    public final void setConfiguredSchemata(List<SchemaMappingType> schemata) {
         this.configuredSchemata = schemata;
     }
 
@@ -679,7 +829,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<Filter> getFilters() {
         if (filters == null) {
-            filters = new ArrayList<Filter>();
+            filters = new ArrayList<>();
         }
 
         return Collections.unmodifiableList(filters);
@@ -729,6 +879,16 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
+    public final void setIncludeInvisibleColumns(boolean includeInvisibleColumns) {
+        this.includeInvisibleColumns = includeInvisibleColumns;
+    }
+
+    @Override
+    public final boolean getIncludeInvisibleColumns() {
+        return includeInvisibleColumns;
+    }
+
+    @Override
     public final boolean getIncludeTables() {
         return includeTables;
     }
@@ -736,6 +896,16 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final void setIncludeTables(boolean includeTables) {
         this.includeTables = includeTables;
+    }
+
+    @Override
+    public final boolean getIncludeEmbeddables() {
+        return includeEmbeddables;
+    }
+
+    @Override
+    public final void setIncludeEmbeddables(boolean includeEmbeddables) {
+        this.includeEmbeddables = includeEmbeddables;
     }
 
     @Override
@@ -819,6 +989,16 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
+    public final void setIncludeCheckConstraints(boolean includeCheckConstraints) {
+        this.includeCheckConstraints = includeCheckConstraints;
+    }
+
+    @Override
+    public final boolean getIncludeCheckConstraints() {
+        return includeCheckConstraints;
+    }
+
+    @Override
     public final void setIncludeIndexes(boolean includeIndexes) {
         this.includeIndexes = includeIndexes;
     }
@@ -860,16 +1040,32 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public final void setRegexFlags(List<RegexFlag> regexFlags) {
-        this.regexFlags = regexFlags;
+        this.patterns.setRegexFlags(regexFlags);
     }
 
     @Override
     public final List<RegexFlag> getRegexFlags() {
-        if (regexFlags == null) {
-            regexFlags = new ArrayList<RegexFlag>();
-        }
+        return patterns.getRegexFlags();
+    }
 
-        return regexFlags;
+    @Override
+    public final void setRegexMatchesPartialQualification(boolean regexMatchesPartialQualification) {
+        this.regexMatchesPartialQualification = regexMatchesPartialQualification;
+    }
+
+    @Override
+    public final boolean getRegexMatchesPartialQualification() {
+        return regexMatchesPartialQualification;
+    }
+
+    @Override
+    public final void setSqlMatchesPartialQualification(boolean sqlMatchesPartialQualification) {
+        this.sqlMatchesPartialQualification = sqlMatchesPartialQualification;
+    }
+
+    @Override
+    public final boolean getSqlMatchesPartialQualification() {
+        return sqlMatchesPartialQualification;
     }
 
     @Override
@@ -964,7 +1160,7 @@ public abstract class AbstractDatabase implements Database {
     @Deprecated
     public final List<CustomType> getConfiguredCustomTypes() {
         if (configuredCustomTypes == null) {
-            configuredCustomTypes = new ArrayList<CustomType>();
+            configuredCustomTypes = new ArrayList<>();
         }
 
         return configuredCustomTypes;
@@ -1000,9 +1196,21 @@ public abstract class AbstractDatabase implements Database {
             ForcedType type = it2.next();
 
             if (type.getExpressions() != null) {
-                type.setExpression(type.getExpressions());
+                type.setIncludeExpression(type.getExpressions());
                 type.setExpressions(null);
-                log.warn("DEPRECATED", "The <expressions/> element in <forcedType/> is deprecated. Use <expression/> instead: " + type);
+                log.warn("DEPRECATED", "The <expressions/> element in <forcedType/> is deprecated. Use <includeExpression/> instead: " + type);
+            }
+
+            if (type.getExpression() != null) {
+                type.setIncludeExpression(type.getExpression());
+                type.setExpression(null);
+                log.warn("DEPRECATED", "The <expression/> element in <forcedType/> is deprecated. Use <includeExpression/> instead: " + type);
+            }
+
+            if (type.getTypes() != null) {
+                type.setIncludeTypes(type.getTypes());
+                type.setTypes(null);
+                log.warn("DEPRECATED", "The <types/> element in <forcedType/> is deprecated. Use <includeTypes/> instead: " + type);
             }
 
             if (StringUtils.isBlank(type.getName())) {
@@ -1051,13 +1259,17 @@ public abstract class AbstractDatabase implements Database {
 
     @Override
     public final void setConfiguredForcedTypes(List<ForcedType> configuredForcedTypes) {
-        this.configuredForcedTypes = configuredForcedTypes;
+
+        // [#8512] Some implementation of this database may have already configured
+        //         a forced type programmatically, so we must not set the list but
+        //         append it.
+        getConfiguredForcedTypes().addAll(configuredForcedTypes);
     }
 
     @Override
     public final List<ForcedType> getConfiguredForcedTypes() {
         if (configuredForcedTypes == null)
-            configuredForcedTypes = new ArrayList<ForcedType>();
+            configuredForcedTypes = new ArrayList<>();
 
         return configuredForcedTypes;
     }
@@ -1070,6 +1282,16 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final void setLogSlowQueriesAfterSeconds(int logSlowQueriesAfterSeconds) {
         this.logSlowQueriesAfterSeconds = logSlowQueriesAfterSeconds;
+    }
+
+    @Override
+    public final int getLogSlowResultsAfterSeconds() {
+        return logSlowResultsAfterSeconds;
+    }
+
+    @Override
+    public final void setLogSlowResultsAfterSeconds(int logSlowResultsAfterSeconds) {
+        this.logSlowResultsAfterSeconds = logSlowResultsAfterSeconds;
     }
 
     @Override
@@ -1113,6 +1335,16 @@ public abstract class AbstractDatabase implements Database {
     }
 
     @Override
+    public final void setIntegerDisplayWidths(boolean integerDisplayWidths) {
+        this.integerDisplayWidths = integerDisplayWidths;
+    }
+
+    @Override
+    public final boolean integerDisplayWidths() {
+        return integerDisplayWidths;
+    }
+
+    @Override
     public final void setIgnoreProcedureReturnValues(boolean ignoreProcedureReturnValues) {
         this.ignoreProcedureReturnValues = ignoreProcedureReturnValues;
     }
@@ -1130,6 +1362,16 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final boolean dateAsTimestamp() {
         return dateAsTimestamp;
+    }
+
+    @Override
+    public final void setJavaTimeTypes(boolean javaTimeTypes) {
+        this.javaTimeTypes = javaTimeTypes;
+    }
+
+    @Override
+    public final boolean javaTimeTypes() {
+        return javaTimeTypes;
     }
 
     @Override
@@ -1165,7 +1407,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<SequenceDefinition> getSequences(SchemaDefinition schema) {
         if (sequences == null) {
-            sequences = new ArrayList<SequenceDefinition>();
+            sequences = new ArrayList<>();
 
             if (getIncludeSequences()) {
                 try {
@@ -1183,7 +1425,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (sequencesBySchema == null)
-            sequencesBySchema = new LinkedHashMap<SchemaDefinition, List<SequenceDefinition>>();
+            sequencesBySchema = new LinkedHashMap<>();
 
         return filterSchema(sequences, schema, sequencesBySchema);
     }
@@ -1191,7 +1433,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<IdentityDefinition> getIdentities(SchemaDefinition schema) {
         if (identities == null) {
-            identities = new ArrayList<IdentityDefinition>();
+            identities = new ArrayList<>();
 
             for (SchemaDefinition s : getSchemata()) {
                 for (TableDefinition table : getTables(s)) {
@@ -1204,7 +1446,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (identitiesBySchema == null)
-            identitiesBySchema = new LinkedHashMap<SchemaDefinition, List<IdentityDefinition>>();
+            identitiesBySchema = new LinkedHashMap<>();
 
         return filterSchema(identities, schema, identitiesBySchema);
     }
@@ -1214,9 +1456,9 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<UniqueKeyDefinition> getUniqueKeys(SchemaDefinition schema) {
         if (uniqueKeys == null) {
-            uniqueKeys = new ArrayList<UniqueKeyDefinition>();
+            uniqueKeys = new ArrayList<>();
 
-            if (getIncludeUniqueKeys())
+            if (getIncludeUniqueKeys() || getIncludePrimaryKeys())
                 for (SchemaDefinition s : getSchemata())
                     for (TableDefinition table : getTables(s))
                         for (UniqueKeyDefinition uniqueKey : table.getUniqueKeys())
@@ -1224,7 +1466,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (uniqueKeysBySchema == null)
-            uniqueKeysBySchema = new LinkedHashMap<SchemaDefinition, List<UniqueKeyDefinition>>();
+            uniqueKeysBySchema = new LinkedHashMap<>();
 
         return filterSchema(uniqueKeys, schema, uniqueKeysBySchema);
     }
@@ -1232,7 +1474,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<ForeignKeyDefinition> getForeignKeys(SchemaDefinition schema) {
         if (foreignKeys == null) {
-            foreignKeys = new ArrayList<ForeignKeyDefinition>();
+            foreignKeys = new ArrayList<>();
 
             if (getIncludeForeignKeys())
                 for (SchemaDefinition s : getSchemata())
@@ -1242,7 +1484,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (foreignKeysBySchema == null)
-            foreignKeysBySchema = new LinkedHashMap<SchemaDefinition, List<ForeignKeyDefinition>>();
+            foreignKeysBySchema = new LinkedHashMap<>();
 
         return filterSchema(foreignKeys, schema, foreignKeysBySchema);
     }
@@ -1250,16 +1492,17 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<CheckConstraintDefinition> getCheckConstraints(SchemaDefinition schema) {
         if (checkConstraints == null) {
-            checkConstraints = new ArrayList<CheckConstraintDefinition>();
+            checkConstraints = new ArrayList<>();
 
-            for (SchemaDefinition s : getSchemata())
-                for (TableDefinition table : getTables(s))
-                    for (CheckConstraintDefinition checkConstraint : table.getCheckConstraints())
-                        checkConstraints.add(checkConstraint);
+            if (getIncludeCheckConstraints())
+                for (SchemaDefinition s : getSchemata())
+                    for (TableDefinition table : getTables(s))
+                        for (CheckConstraintDefinition checkConstraint : table.getCheckConstraints())
+                            checkConstraints.add(checkConstraint);
         }
 
         if (checkConstraintsBySchema == null)
-            checkConstraintsBySchema = new LinkedHashMap<SchemaDefinition, List<CheckConstraintDefinition>>();
+            checkConstraintsBySchema = new LinkedHashMap<>();
 
         return filterSchema(checkConstraints, schema, checkConstraintsBySchema);
     }
@@ -1267,7 +1510,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<TableDefinition> getTables(SchemaDefinition schema) {
         if (tables == null) {
-            tables = new ArrayList<TableDefinition>();
+            tables = new ArrayList<>();
 
             if (getIncludeTables()) {
                 try {
@@ -1285,7 +1528,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (tablesBySchema == null)
-            tablesBySchema = new LinkedHashMap<SchemaDefinition, List<TableDefinition>>();
+            tablesBySchema = new LinkedHashMap<>();
 
         return filterSchema(tables, schema, tablesBySchema);
     }
@@ -1313,7 +1556,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<EnumDefinition> getEnums(SchemaDefinition schema) {
         if (enums == null) {
-            enums = new ArrayList<EnumDefinition>();
+            enums = new ArrayList<>();
 
             try {
                 List<EnumDefinition> e = getEnums0();
@@ -1329,13 +1572,13 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (enumsBySchema == null)
-            enumsBySchema = new LinkedHashMap<SchemaDefinition, List<EnumDefinition>>();
+            enumsBySchema = new LinkedHashMap<>();
 
         return filterSchema(enums, schema, enumsBySchema);
     }
 
     private final List<EnumDefinition> getConfiguredEnums() {
-        List<EnumDefinition> result = new ArrayList<EnumDefinition>(configuredCustomTypes.size());
+        List<EnumDefinition> result = new ArrayList<>(configuredCustomTypes.size());
 
         for (EnumType enumType : configuredEnumTypes) {
             String name = enumType.getName();
@@ -1366,49 +1609,147 @@ public abstract class AbstractDatabase implements Database {
         // [#5885] Only the first matching <forcedType/> is applied to the data type definition.
         forcedTypeLoop:
         for (ForcedType forcedType : getConfiguredForcedTypes()) {
-            String expression = StringUtils.defaultIfNull(forcedType.getExpressions(), forcedType.getExpression());
-            String types = forcedType.getTypes();
+            String excludeExpression = forcedType.getExcludeExpression();
+            String includeExpression = StringUtils.firstNonNull(forcedType.getIncludeExpression(), forcedType.getExpression(), forcedType.getExpressions());
+            String excludeTypes = forcedType.getExcludeTypes();
+            String includeTypes = StringUtils.firstNonNull(forcedType.getIncludeTypes(), forcedType.getTypes());
             Nullability nullability = forcedType.getNullability();
+            ForcedTypeObjectType objectType = forcedType.getObjectType();
+            String sql = forcedType.getSql();
 
-            if (     (nullability != null && nullability != Nullability.ALL)
+            if (     (objectType != null && objectType != ForcedTypeObjectType.ALL)
+                 && ((objectType == ForcedTypeObjectType.ATTRIBUTE && !(definition instanceof AttributeDefinition))
+                 ||  (objectType == ForcedTypeObjectType.COLUMN && !(definition instanceof ColumnDefinition))
+                 ||  (objectType == ForcedTypeObjectType.ELEMENT && !(definition instanceof ArrayDefinition))
+                 ||  (objectType == ForcedTypeObjectType.PARAMETER && !(definition instanceof ParameterDefinition))
+                 ||  (objectType == ForcedTypeObjectType.SEQUENCE && !(definition instanceof SequenceDefinition))))
+                continue forcedTypeLoop;
+
+            if (     (nullability != null && nullability != Nullability.ALL && definedType != null)
                  && ((nullability == Nullability.NOT_NULL && definedType.isNullable())
                  ||  (nullability == Nullability.NULL && !definedType.isNullable())))
                 continue forcedTypeLoop;
 
-            if (expression != null) {
-                Pattern p = pattern(expression);
+            if (excludeExpression != null && matches(patterns.pattern(excludeExpression), definition))
+                continue forcedTypeLoop;
 
-                if (     !p.matcher(definition.getName()).matches()
-                      && !p.matcher(definition.getQualifiedName()).matches()) {
+            if (includeExpression != null && !matches(patterns.pattern(includeExpression), definition))
+                continue forcedTypeLoop;
+
+            if (    (definedType != null && (excludeTypes != null || includeTypes != null))
+                 && !typeMatchesExcludeInclude(definedType, excludeTypes, includeTypes))
+                continue forcedTypeLoop;
+
+            if (sql != null)
+                if (!matches(statements.fetchSet(sql), definition))
                     continue forcedTypeLoop;
-                }
-            }
-
-            if (types != null && definedType != null) {
-                Pattern p = pattern(types);
-
-                if (    ( !p.matcher(definedType.getType()).matches() )
-                     && (     definedType.getLength() == 0
-                     ||   !p.matcher(definedType.getType() + "(" + definedType.getLength() + ")").matches())
-                     && (     definedType.getScale() != 0
-                     ||   !p.matcher(definedType.getType() + "(" + definedType.getPrecision() + ")").matches())
-                     && ( !p.matcher(definedType.getType() + "(" + definedType.getPrecision() + "," + definedType.getScale() + ")").matches() )
-                     && ( !p.matcher(definedType.getType() + "(" + definedType.getPrecision() + ", " + definedType.getScale() + ")").matches() )
-
-                     // [#5872] We should match user-defined types as well, in case of which the type might be reported
-                     //         as USER-DEFINED (in PostgreSQL)
-                     && ( StringUtils.isBlank(definedType.getUserType())
-                     ||   !p.matcher(definedType.getUserType()).matches()
-                     &&   !p.matcher(definedType.getQualifiedUserType().unquotedName().toString()).matches() )
-                ) {
-                    continue forcedTypeLoop;
-                }
-            }
 
             return forcedType;
         }
 
         return null;
+    }
+
+    private boolean typeMatchesExcludeInclude(DataTypeDefinition type, String exclude, String include) {
+        if (exclude != null && matches(type, patterns.pattern(exclude)))
+            return false;
+
+        return include == null || matches(type, patterns.pattern(include));
+    }
+
+    private boolean matches(DataTypeDefinition type, Pattern pattern) {
+        return  ( pattern.matcher(type.getType()).matches() )
+             || (     type.getLength() != 0
+             &&   pattern.matcher(type.getType() + "(" + type.getLength() + ")").matches() )
+             || (     type.getScale() == 0
+             &&   pattern.matcher(type.getType() + "(" + type.getPrecision() + ")").matches() )
+             || ( pattern.matcher(type.getType() + "(" + type.getPrecision() + "," + type.getScale() + ")").matches() )
+             || ( pattern.matcher(type.getType() + "(" + type.getPrecision() + ", " + type.getScale() + ")").matches() )
+
+             // [#5872] We should match user-defined types as well, in case of which the type might be reported
+             //         as USER-DEFINED (in PostgreSQL)
+             || ( !StringUtils.isBlank(type.getUserType())
+             && ( pattern.matcher(type.getUserType()).matches()
+             ||   pattern.matcher(type.getQualifiedUserType().unquotedName().toString()).matches() )
+            );
+    }
+
+    @Override
+    public final void setConfiguredEmbeddables(List<Embeddable> configuredEmbeddables) {
+        this.configuredEmbeddables = configuredEmbeddables;
+    }
+
+    @Override
+    public final List<Embeddable> getConfiguredEmbeddables() {
+        if (configuredEmbeddables == null)
+            configuredEmbeddables = new ArrayList<>();
+
+        return configuredEmbeddables;
+    }
+
+    @Override
+    public final List<EmbeddableDefinition> getEmbeddables() {
+        List<EmbeddableDefinition> result = new ArrayList<>();
+
+        for (SchemaDefinition schema : getSchemata()) {
+            for (TableDefinition table : getTables(schema)) {
+                for (Embeddable embeddable : getConfiguredEmbeddables()) {
+                    List<ColumnDefinition> columns = new ArrayList<>();
+                    List<String> names = new ArrayList<>();
+
+                    for (EmbeddableField embeddableField : embeddable.getFields()) {
+                        boolean matched = false;
+
+                        for (ColumnDefinition column : table.getColumns())
+                            if (matches(patterns.pattern(embeddableField.getExpression()), column))
+                                if (matched)
+                                    log.warn("EmbeddableField configuration matched several columns in table " + table + ": " + embeddableField);
+                                else
+                                    matched = columns.add(column) && names.add(defaultIfEmpty(embeddableField.getName(), column.getName()));
+                    }
+
+                    if (columns.size() == embeddable.getFields().size())
+                        result.add(new DefaultEmbeddableDefinition(embeddable.getName(), names, table, columns));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public final List<EmbeddableDefinition> getEmbeddables(SchemaDefinition schema) {
+        if (embeddables == null) {
+            embeddables = new ArrayList<>();
+
+            if (getIncludeEmbeddables()) {
+                try {
+                    List<EmbeddableDefinition> r = getEmbeddables();
+
+                    embeddables = sort(r);
+                    // indexes = sort(filterExcludeInclude(r)); TODO Support include / exclude for indexes (and constraints!)
+                    log.info("Embeddables fetched", fetchedSize(r, embeddables));
+                }
+                catch (Exception e) {
+                    log.error("Error while fetching embeddables", e);
+                }
+            }
+            else
+                log.info("Embeddables excluded");
+        }
+
+        if (embeddablesBySchema == null)
+            embeddablesBySchema = new LinkedHashMap<>();
+
+        return filterSchema(embeddables, schema, embeddablesBySchema);
+    }
+
+    @Override
+    public final List<EmbeddableDefinition> getEmbeddables(TableDefinition table) {
+        if (embeddablesByTable == null)
+            embeddablesByTable = new LinkedHashMap<>();
+
+        return filterTable(getEmbeddables(table.getSchema()), table, embeddablesByTable);
     }
 
     @Override
@@ -1434,7 +1775,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<DomainDefinition> getDomains(SchemaDefinition schema) {
         if (domains == null) {
-            domains = new ArrayList<DomainDefinition>();
+            domains = new ArrayList<>();
 
             try {
                 List<DomainDefinition> e = getDomains0();
@@ -1473,7 +1814,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<ArrayDefinition> getArrays(SchemaDefinition schema) {
         if (arrays == null) {
-            arrays = new ArrayList<ArrayDefinition>();
+            arrays = new ArrayList<>();
 
             if (getIncludeUDTs()) {
                 try {
@@ -1491,7 +1832,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (arraysBySchema == null)
-            arraysBySchema = new LinkedHashMap<SchemaDefinition, List<ArrayDefinition>>();
+            arraysBySchema = new LinkedHashMap<>();
 
         return filterSchema(arrays, schema, arraysBySchema);
     }
@@ -1518,7 +1859,7 @@ public abstract class AbstractDatabase implements Database {
 
     private final List<UDTDefinition> getAllUDTs(SchemaDefinition schema) {
         if (udts == null) {
-            udts = new ArrayList<UDTDefinition>();
+            udts = new ArrayList<>();
 
             if (getIncludeUDTs()) {
                 try {
@@ -1536,13 +1877,13 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (udtsBySchema == null)
-            udtsBySchema = new LinkedHashMap<SchemaDefinition, List<UDTDefinition>>();
+            udtsBySchema = new LinkedHashMap<>();
 
         return filterSchema(udts, schema, udtsBySchema);
     }
 
     private final List<UDTDefinition> ifInPackage(List<UDTDefinition> allUDTs, boolean expected) {
-        List<UDTDefinition> result = new ArrayList<UDTDefinition>();
+        List<UDTDefinition> result = new ArrayList<>();
 
         for (UDTDefinition u : allUDTs)
             if ((u.getPackage() != null) == expected)
@@ -1604,7 +1945,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<IndexDefinition> getIndexes(SchemaDefinition schema) {
         if (indexes == null) {
-            indexes = new ArrayList<IndexDefinition>();
+            indexes = new ArrayList<>();
 
             if (getIncludeIndexes()) {
                 try {
@@ -1623,7 +1964,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (indexesBySchema == null)
-            indexesBySchema = new LinkedHashMap<SchemaDefinition, List<IndexDefinition>>();
+            indexesBySchema = new LinkedHashMap<>();
 
         return filterSchema(indexes, schema, indexesBySchema);
     }
@@ -1631,21 +1972,21 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<IndexDefinition> getIndexes(TableDefinition table) {
         if (indexesByTable == null)
-            indexesByTable = new HashMap<TableDefinition, List<IndexDefinition>>();
+            indexesByTable = new HashMap<>();
 
         List<IndexDefinition> list = indexesByTable.get(table);
         if (list == null) {
-            indexesByTable.put(table, list = new ArrayList<IndexDefinition>());
+            indexesByTable.put(table, list = new ArrayList<>());
 
             for (TableDefinition otherTable : getTables(table.getSchema()))
                 if (!indexesByTable.containsKey(otherTable))
-                    indexesByTable.put(otherTable, new ArrayList<IndexDefinition>());
+                    indexesByTable.put(otherTable, new ArrayList<>());
 
             for (IndexDefinition index : getIndexes(table.getSchema())) {
                 List<IndexDefinition> otherList = indexesByTable.get(index.getTable());
 
                 if (otherList == null)
-                    indexesByTable.put(index.getTable(), otherList = new ArrayList<IndexDefinition>());
+                    indexesByTable.put(index.getTable(), otherList = new ArrayList<>());
 
                 otherList.add(index);
             }
@@ -1657,7 +1998,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<RoutineDefinition> getRoutines(SchemaDefinition schema) {
         if (routines == null) {
-            routines = new ArrayList<RoutineDefinition>();
+            routines = new ArrayList<>();
 
             if (getIncludeRoutines()) {
                 try {
@@ -1667,7 +2008,7 @@ public abstract class AbstractDatabase implements Database {
                     log.info("Routines fetched", fetchedSize(r, routines));
                 }
                 catch (Exception e) {
-                    log.error("Error while fetching functions", e);
+                    log.error("Error while fetching routines", e);
                 }
             }
             else
@@ -1675,7 +2016,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (routinesBySchema == null)
-            routinesBySchema = new LinkedHashMap<SchemaDefinition, List<RoutineDefinition>>();
+            routinesBySchema = new LinkedHashMap<>();
 
         return filterSchema(routines, schema, routinesBySchema);
     }
@@ -1683,7 +2024,7 @@ public abstract class AbstractDatabase implements Database {
     @Override
     public final List<PackageDefinition> getPackages(SchemaDefinition schema) {
         if (packages == null) {
-            packages = new ArrayList<PackageDefinition>();
+            packages = new ArrayList<>();
 
             if (getIncludePackages()) {
                 try {
@@ -1701,7 +2042,7 @@ public abstract class AbstractDatabase implements Database {
         }
 
         if (packagesBySchema == null)
-            packagesBySchema = new LinkedHashMap<SchemaDefinition, List<PackageDefinition>>();
+            packagesBySchema = new LinkedHashMap<>();
 
         return filterSchema(packages, schema, packagesBySchema);
     }
@@ -1716,25 +2057,27 @@ public abstract class AbstractDatabase implements Database {
     }
 
     protected static final <D extends Definition> D getDefinition(List<D> definitions, String name, boolean ignoreCase) {
-        for (D definition : definitions) {
+        if (name == null)
+            return null;
+
+        for (D definition : definitions)
             if ((ignoreCase && definition.getName().equalsIgnoreCase(name)) ||
-                (!ignoreCase && definition.getName().equals(name))) {
+                (!ignoreCase && definition.getName().equals(name)))
 
                 return definition;
-            }
-        }
 
         return null;
     }
 
     protected static final <D extends Definition> D getDefinition(List<D> definitions, Name name, boolean ignoreCase) {
-        for (D definition : definitions) {
+        if (name == null)
+            return null;
+
+        for (D definition : definitions)
             if ((ignoreCase && definition.getQualifiedNamePart().equalsIgnoreCase(name)) ||
-                (!ignoreCase && definition.getQualifiedNamePart().equals(name))) {
+                (!ignoreCase && definition.getQualifiedNamePart().equals(name)))
 
                 return definition;
-            }
-        }
 
         return null;
     }
@@ -1751,18 +2094,40 @@ public abstract class AbstractDatabase implements Database {
     }
 
     protected final <T extends Definition> List<T> filterSchema(List<T> definitions, SchemaDefinition schema) {
-        if (schema == null) {
+        if (schema == null)
             return definitions;
-        }
-        else {
-            List<T> result = new ArrayList<T>();
 
-            for (T definition : definitions)
-                if (definition.getSchema().equals(schema))
-                    result.add(definition);
+        List<T> result = new ArrayList<>();
 
-            return result;
+        for (T definition : definitions)
+            if (definition.getSchema().equals(schema))
+                result.add(definition);
+
+        return result;
+    }
+
+    protected final <T extends TableElementDefinition> List<T> filterTable(List<T> definitions, TableDefinition table, Map<TableDefinition, List<T>> cache) {
+        List<T> result = cache.get(table);
+
+        if (result == null) {
+            result = filterTable(definitions, table);
+            cache.put(table, result);
         }
+
+        return result;
+    }
+
+    protected final <T extends TableElementDefinition> List<T> filterTable(List<T> definitions, TableDefinition table) {
+        if (table == null)
+            return definitions;
+
+        List<T> result = new ArrayList<>();
+
+        for (T definition : definitions)
+            if (definition.getTable().equals(table))
+                result.add(definition);
+
+        return result;
     }
 
     @Override
@@ -1801,17 +2166,12 @@ public abstract class AbstractDatabase implements Database {
     }
 
     protected final <T extends Definition> List<T> filterExcludeInclude(List<T> definitions, String[] e, String[] i, List<Filter> f) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
 
         definitionsLoop: for (T definition : definitions) {
             if (e != null) {
                 for (String exclude : e) {
-                    Pattern p = pattern(exclude);
-
-                    if (exclude != null &&
-                            (p.matcher(definition.getName()).matches() ||
-                             p.matcher(definition.getQualifiedName()).matches())) {
-
+                    if (exclude != null && matches(patterns.pattern(exclude), definition)) {
                         if (log.isDebugEnabled())
                             log.debug("Exclude", "Excluding " + definition.getQualifiedName() + " because of pattern " + exclude);
 
@@ -1822,11 +2182,7 @@ public abstract class AbstractDatabase implements Database {
 
             if (i != null) {
                 for (String include : i) {
-                    Pattern p = pattern(include);
-
-                    if (include != null &&
-                            (p.matcher(definition.getName()).matches() ||
-                             p.matcher(definition.getQualifiedName()).matches())) {
+                    if (include != null && matches(patterns.pattern(include), definition)) {
 
                         // [#3488] This allows for filtering out additional objects, in case the applicable
                         // code generation configuration might cause conflicts in resulting code
@@ -1862,42 +2218,48 @@ public abstract class AbstractDatabase implements Database {
         DefaultRelations result = new DefaultRelations();
 
         try {
-            loadPrimaryKeys(result);
+            if (getIncludePrimaryKeys())
+                loadPrimaryKeys(result);
         }
         catch (Exception e) {
             log.error("Error while fetching primary keys", e);
         }
 
         try {
-            loadUniqueKeys(result);
+            if (getIncludeUniqueKeys())
+                loadUniqueKeys(result);
         }
         catch (Exception e) {
             log.error("Error while fetching unique keys", e);
         }
 
         try {
-            loadForeignKeys(result);
+            if (getIncludeForeignKeys())
+                loadForeignKeys(result);
         }
         catch (Exception e) {
             log.error("Error while fetching foreign keys", e);
         }
 
         try {
-            loadCheckConstraints(result);
+            if (getIncludeCheckConstraints())
+                loadCheckConstraints(result);
         }
         catch (Exception e) {
             log.error("Error while fetching check constraints", e);
         }
 
         try {
-            syntheticPrimaryKeys(result);
+            if (getIncludePrimaryKeys())
+                syntheticPrimaryKeys(result);
         }
         catch (Exception e) {
             log.error("Error while generating synthetic primary keys", e);
         }
 
         try {
-            overridePrimaryKeys(result);
+            if (getIncludePrimaryKeys())
+                overridePrimaryKeys(result);
         }
         catch (Exception e) {
             log.error("Error while overriding primary keys", e);
@@ -1933,7 +2295,7 @@ public abstract class AbstractDatabase implements Database {
     }
 
     private final void syntheticPrimaryKeys(DefaultRelations r) {
-        List<UniqueKeyDefinition> syntheticKeys = new ArrayList<UniqueKeyDefinition>();
+        List<UniqueKeyDefinition> syntheticKeys = new ArrayList<>();
 
         for (SchemaDefinition schema : getSchemata()) {
             for (TableDefinition table : schema.getTables()) {

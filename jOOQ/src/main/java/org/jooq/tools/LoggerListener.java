@@ -142,11 +142,15 @@ public class LoggerListener extends DefaultExecuteListener {
 
     @Override
     public void resultEnd(ExecuteContext ctx) {
-        if (ctx.result() != null)
+        if (ctx.result() != null) {
             if (log.isTraceEnabled())
                 logMultiline("Fetched result", ctx.result().format(TXTFormat.DEFAULT.maxRows(500).maxColWidth(500)), Level.FINE);
             else if (log.isDebugEnabled())
                 logMultiline("Fetched result", ctx.result().format(TXTFormat.DEFAULT.maxRows(5).maxColWidth(50)), Level.FINE);
+
+            if (log.isDebugEnabled())
+                log.debug("Fetched row(s)", ctx.result().size());
+        }
     }
 
     @Override
@@ -173,7 +177,7 @@ public class LoggerListener extends DefaultExecuteListener {
     private Record record(Configuration configuration, Routine<?> routine) {
         Record result = null;
 
-        List<Field<?>> fields = new ArrayList<Field<?>>(1 + routine.getOutParameters().size());
+        List<Field<?>> fields = new ArrayList<>(1 + routine.getOutParameters().size());
         Parameter<?> returnParam = routine.getReturnParameter();
         if (returnParam != null)
             fields.add(field(name(returnParam.getName()), returnParam.getDataType()));

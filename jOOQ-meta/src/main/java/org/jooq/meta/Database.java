@@ -47,12 +47,14 @@ import org.jooq.DSLContext;
 import org.jooq.Name;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
-import org.jooq.meta.jaxb.Catalog;
+import org.jooq.TableField;
+import org.jooq.meta.jaxb.CatalogMappingType;
 import org.jooq.meta.jaxb.CustomType;
+import org.jooq.meta.jaxb.Embeddable;
 import org.jooq.meta.jaxb.EnumType;
 import org.jooq.meta.jaxb.ForcedType;
 import org.jooq.meta.jaxb.RegexFlag;
-import org.jooq.meta.jaxb.Schema;
+import org.jooq.meta.jaxb.SchemaMappingType;
 
 /**
  * A general database model.
@@ -150,6 +152,21 @@ public interface Database  extends AutoCloseable  {
      * Get a table in this database by name.
      */
     TableDefinition getTable(SchemaDefinition schema, Name name, boolean ignoreCase);
+
+    /**
+     * Get all embeddables.
+     */
+    List<EmbeddableDefinition> getEmbeddables();
+
+    /**
+     * Get all embeddables for a given schema.
+     */
+    List<EmbeddableDefinition> getEmbeddables(SchemaDefinition schema);
+
+    /**
+     * Get all embeddables for a given table.
+     */
+    List<EmbeddableDefinition> getEmbeddables(TableDefinition table);
 
     /**
      * The enum UDTs defined in this database.
@@ -338,12 +355,12 @@ public interface Database  extends AutoCloseable  {
     /**
      * The input and output catalogs.
      */
-    void setConfiguredCatalogs(List<Catalog> catalogs);
+    void setConfiguredCatalogs(List<CatalogMappingType> catalogs);
 
     /**
      * The input and output schemata.
      */
-    void setConfiguredSchemata(List<Schema> schemata);
+    void setConfiguredSchemata(List<SchemaMappingType> schemata);
 
     /**
      * Database objects matching any of these regular expressions will not be
@@ -410,6 +427,16 @@ public interface Database  extends AutoCloseable  {
      * whether primary keys should be included.
      */
     boolean getIncludePrimaryKeys();
+
+    /**
+     * whether check constraints should be included.
+     */
+    void setIncludeCheckConstraints(boolean checkConstraints);
+
+    /**
+     * whether check constraints should be included.
+     */
+    boolean getIncludeCheckConstraints();
 
     /**
      * whether indexes should be included.
@@ -507,6 +534,31 @@ public interface Database  extends AutoCloseable  {
     void setIncludeTables(boolean includeTables);
 
     /**
+     * Whether tables (and views) should be included.
+     */
+    boolean getIncludeTables();
+
+    /**
+     * Whether embeddable types should be included.
+     */
+    void setIncludeEmbeddables(boolean includeEmbeddables);
+
+    /**
+     * Whether embeddable types should be included.
+     */
+    boolean getIncludeEmbeddables();
+
+    /**
+     * Whether invisible columns should be included.
+     */
+    void setIncludeInvisibleColumns(boolean includeInvisibleColumns);
+
+    /**
+     * Whether invisible columns should be included.
+     */
+    boolean getIncludeInvisibleColumns();
+
+    /**
      * Whether zero-scale decimal types should be treated as their most
      * appropriate, corresponding integer type.
      */
@@ -517,11 +569,6 @@ public interface Database  extends AutoCloseable  {
      * appropriate, corresponding integer type.
      */
     boolean getForceIntegerTypesOnZeroScaleDecimals();
-
-    /**
-     * Whether tables (and views) should be included.
-     */
-    boolean getIncludeTables();
 
     /**
      * [#3488] Add an additional filter to the database that is applied in
@@ -568,6 +615,34 @@ public interface Database  extends AutoCloseable  {
      * The regular expression flags that should be applied when using regular expressions.
      */
     List<RegexFlag> getRegexFlags();
+
+    /**
+     * Whether the regular expressions matching database objects should match
+     * partially qualified names as well as fully qualified and unqualified
+     * names.
+     */
+    void setRegexMatchesPartialQualification(boolean regexMatchesPartialQualification);
+
+    /**
+     * Whether the regular expressions matching database objects should match
+     * partially qualified names as well as fully qualified and unqualified
+     * names.
+     */
+    boolean getRegexMatchesPartialQualification();
+
+    /**
+     * Whether the SQL statements matching database objects should match
+     * partially qualified names as well as fully qualified and unqualified
+     * names.
+     */
+    void setSqlMatchesPartialQualification(boolean sqlMatchesPartialQualification);
+
+    /**
+     * Whether the SQL statements matching database objects should match
+     * partially qualified names as well as fully qualified and unqualified
+     * names.
+     */
+    boolean getSqlMatchesPartialQualification();
 
     /**
      * Table columns matching these regular expressions will be considered as
@@ -684,6 +759,16 @@ public interface Database  extends AutoCloseable  {
     void setLogSlowQueriesAfterSeconds(int logSlowQueriesAfterSeconds);
 
     /**
+     * Log slow results after this amount of seconds.
+     */
+    int getLogSlowResultsAfterSeconds();
+
+    /**
+     * Log slow results after this amount of seconds.
+     */
+    void setLogSlowResultsAfterSeconds(int logSlowResultsAfterSeconds);
+
+    /**
      * The database's schema version provider.
      */
     SchemaVersionProvider getSchemaVersionProvider();
@@ -732,6 +817,17 @@ public interface Database  extends AutoCloseable  {
     ForcedType getConfiguredForcedType(Definition definition, DataTypeDefinition definedType);
 
     /**
+     * Configure the embeddable types.
+     */
+    void setConfiguredEmbeddables(List<Embeddable> configuredEmbeddables);
+
+    /**
+     * Get the configured embeddable type definitions for any given
+     * {@link Definition}.
+     */
+    List<Embeddable> getConfiguredEmbeddables();
+
+    /**
      * Get the dialect for this database.
      */
     SQLDialect getDialect();
@@ -757,6 +853,18 @@ public interface Database  extends AutoCloseable  {
     boolean supportsUnsignedTypes();
 
     /**
+     * Whether this database includes integer display widths in metadata, where
+     * applicable.
+     */
+    void setIntegerDisplayWidths(boolean integerDisplayWidths);
+
+    /**
+     * Whether this database includes integer display widths in metadata, where
+     * applicable.
+     */
+    boolean integerDisplayWidths();
+
+    /**
      * Whether this database should ignore procedure return values.
      */
     void setIgnoreProcedureReturnValues(boolean ignoreProcedureReturnValues);
@@ -777,6 +885,18 @@ public interface Database  extends AutoCloseable  {
     boolean dateAsTimestamp();
 
     /**
+     * Whether <code>java.time</code> types are used, as opposed to
+     * <code>java.sql</code> types.
+     */
+    void setJavaTimeTypes(boolean javaTimeTypes);
+
+    /**
+     * Whether <code>java.time</code> types are used, as opposed to
+     * <code>java.sql</code> types.
+     */
+    boolean javaTimeTypes();
+
+    /**
      * [#3559] Whether relations (i.e. constraints) should be included in this database.
      */
     void setIncludeRelations(boolean includeRelations);
@@ -795,6 +915,16 @@ public interface Database  extends AutoCloseable  {
      * [#4838] Whether table-valued functions should be reported as tables.
      */
     boolean tableValuedFunctions();
+
+    /**
+     * Check for the existence of a table field in the dictionary views.
+     */
+    boolean exists(TableField<?, ?> field);
+
+    /**
+     * Check for the existence of several table fields in the dictionary views.
+     */
+    boolean existAll(TableField<?, ?>... fields);
 
     /**
      * Check for the existence of a table in the dictionary views.

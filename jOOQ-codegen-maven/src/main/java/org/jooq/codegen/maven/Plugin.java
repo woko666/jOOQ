@@ -52,6 +52,7 @@ import java.util.List;
 import org.jooq.codegen.GenerationTool;
 import org.jooq.meta.jaxb.Configuration;
 import org.jooq.meta.jaxb.Target;
+import org.jooq.util.jaxb.tools.MiniJAXB;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -84,12 +85,24 @@ public class Plugin extends AbstractMojo {
     private MavenProject                 project;
 
     /**
-     * An external configuration file that overrides anything in the Maven configuration
+     * An external configuration file that is appended to anything from the
+     * Maven configuration, using Maven's <code>combine.children="append"</code>
+     * semantics.
      */
     @Parameter(
         property = "jooq.codegen.configurationFile"
     )
     private String                       configurationFile;
+
+    /**
+     * An external set of configuration files that is appended to anything from
+     * the Maven configuration, using Maven's
+     * <code>combine.children="append"</code> semantics.
+     */
+    @Parameter(
+        property = "jooq.codegen.configurationFiles"
+    )
+    private List<String>                 configurationFiles;
 
     /**
      * Whether to skip the execution of the Maven Plugin for this module.
@@ -106,6 +119,14 @@ public class Plugin extends AbstractMojo {
         property = "jooq.codegen.logging"
     )
     private org.jooq.meta.jaxb.Logging   logging;
+
+    /**
+     * The on-error behavior.
+     */
+    @Parameter(
+        property = "jooq.codegen.onError"
+    )
+    private org.jooq.meta.jaxb.OnError   onError;
 
     /**
      * The jdbc settings.
@@ -126,32 +147,11 @@ public class Plugin extends AbstractMojo {
             return;
         }
 
-        if (configurationFile != null) {
-            getLog().info("Reading external configuration");
-            File file = new File(configurationFile);
-
-            if (!file.isAbsolute())
-                file = new File(project.getBasedir(), configurationFile);
-
-            FileInputStream in = null;
-            try {
-                in = new FileInputStream(file);
-                Configuration configuration = GenerationTool.load(in);
-                generator = configuration.getGenerator();
-                jdbc = configuration.getJdbc();
-            }
-            catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            finally {
-                if (in != null) {
-                    try {
-                        in.close();
-                    }
-                    catch (IOException ignore) {}
-                }
-            }
-        }
+        if (configurationFiles != null && !configurationFiles.isEmpty())
+            for (String file : configurationFiles)
+                read(file);
+        else if (configurationFile != null)
+            read(configurationFile);
 
         // [#5286] There are a variety of reasons why the generator isn't set up
         //         correctly at this point. We'll log them all here.
@@ -168,10 +168,12 @@ public class Plugin extends AbstractMojo {
         }
 
         ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
+        URLClassLoader pluginClassLoader = getClassLoader();
 
         try {
+
             // [#2886] Add the surrounding project's dependencies to the current classloader
-            Thread.currentThread().setContextClassLoader(getClassLoader());
+            Thread.currentThread().setContextClassLoader(pluginClassLoader);
 
             // [#5881] Target is allowed to be null
             if (generator.getTarget() == null)
@@ -182,10 +184,11 @@ public class Plugin extends AbstractMojo {
 
             // [#2887] Patch relative paths to take plugin execution basedir into account
             if (!new File(generator.getTarget().getDirectory()).isAbsolute())
-                generator.getTarget().setDirectory(project.getBasedir() + File.separator + generator.getTarget().getDirectory());
+                generator.getTarget().setDirectory(new File(project.getBasedir(), generator.getTarget().getDirectory()).getCanonicalPath());
 
             Configuration configuration = new Configuration();
             configuration.setLogging(logging);
+            configuration.setOnError(onError);
             configuration.setJdbc(jdbc);
             configuration.setGenerator(generator);
 
@@ -197,24 +200,63 @@ public class Plugin extends AbstractMojo {
         catch (Exception ex) {
             throw new MojoExecutionException("Error running jOOQ code generation tool", ex);
         }
-
-        // [#2886] Restore old class loader
         finally {
+
+            // [#2886] Restore old class loader
             Thread.currentThread().setContextClassLoader(oldCL);
+
+
+            // [#7630] Close URLClassLoader to help free resources
+            try {
+                pluginClassLoader.close();
+            }
+
+            // Catch all possible errors to avoid suppressing the original exception
+            catch (Throwable e) {
+                getLog().error("Couldn't close the classloader.", e);
+            }
+
         }
 
         project.addCompileSourceRoot(generator.getTarget().getDirectory());
     }
 
-    @SuppressWarnings("unchecked")
-    private ClassLoader getClassLoader() throws MojoExecutionException {
+    private void read(String file) {
+        getLog().info("Reading external configuration: " + file);
+        File f = new File(file);
+
+        if (!f.isAbsolute())
+            f = new File(project.getBasedir(), file);
+
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(f);
+            Configuration configuration = GenerationTool.load(in);
+            logging = MiniJAXB.append(logging, configuration.getLogging());
+            onError = MiniJAXB.append(onError, configuration.getOnError());
+            jdbc = MiniJAXB.append(jdbc, configuration.getJdbc());
+            generator = MiniJAXB.append(generator, configuration.getGenerator());
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        finally {
+            if (in != null) {
+                try {
+                    in.close();
+                }
+                catch (IOException ignore) {}
+            }
+        }
+    }
+
+    private URLClassLoader getClassLoader() throws MojoExecutionException {
         try {
             List<String> classpathElements = project.getRuntimeClasspathElements();
             URL urls[] = new URL[classpathElements.size()];
 
-            for (int i = 0; i < urls.length; i++) {
+            for (int i = 0; i < urls.length; i++)
                 urls[i] = new File(classpathElements.get(i)).toURI().toURL();
-            }
 
             return new URLClassLoader(urls, getClass().getClassLoader());
         }

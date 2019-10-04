@@ -42,6 +42,7 @@ import java.sql.SQLException;
 
 import org.jooq.Attachable;
 import org.jooq.BindContext;
+import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DSLContext;
@@ -86,6 +87,16 @@ abstract class AbstractQueryPart implements QueryPartInternal {
     @Override
     @Deprecated
     public final void bind(BindContext context) throws DataAccessException {}
+
+    /**
+     * @deprecated - 3.11.0 - [#8179] - This functionality will be removed in
+     *             the future.
+     */
+    @Deprecated
+    @Override
+    public Clause[] clauses(Context<?> ctx) {
+        return null;
+    }
 
     // -------------------------------------------------------------------------
     // The QueryPart and QueryPart internal API
@@ -166,7 +177,10 @@ abstract class AbstractQueryPart implements QueryPartInternal {
     @Override
     public String toString() {
         try {
-            return create(configuration().derive(SettingsTools.clone(configuration().settings()).withRenderFormatted(true))).renderInlined(this);
+
+            // [#8355] Subtypes may have null configuration
+            Configuration configuration = Tools.configuration(configuration());
+            return create(configuration.derive(SettingsTools.clone(configuration.settings()).withRenderFormatted(true))).renderInlined(this);
         }
         catch (SQLDialectNotSupportedException e) {
             return "[ ... " + e.getMessage() + " ... ]";

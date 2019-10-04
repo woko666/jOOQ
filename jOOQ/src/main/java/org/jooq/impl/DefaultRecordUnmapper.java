@@ -44,6 +44,7 @@ import static org.jooq.impl.Tools.getMatchingMembers;
 import static org.jooq.impl.Tools.hasColumnAnnotations;
 
 import java.lang.reflect.Method;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -90,6 +91,8 @@ public class DefaultRecordUnmapper<E, R extends Record> implements RecordUnmappe
             delegate = new ArrayUnmapper();
         else if (Map.class.isAssignableFrom(type))
             delegate = new MapUnmapper();
+        else if (Iterable.class.isAssignableFrom(type))
+            delegate = new IterableUnmapper();
         else
             delegate = new PojoUnmapper();
     }
@@ -166,6 +169,33 @@ public class DefaultRecordUnmapper<E, R extends Record> implements RecordUnmappe
         }
     }
 
+    private final class IterableUnmapper implements RecordUnmapper<E, R> {
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Override
+        public final R unmap(E source) {
+            if (source == null)
+                return null;
+
+            if (source instanceof Iterable) {
+                Iterator<?> it = ((Iterable<?>) source).iterator();
+                int size = rowType.size();
+                Record record = newRecord();
+
+                for (int i = 0; i < size && it.hasNext(); i++) {
+                    Field field = rowType.field(i);
+
+                    if (rowType.field(field) != null)
+                        Tools.setValue(record, field, it.next());
+                }
+
+                return (R) record;
+            }
+
+            throw new MappingException("Iterable expected. Got: " + source.getClass());
+        }
+    }
+
     private final class MapUnmapper implements RecordUnmapper<E, R> {
 
         @SuppressWarnings("unchecked")
@@ -225,12 +255,10 @@ public class DefaultRecordUnmapper<E, R extends Record> implements RecordUnmappe
                     }
 
                     // Use only the first applicable method or member
-                    if (method != null) {
+                    if (method != null)
                         Tools.setValue(record, field, method.invoke(source));
-                    }
-                    else if (members.size() > 0) {
+                    else if (members.size() > 0)
                         setValue(record, source, members.get(0), field);
-                    }
                 }
 
                 return (R) record;

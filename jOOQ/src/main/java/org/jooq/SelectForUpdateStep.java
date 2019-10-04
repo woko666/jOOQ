@@ -50,6 +50,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -71,9 +72,9 @@ import static org.jooq.SQLDialect.POSTGRES;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -134,6 +135,15 @@ public interface SelectForUpdateStep<R extends Record> extends SelectOptionStep<
     SelectForUpdateOfStep<R> forUpdate();
 
     /**
+     * Add a <code>FOR NO KEY UPDATE</code> clause to the end of the query.
+     *
+     * @see SelectQuery#setForShare(boolean) see LockProvider for more
+     *      details
+     */
+    @Support({ POSTGRES })
+    SelectForUpdateOfStep<R> forNoKeyUpdate();
+
+    /**
      * Add a <code>FOR SHARE</code> clause to the end of the query.
      *
      * @see SelectQuery#setForShare(boolean) see LockProvider for more
@@ -141,6 +151,17 @@ public interface SelectForUpdateStep<R extends Record> extends SelectOptionStep<
      */
     @Support({ MARIADB, MYSQL, POSTGRES })
     SelectOptionStep<R> forShare();
+
+    /**
+     * Add a <code>FOR KEY SHARE</code> clause to the end of the query.
+     *
+     * @see SelectQuery#setForShare(boolean) see LockProvider for more
+     *      details
+     */
+    @Support({ POSTGRES })
+    SelectForUpdateOfStep<R> forKeyShare();
+
+
 
 
 

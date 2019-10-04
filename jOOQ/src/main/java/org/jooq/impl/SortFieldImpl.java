@@ -43,7 +43,6 @@ import static org.jooq.impl.DSL.zero;
 import static org.jooq.impl.Keywords.K_NULLS_FIRST;
 import static org.jooq.impl.Keywords.K_NULLS_LAST;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.SortField;
@@ -123,6 +122,7 @@ final class SortFieldImpl<T> extends AbstractQueryPart implements SortField<T> {
 
 
 
+
                 // These OSS dialects don't support this syntax at all
                 case CUBRID:
                 case MARIADB:
@@ -134,39 +134,39 @@ final class SortFieldImpl<T> extends AbstractQueryPart implements SortField<T> {
                     ctx.visit(nvl2(field, ifNotNull, ifNull))
                        .sql(", ");
 
-                    acceptFieldAndOrder(ctx);
-
+                    acceptFieldAndOrder(ctx, false);
                     break;
                 }
 
                 // DERBY, H2, HSQLDB, ORACLE, POSTGRES
                 default: {
-                    acceptFieldAndOrder(ctx);
-
-                    if (nullsFirst)
-                        ctx.sql(' ').visit(K_NULLS_FIRST);
-                    else
-                        ctx.sql(' ').visit(K_NULLS_LAST);
-
+                    acceptFieldAndOrder(ctx, true);
                     break;
                 }
             }
         }
         else {
-            acceptFieldAndOrder(ctx);
+            acceptFieldAndOrder(ctx, false);
         }
     }
 
-    private final void acceptFieldAndOrder(Context<?> ctx) {
-        ctx.visit(field);
+    private final void acceptFieldAndOrder(Context<?> ctx, boolean includeNulls) {
+        String separator = "";
 
-        if (order != SortOrder.DEFAULT)
-           ctx.sql(' ')
-              .visit(order.toKeyword());
-    }
+        for (Field<?> f : Tools.flatten(field)) {
+            ctx.sql(separator).visit(f);
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+            if (order != SortOrder.DEFAULT)
+               ctx.sql(' ')
+                  .visit(order.toKeyword());
+
+            if (includeNulls)
+                if (nullsFirst)
+                    ctx.sql(' ').visit(K_NULLS_FIRST);
+                else
+                    ctx.sql(' ').visit(K_NULLS_LAST);
+
+            separator = ", ";
+        }
     }
 }

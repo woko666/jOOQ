@@ -41,24 +41,25 @@ import static org.jooq.DDLFlag.COMMENT;
 import static org.jooq.DDLFlag.FOREIGN_KEY;
 import static org.jooq.DDLFlag.PRIMARY_KEY;
 import static org.jooq.DDLFlag.SCHEMA;
+import static org.jooq.DDLFlag.SEQUENCE;
 import static org.jooq.DDLFlag.TABLE;
 import static org.jooq.DDLFlag.UNIQUE;
 import static org.jooq.impl.DSL.constraint;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
+import java.util.Collection;
 import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Constraint;
-import org.jooq.DDLFlag;
+import org.jooq.DDLExportConfiguration;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Queries;
 import org.jooq.Query;
 import org.jooq.Schema;
+import org.jooq.Sequence;
 import org.jooq.Table;
 import org.jooq.UniqueKey;
 import org.jooq.tools.StringUtils;
@@ -68,26 +69,35 @@ import org.jooq.tools.StringUtils;
  */
 final class DDL {
 
-    private final DSLContext       ctx;
-    private final EnumSet<DDLFlag> flags;
+    private final DSLContext             ctx;
+    private final DDLExportConfiguration configuration;
 
-    DDL(DSLContext ctx, DDLFlag... flags) {
+    DDL(DSLContext ctx, DDLExportConfiguration configuration) {
         this.ctx = ctx;
-        this.flags = EnumSet.noneOf(DDLFlag.class);
+        this.configuration = configuration;
+    }
 
-        for (DDLFlag flag : flags)
-            this.flags.add(flag);
+    private final Query createTable(Table<?> table, Collection<? extends Constraint> constraints) {
+        return (configuration.createTableIfNotExists()
+                    ? ctx.createTableIfNotExists(table)
+                    : ctx.createTable(table))
+                  .columns(table.fields())
+                  .constraints(constraints);
+    }
+
+    private final Query createSequence(Sequence<?> sequence) {
+        return configuration.createSequenceIfNotExists()
+                    ? ctx.createSequenceIfNotExists(sequence)
+                    : ctx.createSequence(sequence);
     }
 
     private final Query createTable(Table<?> table) {
-        return ctx.createTable(table)
-                  .columns(table.fields())
-                  .constraints(constraints(table));
+        return createTable(table, constraints(table));
     }
 
     private final List<Query> alterTableAddConstraints(Table<?> table) {
         List<Constraint> constraints = constraints(table);
-        List<Query> result = new ArrayList<Query>(constraints.size());
+        List<Query> result = new ArrayList<>(constraints.size());
 
         for (Constraint constraint : constraints)
             result.add(ctx.alterTable(table).add(constraint));
@@ -96,7 +106,7 @@ final class DDL {
     }
 
     private final List<Constraint> constraints(Table<?> table) {
-        List<Constraint> result = new ArrayList<Constraint>();
+        List<Constraint> result = new ArrayList<>();
 
         result.addAll(primaryKeys(table));
         result.addAll(uniqueKeys(table));
@@ -105,10 +115,10 @@ final class DDL {
         return result;
     }
 
-    private List<Constraint> primaryKeys(Table<?> table) {
-        List<Constraint> result = new ArrayList<Constraint>();
+    private final List<Constraint> primaryKeys(Table<?> table) {
+        List<Constraint> result = new ArrayList<>();
 
-        if (flags.contains(PRIMARY_KEY))
+        if (configuration.flags().contains(PRIMARY_KEY))
             for (UniqueKey<?> key : table.getKeys())
                 if (key.isPrimary())
                     result.add(constraint(key.getName()).primaryKey(key.getFieldsArray()));
@@ -116,10 +126,10 @@ final class DDL {
         return result;
     }
 
-    private List<Constraint> uniqueKeys(Table<?> table) {
-        List<Constraint> result = new ArrayList<Constraint>();
+    private final List<Constraint> uniqueKeys(Table<?> table) {
+        List<Constraint> result = new ArrayList<>();
 
-        if (flags.contains(UNIQUE))
+        if (configuration.flags().contains(UNIQUE))
             for (UniqueKey<?> key : table.getKeys())
                 if (!key.isPrimary())
                     result.add(constraint(key.getName()).unique(key.getFieldsArray()));
@@ -127,10 +137,10 @@ final class DDL {
         return result;
     }
 
-    private List<Constraint> foreignKeys(Table<?> table) {
-        List<Constraint> result = new ArrayList<Constraint>();
+    private final List<Constraint> foreignKeys(Table<?> table) {
+        List<Constraint> result = new ArrayList<>();
 
-        if (flags.contains(FOREIGN_KEY))
+        if (configuration.flags().contains(FOREIGN_KEY))
             for (ForeignKey<?, ?> key : table.getReferences())
                 result.add(constraint(key.getName()).foreignKey(key.getFieldsArray()).references(key.getKey().getTable(), key.getKey().getFieldsArray()));
 
@@ -138,10 +148,10 @@ final class DDL {
     }
 
     final Queries queries(Table<?>... tables) {
-        List<Query> queries = new ArrayList<Query>();
+        List<Query> queries = new ArrayList<>();
 
         for (Table<?> table : tables) {
-            if (flags.contains(TABLE))
+            if (configuration.flags().contains(TABLE))
                 queries.add(createTable(table));
             else
                 queries.addAll(alterTableAddConstraints(table));
@@ -152,10 +162,10 @@ final class DDL {
         return ctx.queries(queries);
     }
 
-    private List<Query> commentOn(Table<?> table) {
-        List<Query> result = new ArrayList<Query>();
+    private final List<Query> commentOn(Table<?> table) {
+        List<Query> result = new ArrayList<>();
 
-        if (flags.contains(COMMENT)) {
+        if (configuration.flags().contains(COMMENT)) {
             String tComment = table.getComment();
 
             if (!StringUtils.isEmpty(tComment))
@@ -172,56 +182,62 @@ final class DDL {
         return result;
     }
 
-    final Queries queries(Schema schema) {
-        List<Query> queries = new ArrayList<Query>();
+    final Queries queries(Schema... schemas) {
+        List<Query> queries = new ArrayList<>();
 
-        if (flags.contains(SCHEMA) && !StringUtils.isBlank(schema.getName()))
-            queries.add(ctx.createSchema(schema.getName()));
+        for (Schema schema : schemas)
+            if (configuration.flags().contains(SCHEMA) && !StringUtils.isBlank(schema.getName()))
+                if (configuration.createSchemaIfNotExists())
+                    queries.add(ctx.createSchemaIfNotExists(schema.getName()));
+                else
+                    queries.add(ctx.createSchema(schema.getName()));
 
-        if (flags.contains(TABLE)) {
-            for (Table<?> table : schema.getTables()) {
-                List<Constraint> constraints = new ArrayList<Constraint>();
+        if (configuration.flags().contains(TABLE)) {
+            for (Schema schema : schemas) {
+                for (Table<?> table : schema.getTables()) {
+                    List<Constraint> constraints = new ArrayList<>();
 
-                constraints.addAll(primaryKeys(table));
-                constraints.addAll(uniqueKeys(table));
+                    constraints.addAll(primaryKeys(table));
+                    constraints.addAll(uniqueKeys(table));
 
-                queries.add(
-                    ctx.createTable(table)
-                       .columns(table.fields())
-                       .constraints(constraints)
-                );
+                    queries.add(createTable(table, constraints));
+                }
             }
         }
         else {
-            if (flags.contains(PRIMARY_KEY))
-                for (Table<?> table : schema.getTables())
-                    for (Constraint constraint : primaryKeys(table))
-                        queries.add(ctx.alterTable(table).add(constraint));
+            for (Schema schema : schemas) {
+                if (configuration.flags().contains(PRIMARY_KEY))
+                    for (Table<?> table : schema.getTables())
+                        for (Constraint constraint : primaryKeys(table))
+                            queries.add(ctx.alterTable(table).add(constraint));
 
-            if (flags.contains(UNIQUE))
-                for (Table<?> table : schema.getTables())
-                    for (Constraint constraint : uniqueKeys(table))
-                        queries.add(ctx.alterTable(table).add(constraint));
+                if (configuration.flags().contains(UNIQUE))
+                    for (Table<?> table : schema.getTables())
+                        for (Constraint constraint : uniqueKeys(table))
+                            queries.add(ctx.alterTable(table).add(constraint));
+            }
         }
 
-        if (flags.contains(FOREIGN_KEY))
-            for (Table<?> table : schema.getTables())
-                for (Constraint constraint : foreignKeys(table))
-                    queries.add(ctx.alterTable(table).add(constraint));
+        if (configuration.flags().contains(FOREIGN_KEY))
+            for (Schema schema : schemas)
+                for (Table<?> table : schema.getTables())
+                    for (Constraint constraint : foreignKeys(table))
+                        queries.add(ctx.alterTable(table).add(constraint));
 
-        if (flags.contains(COMMENT))
-            for (Table<?> table : schema.getTables())
-                queries.addAll(commentOn(table));
+        if (configuration.flags().contains(SEQUENCE))
+            for (Schema schema : schemas)
+                for (Sequence<?> sequence : schema.getSequences())
+                    queries.add(createSequence(sequence));
+
+        if (configuration.flags().contains(COMMENT))
+            for (Schema schema : schemas)
+                for (Table<?> table : schema.getTables())
+                    queries.addAll(commentOn(table));
 
         return ctx.queries(queries);
     }
 
     final Queries queries(Catalog catalog) {
-        List<Query> queries = new ArrayList<Query>();
-
-        for (Schema schema : catalog.getSchemas())
-            queries.addAll(Arrays.asList(queries(schema).queries()));
-
-        return ctx.queries(queries);
+        return queries(catalog.getSchemas().toArray(Tools.EMPTY_SCHEMA));
     }
 }

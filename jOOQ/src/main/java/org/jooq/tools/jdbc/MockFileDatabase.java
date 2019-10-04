@@ -38,14 +38,10 @@
 package org.jooq.tools.jdbc;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.Reader;
-import java.io.StringReader;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
@@ -55,9 +51,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
+import org.jooq.Source;
 import org.jooq.exception.MockFileDatabaseException;
 import org.jooq.impl.DSL;
 import org.jooq.tools.JooqLogger;
@@ -71,44 +69,44 @@ import org.jooq.tools.JooqLogger;
  *
  * # Statement strings have no prefix and should be ended with a semi-colon
  * select 'A' from dual;
- * # Statements may be followed by results, using >
- * > A
- * > -
- * > A
+ * # Statements may be followed by results, using &gt;
+ * &gt; A
+ * &gt; -
+ * &gt; A
  * # Statements should be followed by "&#64; rows: [N]" indicating the update count
  * &#64; rows: 1
  *
  * # New statements can be listed int his file
  * select 'A', 'B' from dual;
- * > A B
- * > - -
- * > A B
+ * &gt; A B
+ * &gt; - -
+ * &gt; A B
  * &#64; rows: 1
  *
  * # Beware of the exact syntax (e.g. using quotes)
  * select "TABLE1"."ID1", "TABLE1"."NAME1" from "TABLE1";
- * > ID1 NAME1
- * > --- -----
- * > 1   X
- * > 2   Y
+ * &gt; ID1 NAME1
+ * &gt; --- -----
+ * &gt; 1   X
+ * &gt; 2   Y
  * &#64; rows: 2
  *
  * # Statements can return several results
- * > F1  F2  F3 is a bit more complex
- * > --- --  ----------------------------
- * > 1   2   and a string containing data
- * > 1.1 x   another string
+ * &gt; F1  F2  F3 is a bit more complex
+ * &gt; --- --  ----------------------------
+ * &gt; 1   2   and a string containing data
+ * &gt; 1.1 x   another string
  * &#64; rows: 2
  *
- * > A B "C D"
- * > - - -----
- * > x y z
+ * &gt; A B "C D"
+ * &gt; - - -----
+ * &gt; x y z
  * &#64; rows: 1
  * </pre></code>
  * <p>
  * Results can be loaded using several techniques:
  * <ul>
- * <li>When results are prefixed with <code>></code>, then
+ * <li>When results are prefixed with <code>&gt;</code>, then
  * {@link DSLContext#fetchFromTXT(String)} is used</li>
  * <li>In the future, other types of result sources will be supported, such as
  * CSV, XML, JSON</li>
@@ -121,34 +119,40 @@ public class MockFileDatabase implements MockDataProvider {
 
     private static final JooqLogger              log = JooqLogger.getLogger(MockFileDatabase.class);
 
-    private final LineNumberReader               in;
+    private final MockFileDatabaseConfiguration  configuration;
     private final Map<String, List<MockResult>>  matchExactly;
     private final Map<Pattern, List<MockResult>> matchPattern;
     private final DSLContext                     create;
+
+    @Deprecated
     private String                               nullLiteral;
 
     public MockFileDatabase(File file) throws IOException {
-        this(file, "UTF-8");
+        this(new MockFileDatabaseConfiguration().source(file));
     }
 
     public MockFileDatabase(File file, String encoding) throws IOException {
-        this(new FileInputStream(file), encoding);
+        this(new MockFileDatabaseConfiguration().source(file, encoding));
     }
 
     public MockFileDatabase(InputStream stream) throws IOException {
-        this(stream, "UTF-8");
+        this(new MockFileDatabaseConfiguration().source(stream));
     }
 
     public MockFileDatabase(InputStream stream, String encoding) throws IOException {
-        this(new InputStreamReader(stream, encoding));
+        this(new MockFileDatabaseConfiguration().source(stream, encoding));
     }
 
     public MockFileDatabase(Reader reader) throws IOException {
-        this(new LineNumberReader(reader));
+        this(new MockFileDatabaseConfiguration().source(reader));
     }
 
     public MockFileDatabase(String string) throws IOException {
-        this(new StringReader(string));
+        this(new MockFileDatabaseConfiguration().source(string));
+    }
+
+    public MockFileDatabase(Source source) throws IOException {
+        this(new MockFileDatabaseConfiguration().source(source));
     }
 
     /**
@@ -157,16 +161,20 @@ public class MockFileDatabase implements MockDataProvider {
      * itself.
      *
      * @see DSLContext#fetchFromTXT(String, String)
+     * @deprecated - Use
+     *             {@link MockFileDatabaseConfiguration#nullLiteral(String)}
+     *             instead.
      */
+    @Deprecated
     public MockFileDatabase nullLiteral(String literal) {
         this.nullLiteral = literal;
         return this;
     }
 
-    private MockFileDatabase(LineNumberReader reader) throws IOException {
-        this.in = reader;
-        this.matchExactly = new LinkedHashMap<String, List<MockResult>>();
-        this.matchPattern = new LinkedHashMap<Pattern, List<MockResult>>();
+    public MockFileDatabase(MockFileDatabaseConfiguration configuration) throws IOException {
+        this.configuration = configuration;
+        this.matchExactly = new LinkedHashMap<>();
+        this.matchPattern = new LinkedHashMap<>();
         this.create = DSL.using(SQLDialect.DEFAULT);
 
         load();
@@ -257,8 +265,8 @@ public class MockFileDatabase implements MockDataProvider {
                     }
                 }
                 finally {
-                    if (in != null)
-                        in.close();
+                    if (configuration.in != null)
+                        configuration.in.close();
                 }
             }
 
@@ -266,24 +274,26 @@ public class MockFileDatabase implements MockDataProvider {
                 List<MockResult> results = matchExactly.get(previousSQL);
 
                 if (results == null) {
-                    results = new ArrayList<MockResult>();
-                    matchExactly.put(previousSQL, results);
+                    results = new ArrayList<>();
 
-//                    try {
-//                        Pattern p = Pattern.compile(previousSQL);
-//                        matchPattern.put(p, results);
-//                    }
-//                    catch (PatternSyntaxException ignore) {
-//                        if (log.isDebugEnabled()) {
-//                            log.debug("Not a pattern", previousSQL);
-//                        }
-//                    }
+                    if (configuration.patterns) {
+                        try {
+                            Pattern p = Pattern.compile(previousSQL);
+                            matchPattern.put(p, results);
+                        }
+                        catch (PatternSyntaxException e) {
+                            throw new MockFileDatabaseException("Not a pattern: " + previousSQL, e);
+                        }
+                    }
+                    else {
+                        matchExactly.put(previousSQL, results);
+                    }
                 }
 
                 MockResult mock = parse(line);
                 results.add(mock);
 
-                if (log.isDebugEnabled()) {
+                if (mock.data != null && log.isDebugEnabled()) {
                     String comment = "Loaded Result";
 
                     for (String l : mock.data.format(5).split("\n")) {
@@ -295,16 +305,33 @@ public class MockFileDatabase implements MockDataProvider {
 
             private MockResult parse(String rowString) {
                 int rows = 0;
+                SQLException exception = null;
+
                 if (rowString.startsWith("@ rows:"))
                     rows = Integer.parseInt(rowString.substring(7).trim());
+                if (rowString.startsWith("@ exception:"))
+                    exception = new SQLException(rowString.substring(12).trim());
 
-                MockResult result = new MockResult(rows,
-                    nullLiteral == null
-                    ? create.fetchFromTXT(currentResult.toString())
-                    : create.fetchFromTXT(currentResult.toString(), nullLiteral)
-                );
+                String resultText = currentResult.toString();
+                String trimmed = resultText.trim();
+                MockResult result =
+                      exception != null
+                    ? new MockResult(exception)
+                    : resultText.isEmpty()
+                    ? new MockResult(rows)
+                    : trimmed.startsWith("<")
+                    ? new MockResult(rows, create.fetchFromXML(resultText))
+                    : trimmed.startsWith("{") || trimmed.startsWith("[")
+                    ? new MockResult(rows, create.fetchFromJSON(resultText))
+                    : new MockResult(rows,
+                          configuration.nullLiteral == null && nullLiteral == null
+                        ? create.fetchFromTXT(resultText)
+                        : configuration.nullLiteral != null
+                        ? create.fetchFromTXT(resultText, configuration.nullLiteral)
+                        : create.fetchFromTXT(resultText, nullLiteral)
+                      );
 
-                if (rows != result.data.size())
+                if (result.data != null && rows != result.data.size())
                     throw new MockFileDatabaseException("Rows mismatch. Declared: " + rows + ". Actual: " + result.data.size() + ".");
 
                 return result;
@@ -312,7 +339,7 @@ public class MockFileDatabase implements MockDataProvider {
 
             private String readLine() throws IOException {
                 while (true) {
-                    String line = in.readLine();
+                    String line = configuration.in.readLine();
 
                     if (line == null)
                         return line;
@@ -352,14 +379,26 @@ public class MockFileDatabase implements MockDataProvider {
             }
 
             // Check for the first pattern match
-            if (list == null)
-                for (Entry<Pattern, List<MockResult>> entry : matchPattern.entrySet())
-                    if (    entry.getKey().matcher(sql).matches()
-                         || entry.getKey().matcher(inlined).matches())
-                        list = entry.getValue();
+            if (list == null) {
 
+                patternLoop:
+                for (Entry<Pattern, List<MockResult>> entry : matchPattern.entrySet()) {
+                    if (    entry.getKey().matcher(sql).matches()
+                         || entry.getKey().matcher(inlined).matches()) {
+                        list = entry.getValue();
+                        break patternLoop;
+                    }
+                }
+            }
+
+            // [#9078] Listing possible reasons for this to happen
             if (list == null)
-                throw new SQLException("Invalid SQL: " + sql);
+                throw new SQLException("Invalid SQL: " + sql
+                    + "\nPossible reasons include: "
+                    + "\n  Your regular expressions are case sensitive."
+                    + "\n  Your regular expressions use constant literals (e.g. 'Hello'), but the above SQL string uses bind variable placeholders (e.g. ?)."
+                    + "\n  Your regular expressions did not quote special characters (e.g. \\?)."
+                    + "\n  Your regular expressions' whitespace doesn't match the input SQL's whitespace.");
 
             return list.toArray(new MockResult[list.size()]);
         }

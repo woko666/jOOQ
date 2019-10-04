@@ -52,18 +52,20 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
+// ...
 import static org.jooq.impl.Keywords.K_IS_NOT_NULL;
 import static org.jooq.impl.Keywords.K_IS_NULL;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -82,13 +84,16 @@ final class RowIsNull extends AbstractCondition {
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID = -1806139685201770706L;
-    private static final Clause[]            CLAUSES_NULL     = { CONDITION, CONDITION_IS_NULL };
-    private static final Clause[]            CLAUSES_NOT_NULL = { CONDITION, CONDITION_IS_NOT_NULL };
-    private static final EnumSet<SQLDialect> EMULATE_NULL     = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, SQLITE);
+    private static final long            serialVersionUID = -1806139685201770706L;
+    private static final Clause[]        CLAUSES_NULL     = { CONDITION, CONDITION_IS_NULL };
+    private static final Clause[]        CLAUSES_NOT_NULL = { CONDITION, CONDITION_IS_NOT_NULL };
 
-    private final Row                        row;
-    private final boolean                    isNull;
+    // Currently not yet supported in SQLite:
+    // https://www.sqlite.org/rowvalue.html
+    private static final Set<SQLDialect> EMULATE_NULL     = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, SQLITE);
+
+    private final Row                    row;
+    private final boolean                isNull;
 
     RowIsNull(Row row, boolean isNull) {
         this.row = row;
@@ -100,18 +105,18 @@ final class RowIsNull extends AbstractCondition {
         ctx.visit(delegate(ctx.configuration()));
     }
 
-    @Override
+    @Override // Avoid AbstractCondition implementation
     public final Clause[] clauses(Context<?> ctx) {
         return null;
     }
 
     private final QueryPartInternal delegate(Configuration configuration) {
 
-        // CUBRID 9.0.0 and HSQLDB have buggy implementations of the NULL predicate.
+        // CUBRID 9, HSQLDB, and Vertica have incorrect implementations of the NULL predicate.
         // Informix doesn't implement the RVE IS NULL predicate.
         if (EMULATE_NULL.contains(configuration.family())) {
             Field<?>[] fields = row.fields();
-            List<Condition> conditions = new ArrayList<Condition>(fields.length);
+            List<Condition> conditions = new ArrayList<>(fields.length);
 
             for (Field<?> field : fields)
                 conditions.add(isNull ? field.isNull() : field.isNotNull());

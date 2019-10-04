@@ -45,13 +45,18 @@ import static org.jooq.JoinType.JOIN;
 import static org.jooq.JoinType.LEFT_ANTI_JOIN;
 import static org.jooq.JoinType.LEFT_OUTER_JOIN;
 import static org.jooq.JoinType.LEFT_SEMI_JOIN;
+import static org.jooq.JoinType.NATURAL_FULL_OUTER_JOIN;
 import static org.jooq.JoinType.NATURAL_JOIN;
 import static org.jooq.JoinType.NATURAL_LEFT_OUTER_JOIN;
 import static org.jooq.JoinType.NATURAL_RIGHT_OUTER_JOIN;
 import static org.jooq.JoinType.OUTER_APPLY;
 import static org.jooq.JoinType.RIGHT_OUTER_JOIN;
 import static org.jooq.JoinType.STRAIGHT_JOIN;
+import static org.jooq.impl.DSL.condition;
+import static org.jooq.impl.DSL.exists;
 // ...
+import static org.jooq.impl.DSL.notExists;
+import static org.jooq.impl.DSL.selectFrom;
 import static org.jooq.impl.DSL.table;
 import static org.jooq.impl.DSL.val;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
@@ -82,14 +87,17 @@ import org.jooq.Index;
 import org.jooq.JoinType;
 // ...
 import org.jooq.Name;
-import org.jooq.PivotForStep;
+// ...
+// ...
 import org.jooq.QualifiedAsterisk;
 import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.RecordType;
 import org.jooq.Row;
+import org.jooq.RowId;
 import org.jooq.SQL;
 import org.jooq.Schema;
+import org.jooq.Select;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableLike;
@@ -113,7 +121,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
     private static final Clause[] CLAUSES          = { TABLE };
 
     private Schema                tableschema;
-    private transient DataType<R> type;
+    private transient DataType<R> tabletype;
 
     /**
      * @deprecated - 3.10.0 - [#6068] - Use {@link #AbstractTable(Name)} instead.
@@ -171,14 +179,23 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
         return record.into(this);
     }
 
-    // ------------------------------------------------------------------------
-    // XXX: TableLike API
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // XXX: Expressions based on this table
+    // -------------------------------------------------------------------------
 
     @Override
     public final QualifiedAsterisk asterisk() {
         return new QualifiedAsteriskImpl(this);
     }
+
+    @Override
+    public final Field<RowId> rowid() {
+        return new RowIdField(this);
+    }
+
+    // ------------------------------------------------------------------------
+    // XXX: TableLike API
+    // ------------------------------------------------------------------------
 
     /**
      * Subclasses should override this method to provide the set of fields
@@ -190,11 +207,10 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
 
     @Override
     public final DataType<R> getDataType() {
-        if (type == null) {
-            type = new TableDataType<R>(this);
-        }
+        if (tabletype == null)
+            tabletype = new TableDataType<>(this);
 
-        return type;
+        return tabletype;
     }
 
     @Override
@@ -207,9 +223,12 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
         return DSL.using(new DefaultConfiguration()).newRecord(this);
     }
 
+    /*
+     * Subclasses may override this method
+     */
     @SuppressWarnings({ "rawtypes" })
     @Override
-    public final Row fieldsRow() {
+    public Row fieldsRow() {
         return new RowImpl(fields0());
     }
 
@@ -293,6 +312,21 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
     @Override
     public final Field<?>[] fields(int... fieldIndexes) {
         return fieldsRow().fields(fieldIndexes);
+    }
+
+    @Override
+    public final int indexOf(Field<?> field) {
+        return fieldsRow().indexOf(field);
+    }
+
+    @Override
+    public final int indexOf(String fieldName) {
+        return fieldsRow().indexOf(fieldName);
+    }
+
+    @Override
+    public final int indexOf(Name fieldName) {
+        return fieldsRow().indexOf(fieldName);
     }
 
     @Override
@@ -453,9 +487,6 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
         return Collections.emptyList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public final <O extends Record> List<ForeignKey<O, R>> getReferencesFrom(Table<O> other) {
         return other.getReferencesTo(this);
@@ -471,13 +502,10 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
         return Collections.emptyList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("unchecked")
     @Override
     public final <O extends Record> List<ForeignKey<R, O>> getReferencesTo(Table<O> other) {
-        List<ForeignKey<R, O>> result = new ArrayList<ForeignKey<R, O>>();
+        List<ForeignKey<R, O>> result = new ArrayList<>();
 
         for (ForeignKey<R, ?> reference : getReferences()) {
             if (other.equals(reference.getKey().getTable())) {
@@ -503,8 +531,156 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      *
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link AbstractTable#createField(Name, DataType, Table)} instead.
      */
+    @Deprecated
     protected static final <R extends Record, T> TableField<R, T> createField(String name, DataType<T> type, Table<R> table) {
+        return createField(DSL.name(name), type, table, null, null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link AbstractTable#createField(Name, DataType, Table, String)} instead.
+     */
+    @Deprecated
+    protected static final <R extends Record, T> TableField<R, T> createField(String name, DataType<T> type, Table<R> table, String comment) {
+        return createField(DSL.name(name), type, table, comment, null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link AbstractTable#createField(Name, DataType, Table, String, Converter)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends Record, T, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Converter<T, U> converter) {
+        return createField(DSL.name(name), type, table, comment, converter, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link AbstractTable#createField(Name, DataType, Table, String, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends Record, T, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Binding<T, U> binding) {
+        return createField(DSL.name(name), type, table, comment, null, binding);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link AbstractTable#createField(Name, DataType, Table, String, Converter, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected static final <R extends Record, T, X, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+        return createField(DSL.name(name), type, table, comment, converter, binding);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType)}
+     *             instead.
+     */
+    @Deprecated
+    protected final <T> TableField<R, T> createField(String name, DataType<T> type) {
+        return createField(DSL.name(name), type, this, null, null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, String)}
+     *             instead.
+     */
+    @Deprecated
+    protected final <T> TableField<R, T> createField(String name, DataType<T> type, String comment) {
+        return createField(DSL.name(name), type, this, comment, null, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, String, Converter)}
+     *             instead.
+     */
+    @Deprecated
+    protected final <T, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Converter<T, U> converter) {
+        return createField(DSL.name(name), type, this, comment, converter, null);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, String, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected final <T, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Binding<T, U> binding) {
+        return createField(DSL.name(name), type, this, comment, null, binding);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     * @deprecated - 3.12.0 - [#8000] - Use
+     *             {@link #createField(Name, DataType, String, Converter, Binding)}
+     *             instead.
+     */
+    @Deprecated
+    protected final <T, X, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+        return createField(DSL.name(name), type, this, comment, converter, binding);
+    }
+
+    /**
+     * Subclasses may call this method to create {@link TableField} objects that
+     * are linked to this table.
+     *
+     * @param name The name of the field (case-sensitive!)
+     * @param type The data type of the field
+     */
+    protected static final <R extends Record, T> TableField<R, T> createField(Name name, DataType<T> type, Table<R> table) {
         return createField(name, type, table, null, null, null);
     }
 
@@ -515,7 +691,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends Record, T> TableField<R, T> createField(String name, DataType<T> type, Table<R> table, String comment) {
+    protected static final <R extends Record, T> TableField<R, T> createField(Name name, DataType<T> type, Table<R> table, String comment) {
         return createField(name, type, table, comment, null, null);
     }
 
@@ -526,7 +702,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends Record, T, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Converter<T, U> converter) {
+    protected static final <R extends Record, T, U> TableField<R, U> createField(Name name, DataType<T> type, Table<R> table, String comment, Converter<T, U> converter) {
         return createField(name, type, table, comment, converter, null);
     }
 
@@ -537,7 +713,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected static final <R extends Record, T, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Binding<T, U> binding) {
+    protected static final <R extends Record, T, U> TableField<R, U> createField(Name name, DataType<T> type, Table<R> table, String comment, Binding<T, U> binding) {
         return createField(name, type, table, comment, null, binding);
     }
 
@@ -549,7 +725,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param type The data type of the field
      */
     @SuppressWarnings("unchecked")
-    protected static final <R extends Record, T, X, U> TableField<R, U> createField(String name, DataType<T> type, Table<R> table, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+    protected static final <R extends Record, T, X, U> TableField<R, U> createField(Name name, DataType<T> type, Table<R> table, String comment, Converter<X, U> converter, Binding<T, X> binding) {
         final Binding<T, U> actualBinding = DefaultBinding.newBinding(converter, type, binding);
         final DataType<U> actualType =
             converter == null && binding == null
@@ -557,7 +733,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
           : type.asConvertedDataType(actualBinding);
 
         // [#5999] TODO: Allow for user-defined Names
-        final TableFieldImpl<R, U> tableField = new TableFieldImpl<R, U>(DSL.name(name), actualType, table, DSL.comment(comment), actualBinding);
+        final TableFieldImpl<R, U> tableField = new TableFieldImpl<>(name, actualType, table, DSL.comment(comment), actualBinding);
 
         // [#1199] The public API of Table returns immutable field lists
         if (table instanceof TableImpl) {
@@ -574,7 +750,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected final <T> TableField<R, T> createField(String name, DataType<T> type) {
+    protected final <T> TableField<R, T> createField(Name name, DataType<T> type) {
         return createField(name, type, this, null, null, null);
     }
 
@@ -585,7 +761,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected final <T> TableField<R, T> createField(String name, DataType<T> type, String comment) {
+    protected final <T> TableField<R, T> createField(Name name, DataType<T> type, String comment) {
         return createField(name, type, this, comment, null, null);
     }
 
@@ -596,7 +772,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected final <T, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Converter<T, U> converter) {
+    protected final <T, U> TableField<R, U> createField(Name name, DataType<T> type, String comment, Converter<T, U> converter) {
         return createField(name, type, this, comment, converter, null);
     }
 
@@ -607,7 +783,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected final <T, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Binding<T, U> binding) {
+    protected final <T, U> TableField<R, U> createField(Name name, DataType<T> type, String comment, Binding<T, U> binding) {
         return createField(name, type, this, comment, null, binding);
     }
 
@@ -618,7 +794,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
      * @param name The name of the field (case-sensitive!)
      * @param type The data type of the field
      */
-    protected final <T, X, U> TableField<R, U> createField(String name, DataType<T> type, String comment, Converter<X, U> converter, Binding<T, X> binding) {
+    protected final <T, X, U> TableField<R, U> createField(Name name, DataType<T> type, String comment, Converter<X, U> converter, Binding<T, X> binding) {
         return createField(name, type, this, comment, converter, binding);
     }
 
@@ -633,7 +809,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
 
     @Override
     public final Condition equal(Table<R> that) {
-        return new TableComparison<R>(this, that, Comparator.EQUALS);
+        return new TableComparison<>(this, that, Comparator.EQUALS);
     }
 
     @Override
@@ -643,7 +819,7 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
 
     @Override
     public final Condition notEqual(Table<R> that) {
-        return new TableComparison<R>(this, that, Comparator.NOT_EQUALS);
+        return new TableComparison<>(this, that, Comparator.NOT_EQUALS);
     }
 
     // ------------------------------------------------------------------------
@@ -652,62 +828,62 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
 
     @Override
     public final Table<R> useIndex(String... indexes) {
-        return new HintedTable<R>(this, "use index", indexes);
+        return new HintedTable<>(this, "use index", indexes);
     }
 
     @Override
     public final Table<R> useIndexForJoin(String... indexes) {
-        return new HintedTable<R>(this, "use index for join", indexes);
+        return new HintedTable<>(this, "use index for join", indexes);
     }
 
     @Override
     public final Table<R> useIndexForOrderBy(String... indexes) {
-        return new HintedTable<R>(this, "use index for order by", indexes);
+        return new HintedTable<>(this, "use index for order by", indexes);
     }
 
     @Override
     public final Table<R> useIndexForGroupBy(String... indexes) {
-        return new HintedTable<R>(this, "use index for group by", indexes);
+        return new HintedTable<>(this, "use index for group by", indexes);
     }
 
     @Override
     public final Table<R> ignoreIndex(String... indexes) {
-        return new HintedTable<R>(this, "ignore index", indexes);
+        return new HintedTable<>(this, "ignore index", indexes);
     }
 
     @Override
     public final Table<R> ignoreIndexForJoin(String... indexes) {
-        return new HintedTable<R>(this, "ignore index for join", indexes);
+        return new HintedTable<>(this, "ignore index for join", indexes);
     }
 
     @Override
     public final Table<R> ignoreIndexForOrderBy(String... indexes) {
-        return new HintedTable<R>(this, "ignore index for order by", indexes);
+        return new HintedTable<>(this, "ignore index for order by", indexes);
     }
 
     @Override
     public final Table<R> ignoreIndexForGroupBy(String... indexes) {
-        return new HintedTable<R>(this, "ignore index for group by", indexes);
+        return new HintedTable<>(this, "ignore index for group by", indexes);
     }
 
     @Override
     public final Table<R> forceIndex(String... indexes) {
-        return new HintedTable<R>(this, "force index", indexes);
+        return new HintedTable<>(this, "force index", indexes);
     }
 
     @Override
     public final Table<R> forceIndexForJoin(String... indexes) {
-        return new HintedTable<R>(this, "force index for join", indexes);
+        return new HintedTable<>(this, "force index for join", indexes);
     }
 
     @Override
     public final Table<R> forceIndexForOrderBy(String... indexes) {
-        return new HintedTable<R>(this, "force index for order by", indexes);
+        return new HintedTable<>(this, "force index for order by", indexes);
     }
 
     @Override
     public final Table<R> forceIndexForGroupBy(String... indexes) {
-        return new HintedTable<R>(this, "force index for group by", indexes);
+        return new HintedTable<>(this, "force index for group by", indexes);
     }
 
     // ------------------------------------------------------------------------
@@ -826,6 +1002,22 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // ------------------------------------------------------------------------
     // XXX: DIVISION API
     // ------------------------------------------------------------------------
@@ -845,6 +1037,60 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
     @Override
     public final TableOnStep<R> leftAntiJoin(TableLike<?> table) {
         return (TableOnStep) join(table, LEFT_ANTI_JOIN);
+    }
+
+    // ------------------------------------------------------------------------
+    // XXX: WHERE API
+    // ------------------------------------------------------------------------
+
+    @Override
+    public /* non-final */ Table<R> where(Condition condition) {
+        return table(selectFrom(this).where(condition)).as(this);
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(Condition... conditions) {
+        return table(selectFrom(this).where(conditions)).as(this);
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(Collection<? extends Condition> conditions) {
+        return table(selectFrom(this).where(conditions)).as(this);
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(Field<Boolean> field) {
+        return where(condition(field));
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(SQL sql) {
+        return where(condition(sql));
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(String sql) {
+        return where(condition(sql));
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(String sql, Object... bindings) {
+        return where(condition(sql, bindings));
+    }
+
+    @Override
+    public /* non-final */ Table<R> where(String sql, QueryPart... parts) {
+        return where(condition(sql, parts));
+    }
+
+    @Override
+    public /* non-final */ Table<R> whereExists(Select<?> select) {
+        return where(exists(select));
+    }
+
+    @Override
+    public /* non-final */ Table<R> whereNotExists(Select<?> select) {
+        return where(notExists(select));
     }
 
     // ------------------------------------------------------------------------
@@ -915,6 +1161,8 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
     public final TableOnStep<Record> innerJoin(Name name) {
         return innerJoin(table(name));
     }
+
+
 
 
 
@@ -1228,6 +1476,36 @@ abstract class AbstractTable<R extends Record> extends AbstractNamed implements 
     @Override
     public final Table<Record> naturalRightOuterJoin(Name name) {
         return naturalRightOuterJoin(table(name));
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(TableLike<?> table) {
+        return join(table, NATURAL_FULL_OUTER_JOIN);
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(SQL sql) {
+        return naturalFullOuterJoin(table(sql));
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(String sql) {
+        return naturalFullOuterJoin(table(sql));
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(String sql, Object... bindings) {
+        return naturalFullOuterJoin(table(sql, bindings));
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(String sql, QueryPart... parts) {
+        return naturalFullOuterJoin(table(sql, parts));
+    }
+
+    @Override
+    public final Table<Record> naturalFullOuterJoin(Name name) {
+        return naturalFullOuterJoin(table(name));
     }
 
     @Override

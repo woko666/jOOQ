@@ -1,22 +1,15 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -52,10 +45,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class KeyColumnUsage implements Serializable
+public class KeyColumnUsage implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(name = "column_name", required = true)
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String columnName;
@@ -80,186 +73,66 @@ public class KeyColumnUsage implements Serializable
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String tableName;
 
-    /**
-     * Gets the value of the columnName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getColumnName() {
         return columnName;
     }
 
-    /**
-     * Sets the value of the columnName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setColumnName(String value) {
         this.columnName = value;
     }
 
-    /**
-     * Gets the value of the constraintCatalog property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getConstraintCatalog() {
         return constraintCatalog;
     }
 
-    /**
-     * Sets the value of the constraintCatalog property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setConstraintCatalog(String value) {
         this.constraintCatalog = value;
     }
 
-    /**
-     * Gets the value of the constraintSchema property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getConstraintSchema() {
         return constraintSchema;
     }
 
-    /**
-     * Sets the value of the constraintSchema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setConstraintSchema(String value) {
         this.constraintSchema = value;
     }
 
-    /**
-     * Gets the value of the constraintName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getConstraintName() {
         return constraintName;
     }
 
-    /**
-     * Sets the value of the constraintName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setConstraintName(String value) {
         this.constraintName = value;
     }
 
-    /**
-     * Gets the value of the ordinalPosition property.
-     *
-     */
     public int getOrdinalPosition() {
         return ordinalPosition;
     }
 
-    /**
-     * Sets the value of the ordinalPosition property.
-     *
-     */
     public void setOrdinalPosition(int value) {
         this.ordinalPosition = value;
     }
 
-    /**
-     * Gets the value of the tableCatalog property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableCatalog() {
         return tableCatalog;
     }
 
-    /**
-     * Sets the value of the tableCatalog property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableCatalog(String value) {
         this.tableCatalog = value;
     }
 
-    /**
-     * Gets the value of the tableSchema property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableSchema() {
         return tableSchema;
     }
 
-    /**
-     * Sets the value of the tableSchema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableSchema(String value) {
         this.tableSchema = value;
     }
 
-    /**
-     * Gets the value of the tableName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableName() {
         return tableName;
     }
 
-    /**
-     * Sets the value of the tableName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableName(String value) {
         this.tableName = value;
     }
@@ -305,47 +178,22 @@ public class KeyColumnUsage implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("column_name", columnName);
+        builder.append("constraint_catalog", constraintCatalog);
+        builder.append("constraint_schema", constraintSchema);
+        builder.append("constraint_name", constraintName);
+        builder.append("ordinal_position", ordinalPosition);
+        builder.append("table_catalog", tableCatalog);
+        builder.append("table_schema", tableSchema);
+        builder.append("table_name", tableName);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (columnName!= null) {
-            sb.append("<columnName>");
-            sb.append(columnName);
-            sb.append("</columnName>");
-        }
-        if (constraintCatalog!= null) {
-            sb.append("<constraintCatalog>");
-            sb.append(constraintCatalog);
-            sb.append("</constraintCatalog>");
-        }
-        if (constraintSchema!= null) {
-            sb.append("<constraintSchema>");
-            sb.append(constraintSchema);
-            sb.append("</constraintSchema>");
-        }
-        if (constraintName!= null) {
-            sb.append("<constraintName>");
-            sb.append(constraintName);
-            sb.append("</constraintName>");
-        }
-        sb.append("<ordinalPosition>");
-        sb.append(ordinalPosition);
-        sb.append("</ordinalPosition>");
-        if (tableCatalog!= null) {
-            sb.append("<tableCatalog>");
-            sb.append(tableCatalog);
-            sb.append("</tableCatalog>");
-        }
-        if (tableSchema!= null) {
-            sb.append("<tableSchema>");
-            sb.append(tableSchema);
-            sb.append("</tableSchema>");
-        }
-        if (tableName!= null) {
-            sb.append("<tableName>");
-            sb.append(tableName);
-            sb.append("</tableName>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

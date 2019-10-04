@@ -37,15 +37,18 @@
  */
 package org.jooq.impl;
 
-import static org.jooq.impl.DSL.function;
+import static org.jooq.impl.Keywords.F_RTRIM;
+import static org.jooq.impl.Keywords.F_TRIM;
+import static org.jooq.impl.Keywords.K_FROM;
+import static org.jooq.impl.Keywords.K_TRAILING;
 
-import org.jooq.Configuration;
+import org.jooq.Context;
 import org.jooq.Field;
 
 /**
  * @author Lukas Eder
  */
-final class RTrim extends AbstractFunction<String> {
+final class RTrim extends AbstractField<String> {
 
     /**
      * Generated UID
@@ -53,21 +56,47 @@ final class RTrim extends AbstractFunction<String> {
     private static final long   serialVersionUID = -7273879239726265322L;
 
     private final Field<String> argument;
+    private final Field<String> characters;
 
     RTrim(Field<String> argument) {
-        super("rtrim", SQLDataType.VARCHAR, argument);
+        this(argument, null);
+    }
+
+    RTrim(Field<String> argument, Field<String> characters) {
+        super(DSL.name("rtrim"), SQLDataType.VARCHAR);
 
         this.argument = argument;
+        this.characters = characters;
     }
 
     @Override
-    final Field<String> getFunction0(Configuration configuration) {
-        switch (configuration.family()) {
-            case FIREBIRD:
-                return DSL.field("{trim}({trailing} {from} {0})", SQLDataType.VARCHAR, argument);
+    public final void accept(Context<?> ctx) {
+        if (characters == null) {
+            switch (ctx.family()) {
+                case FIREBIRD:
+                    ctx.visit(F_TRIM).sql('(').visit(K_TRAILING).sql(' ').visit(K_FROM).sql(' ').visit(argument).sql(')');
+                    break;
 
-            default:
-                return function("rtrim", SQLDataType.VARCHAR, argument);
+                default:
+                    ctx.visit(F_RTRIM).sql('(').visit(argument).sql(')');
+                    break;
+            }
+        }
+        else {
+            switch (ctx.family()) {
+
+
+
+
+
+                case SQLITE:
+                    ctx.visit(F_RTRIM).sql('(').visit(argument).sql(", ").visit(characters).sql(')');
+                    break;
+
+                default:
+                    ctx.visit(F_TRIM).sql('(').visit(K_TRAILING).sql(' ').visit(characters).sql(' ').visit(K_FROM).sql(' ').visit(argument).sql(')');
+                    break;
+            }
         }
     }
 }

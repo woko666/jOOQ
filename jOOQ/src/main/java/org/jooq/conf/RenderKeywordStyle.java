@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.conf;
 
 import javax.xml.bind.annotation.XmlEnum;
@@ -31,6 +24,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlType(name = "RenderKeywordStyle")
 @XmlEnum
+@Deprecated
 public enum RenderKeywordStyle {
 
     AS_IS,

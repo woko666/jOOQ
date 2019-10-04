@@ -40,14 +40,13 @@ package org.jooq.impl;
 
 import static java.util.Arrays.asList;
 import static org.jooq.conf.SettingsTools.updatablePrimaryKeys;
+import static org.jooq.impl.Tools.embeddedFields;
 import static org.jooq.impl.Tools.indexOrFail;
+import static org.jooq.impl.Tools.isEmbeddable;
 import static org.jooq.impl.Tools.resetChangedOnNotNull;
 import static org.jooq.impl.Tools.settings;
 import static org.jooq.impl.Tools.ThreadGuard.Guard.RECORD_TOSTRING;
 
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -61,8 +60,11 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import org.jooq.Attachable;
+import org.jooq.CSVFormat;
+import org.jooq.ChartFormat;
 import org.jooq.Converter;
 import org.jooq.DataType;
+import org.jooq.EmbeddableRecord;
 import org.jooq.Field;
 import org.jooq.JSONFormat;
 import org.jooq.Name;
@@ -103,6 +105,10 @@ import org.jooq.impl.Tools.ThreadGuard.GuardedOperation;
 import org.jooq.tools.Convert;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StringUtils;
+
+import org.w3c.dom.Document;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 /**
  * A general base class for all {@link Record} types
@@ -153,7 +159,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         for (int i = 0; i < size; i++) {
             if (values[i] instanceof Attachable) {
                 if (result == null)
-                    result = new ArrayList<Attachable>();
+                    result = new ArrayList<>();
 
                 result.add((Attachable) values[i]);
             }
@@ -211,6 +217,21 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         return fields.fields(fieldIndexes);
     }
 
+    @Override
+    public final int indexOf(Field<?> field) {
+        return fields.indexOf(field);
+    }
+
+    @Override
+    public final int indexOf(String fieldName) {
+        return fields.indexOf(fieldName);
+    }
+
+    @Override
+    public final int indexOf(Name fieldName) {
+        return fields.indexOf(fieldName);
+    }
+
     // ------------------------------------------------------------------------
     // XXX: Record API
     // ------------------------------------------------------------------------
@@ -222,7 +243,16 @@ abstract class AbstractRecord extends AbstractStore implements Record {
 
     @Override
     public final <T> T get(Field<T> field) {
-        return (T) get(indexOrFail(fieldsRow(), field));
+        if (field instanceof EmbeddableTableField) {
+            Field<?>[] f = embeddedFields(field);
+
+            return (T) Tools
+                .newRecord(fetched, ((EmbeddableTableField<?, ?>) field).recordType)
+                .operate(new TransferRecordState<Record>(f));
+        }
+        else {
+            return (T) get(indexOrFail(fieldsRow(), field));
+        }
     }
 
     @Override
@@ -292,15 +322,24 @@ abstract class AbstractRecord extends AbstractStore implements Record {
     }
 
     protected final void set(int index, Object value) {
-        set(index, (Field) field(index), value);
+        set(index, field(index), value);
     }
 
     @Override
     public final <T> void set(Field<T> field, T value) {
-        set(indexOrFail(fields, field), field, value);
+        if (isEmbeddable(field) && value instanceof EmbeddableRecord) {
+            Field<?>[] f = embeddedFields(field);
+            Object[] v = ((EmbeddableRecord) value).intoArray();
+
+            for (int i = 0; i < f.length; i++)
+                set(indexOrFail(fields, f[i]), f[i], v[i]);
+        }
+        else {
+            set(indexOrFail(fields, field), field, value);
+        }
     }
 
-    final <T> void set(int index, Field<T> field, T value) {
+    final void set(int index, Field<?> field, Object value) {
         // Relevant issues documenting this method's behaviour:
         // [#945] Avoid bugs resulting from setting the same value twice
         // [#948] To allow for controlling the number of hard-parses
@@ -554,7 +593,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
 
     @Override
     public final Map<String, Object> intoMap() {
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        Map<String, Object> map = new LinkedHashMap<>();
 
         int size = fields.size();
         for (int i = 0; i < size; i++) {
@@ -573,7 +612,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         return Tools.newRecord(fetched, Record.class, f, configuration()).operate(new TransferRecordState<Record>(f));
     }
 
-    // [jooq-tools] START [into-fields]
+
 
     @Override
     public final <T1> Record1<T1> into(Field<T1> field1) {
@@ -685,7 +724,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         return (Record22) into(new Field[] { field1, field2, field3, field4, field5, field6, field7, field8, field9, field10, field11, field12, field13, field14, field15, field16, field17, field18, field19, field20, field21, field22 });
     }
 
-// [jooq-tools] END [into-fields]
+
 
     @Override
     public final <E> E into(Class<? extends E> type) {
@@ -781,7 +820,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
 
     @Override
     public final ResultSet intoResultSet() {
-        ResultImpl<Record> result = new ResultImpl<Record>(configuration(), fields.fields.fields);
+        ResultImpl<Record> result = new ResultImpl<>(configuration(), fields.fields.fields);
         result.add(this);
         return result.intoResultSet();
     }
@@ -916,72 +955,24 @@ abstract class AbstractRecord extends AbstractStore implements Record {
     // -------------------------------------------------------------------------
 
     @Override
-    public final String format() {
-        StringWriter writer = new StringWriter();
-        format(writer);
-        return writer.toString();
-    }
-
-    @Override
-    public final String format(TXTFormat format) {
-        StringWriter writer = new StringWriter();
-        format(writer, format);
-        return writer.toString();
-    }
-
-    @Override
-    public final void format(OutputStream stream) {
-        format(new OutputStreamWriter(stream));
-    }
-
-    @Override
-    public final void format(OutputStream stream, TXTFormat format) {
-        format(new OutputStreamWriter(stream), format);
-    }
-
-    @Override
-    public final void format(Writer writer) {
-        format(writer, TXTFormat.DEFAULT);
-    }
-
-    @Override
     public final void format(Writer writer, TXTFormat format) {
-        Result<AbstractRecord> result = new ResultImpl<AbstractRecord>(configuration(), fields.fields.fields);
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
         result.add(AbstractRecord.this);
         result.format(writer, format);
     }
 
     @Override
-    public final String formatJSON() {
-        StringWriter writer = new StringWriter();
-        formatJSON(writer);
-        return writer.toString();
-    }
-
-    @Override
-    public final String formatJSON(JSONFormat format) {
-        StringWriter writer = new StringWriter();
-        formatJSON(writer, format);
-        return writer.toString();
-    }
-
-    @Override
-    public final void formatJSON(OutputStream stream) {
-        formatJSON(new OutputStreamWriter(stream));
-    }
-
-    @Override
-    public final void formatJSON(OutputStream stream, JSONFormat format) {
-        formatJSON(new OutputStreamWriter(stream), format);
-    }
-
-    @Override
-    public final void formatJSON(Writer writer) {
-        formatJSON(writer, JSONFormat.DEFAULT_FOR_RECORDS);
+    public final void formatCSV(Writer writer, CSVFormat format)  {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        result.formatCSV(writer, format);
     }
 
     @Override
     public final void formatJSON(Writer writer, JSONFormat format) {
+        if (format == null)
+            format = JSONFormat.DEFAULT_FOR_RECORDS;
+
         if (format.header())
             log.debug("JSONFormat.header currently not supported for Record.formatJSON()");
 
@@ -1003,34 +994,10 @@ abstract class AbstractRecord extends AbstractStore implements Record {
     }
 
     @Override
-    public final String formatXML() {
-        return formatXML(XMLFormat.DEFAULT_FOR_RECORDS);
-    }
-
-    @Override
-    public final String formatXML(XMLFormat format) {
-        StringWriter writer = new StringWriter();
-        formatXML(writer, format);
-        return writer.toString();
-    }
-
-    @Override
-    public final void formatXML(OutputStream stream) {
-        formatXML(stream, XMLFormat.DEFAULT_FOR_RECORDS);
-    }
-
-    @Override
-    public final void formatXML(OutputStream stream, XMLFormat format) {
-        formatXML(new OutputStreamWriter(stream), format);
-    }
-
-    @Override
-    public final void formatXML(Writer writer) {
-        formatXML(writer, XMLFormat.DEFAULT_FOR_RECORDS);
-    }
-
-    @Override
     public final void formatXML(Writer writer, XMLFormat format) {
+        if (format == null)
+            format = XMLFormat.DEFAULT_FOR_RECORDS;
+
         if (format.header())
             log.debug("XMLFormat.header currently not supported for Record.formatXML()");
 
@@ -1040,6 +1007,46 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         catch (java.io.IOException e) {
             throw new IOException("Exception while writing XML", e);
         }
+    }
+
+    @Override
+    public final void formatHTML(Writer writer) {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        result.formatHTML(writer);
+    }
+
+    @Override
+    public final void formatChart(Writer writer, ChartFormat format) {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        result.formatChart(writer, format);
+    }
+
+    @Override
+    public final void formatInsert(Writer writer) {
+        formatInsert(writer, null, fields.fields.fields);
+    }
+
+    @Override
+    public final void formatInsert(Writer writer, Table<?> table, Field<?>... f) {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        result.formatInsert(writer, table, f);
+    }
+
+    @Override
+    public final Document intoXML(XMLFormat format) {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        return result.intoXML(format);
+    }
+
+    @Override
+    public final <H extends ContentHandler> H intoXML(H handler, XMLFormat format) throws SAXException {
+        Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
+        result.add(AbstractRecord.this);
+        return result.intoXML(handler, format);
     }
 
     // ------------------------------------------------------------------------
@@ -1052,7 +1059,7 @@ abstract class AbstractRecord extends AbstractStore implements Record {
         return ThreadGuard.run(RECORD_TOSTRING, new GuardedOperation<String>() {
             @Override
             public String unguarded() {
-                Result<AbstractRecord> result = new ResultImpl<AbstractRecord>(configuration(), fields.fields.fields);
+                Result<AbstractRecord> result = new ResultImpl<>(configuration(), fields.fields.fields);
                 result.add(AbstractRecord.this);
                 return result.toString();
             }

@@ -47,6 +47,7 @@ import org.jooq.exception.DataAccessException;
  *
  * @author Lukas Eder
  */
+@Internal
 public interface QueryPartInternal extends QueryPart {
 
     /**
@@ -101,6 +102,7 @@ public interface QueryPartInternal extends QueryPart {
      *         <code>null</code> or an empty array if this query part does not
      *         represent a clause.
      */
+    @SuppressWarnings("javadoc")
     Clause[] clauses(Context<?> ctx);
 
     /**

@@ -49,6 +49,7 @@ import static org.jooq.SQLDialect.DERBY;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
@@ -61,11 +62,13 @@ import static org.jooq.SQLDialect.SQLITE;
 import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.exists;
 import static org.jooq.impl.DSL.notExists;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.Tools.embeddedFields;
+import static org.jooq.impl.Tools.isEmbeddable;
 
-import java.util.EnumSet;
+import java.util.Set;
 
-import org.jooq.Clause;
 import org.jooq.Comparator;
 import org.jooq.Configuration;
 import org.jooq.Context;
@@ -82,17 +85,17 @@ final class IsDistinctFrom<T> extends AbstractCondition {
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID            = 4568269684824736461L;
-    private static final EnumSet<SQLDialect> EMULATE_DISTINCT_PREDICATE  = EnumSet.of(CUBRID, DERBY);
-    private static final EnumSet<SQLDialect> SUPPORT_DISTINCT_WITH_ARROW = EnumSet.of(MARIADB, MYSQL);
+    private static final long            serialVersionUID            = 4568269684824736461L;
+    private static final Set<SQLDialect> EMULATE_DISTINCT_PREDICATE  = SQLDialect.supported(CUBRID, DERBY);
+    private static final Set<SQLDialect> SUPPORT_DISTINCT_WITH_ARROW = SQLDialect.supported(MARIADB, MYSQL);
 
-    private final Field<T>                   lhs;
-    private final Field<T>                   rhs;
-    private final Comparator                 comparator;
+    private final Field<T>               lhs;
+    private final Field<T>               rhs;
+    private final Comparator             comparator;
 
-    private transient QueryPartInternal      mySQLCondition;
-    private transient QueryPartInternal      sqliteCondition;
-    private transient QueryPartInternal      compareCondition;
+    private transient QueryPartInternal  mySQLCondition;
+    private transient QueryPartInternal  sqliteCondition;
+    private transient QueryPartInternal  compareCondition;
 
     IsDistinctFrom(Field<T> lhs, Field<T> rhs, Comparator comparator) {
         this.lhs = lhs;
@@ -105,22 +108,20 @@ final class IsDistinctFrom<T> extends AbstractCondition {
         ctx.visit(delegate(ctx.configuration()));
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
     /**
      * Get a delegate <code>CompareCondition</code>, in case the context
      * {@link SQLDialect} natively supports the <code>IS DISTINCT FROM</code>
      * clause.
      */
     private final QueryPartInternal delegate(Configuration configuration) {
+        if (isEmbeddable(lhs) && isEmbeddable(rhs)) {
+            return (QueryPartInternal) row(embeddedFields(lhs)).compare(comparator, row(embeddedFields(rhs)));
+        }
 
         // [#3511]         These dialects need to emulate the IS DISTINCT FROM predicate,
         //                 optimally using INTERSECT...
         // [#7222] [#7224] Make sure the columns are aliased
-        if (EMULATE_DISTINCT_PREDICATE.contains(configuration.family())) {
+        else if (EMULATE_DISTINCT_PREDICATE.contains(configuration.family())) {
             return (comparator == IS_DISTINCT_FROM)
                 ? (QueryPartInternal) notExists(select(lhs.as("x")).intersect(select(rhs.as("x"))))
                 : (QueryPartInternal) exists(select(lhs.as("x")).intersect(select(rhs.as("x"))));

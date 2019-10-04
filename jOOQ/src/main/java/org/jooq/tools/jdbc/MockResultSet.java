@@ -179,6 +179,9 @@ public class MockResultSet extends JDBC41ResultSet implements ResultSet, Seriali
 
     @SuppressWarnings("deprecation")
     private Timestamp withTZ(Timestamp timestamp, Calendar cal) {
+        if (timestamp == null)
+            return null;
+
         int year = timestamp.getYear() + 1900;
         int month = timestamp.getMonth();
         int day = timestamp.getDate();
@@ -196,6 +199,9 @@ public class MockResultSet extends JDBC41ResultSet implements ResultSet, Seriali
 
     @SuppressWarnings("deprecation")
     private Time withTZ(Time time, Calendar cal) {
+        if (time == null)
+            return null;
+
         int hour = time.getHours();
         int minute = time.getMinutes();
         int second = time.getSeconds();
@@ -206,6 +212,9 @@ public class MockResultSet extends JDBC41ResultSet implements ResultSet, Seriali
 
     @SuppressWarnings("deprecation")
     private Date withTZ(Date date, Calendar cal) {
+        if (date == null)
+            return null;
+
         int year = date.getYear() + 1900;
         int month = date.getMonth();
         int day = date.getDate();
@@ -798,6 +807,22 @@ public class MockResultSet extends JDBC41ResultSet implements ResultSet, Seriali
     public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
         return get(columnLabel, Object.class);
     }
+
+
+    // ---------------------------------------------------------------------
+    // XXX: JDBC 4.1 methods
+    // ---------------------------------------------------------------------
+
+    @Override
+    public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+        return get(columnIndex, type);
+    }
+
+    @Override
+    public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+        return get(columnLabel, type);
+    }
+
 
     // -------------------------------------------------------------------------
     // XXX: Setters and row update methods

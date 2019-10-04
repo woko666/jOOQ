@@ -41,7 +41,7 @@ import java.sql.PreparedStatement;
 
 import org.jooq.RenderContext.CastMode;
 import org.jooq.conf.ParamType;
-import org.jooq.conf.RenderKeywordStyle;
+import org.jooq.conf.RenderKeywordCase;
 import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
@@ -150,6 +150,12 @@ public interface Context<C extends Context<C>> extends Scope {
     C subquery(boolean subquery);
 
     /**
+     * Which level of subqueries we're currently in, starting with 0 for the top
+     * level query.
+     */
+    int subqueryLevel();
+
+    /**
      * Start a new SELECT scope.
      */
     C scopeStart();
@@ -253,7 +259,7 @@ public interface Context<C extends Context<C>> extends Scope {
     /**
      * Append a SQL keyword to the context's contained {@link StringBuilder}.
      * <p>
-     * Use this to have your SQL keyword rendered in {@link RenderKeywordStyle}.
+     * Use this to have your SQL keyword rendered in {@link RenderKeywordCase}.
      *
      * @deprecated - 3.10.0 - [#4990] - Use {@link DSL#keyword(String)} instead.
      */
@@ -282,6 +288,21 @@ public interface Context<C extends Context<C>> extends Scope {
      * Append some SQL to the context's contained {@link StringBuilder}.
      */
     C sql(int sql);
+
+    /**
+     * Append some SQL to the context's contained {@link StringBuilder}.
+     */
+    C sql(long sql);
+
+    /**
+     * Append some SQL to the context's contained {@link StringBuilder}.
+     */
+    C sql(float sql);
+
+    /**
+     * Append some SQL to the context's contained {@link StringBuilder}.
+     */
+    C sql(double sql);
 
     /**
      * Override the value of {@link Settings#isRenderFormatted()}.

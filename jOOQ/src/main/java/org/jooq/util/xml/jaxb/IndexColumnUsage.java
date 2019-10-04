@@ -1,22 +1,15 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -53,10 +46,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class IndexColumnUsage implements Serializable
+public class IndexColumnUsage implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(name = "index_catalog")
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String indexCatalog;
@@ -83,186 +76,66 @@ public class IndexColumnUsage implements Serializable
     @XmlElement(name = "is_descending")
     protected Boolean isDescending;
 
-    /**
-     * Gets the value of the indexCatalog property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getIndexCatalog() {
         return indexCatalog;
     }
 
-    /**
-     * Sets the value of the indexCatalog property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setIndexCatalog(String value) {
         this.indexCatalog = value;
     }
 
-    /**
-     * Gets the value of the indexSchema property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getIndexSchema() {
         return indexSchema;
     }
 
-    /**
-     * Sets the value of the indexSchema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setIndexSchema(String value) {
         this.indexSchema = value;
     }
 
-    /**
-     * Gets the value of the indexName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getIndexName() {
         return indexName;
     }
 
-    /**
-     * Sets the value of the indexName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setIndexName(String value) {
         this.indexName = value;
     }
 
-    /**
-     * Gets the value of the tableCatalog property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableCatalog() {
         return tableCatalog;
     }
 
-    /**
-     * Sets the value of the tableCatalog property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableCatalog(String value) {
         this.tableCatalog = value;
     }
 
-    /**
-     * Gets the value of the tableSchema property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableSchema() {
         return tableSchema;
     }
 
-    /**
-     * Sets the value of the tableSchema property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableSchema(String value) {
         this.tableSchema = value;
     }
 
-    /**
-     * Gets the value of the tableName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getTableName() {
         return tableName;
     }
 
-    /**
-     * Sets the value of the tableName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setTableName(String value) {
         this.tableName = value;
     }
 
-    /**
-     * Gets the value of the columnName property.
-     *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
-     */
     public String getColumnName() {
         return columnName;
     }
 
-    /**
-     * Sets the value of the columnName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
-     *
-     */
     public void setColumnName(String value) {
         this.columnName = value;
     }
 
-    /**
-     * Gets the value of the ordinalPosition property.
-     *
-     */
     public int getOrdinalPosition() {
         return ordinalPosition;
     }
 
-    /**
-     * Sets the value of the ordinalPosition property.
-     *
-     */
     public void setOrdinalPosition(int value) {
         this.ordinalPosition = value;
     }
@@ -337,52 +210,23 @@ public class IndexColumnUsage implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("index_catalog", indexCatalog);
+        builder.append("index_schema", indexSchema);
+        builder.append("index_name", indexName);
+        builder.append("table_catalog", tableCatalog);
+        builder.append("table_schema", tableSchema);
+        builder.append("table_name", tableName);
+        builder.append("column_name", columnName);
+        builder.append("ordinal_position", ordinalPosition);
+        builder.append("is_descending", isDescending);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (indexCatalog!= null) {
-            sb.append("<indexCatalog>");
-            sb.append(indexCatalog);
-            sb.append("</indexCatalog>");
-        }
-        if (indexSchema!= null) {
-            sb.append("<indexSchema>");
-            sb.append(indexSchema);
-            sb.append("</indexSchema>");
-        }
-        if (indexName!= null) {
-            sb.append("<indexName>");
-            sb.append(indexName);
-            sb.append("</indexName>");
-        }
-        if (tableCatalog!= null) {
-            sb.append("<tableCatalog>");
-            sb.append(tableCatalog);
-            sb.append("</tableCatalog>");
-        }
-        if (tableSchema!= null) {
-            sb.append("<tableSchema>");
-            sb.append(tableSchema);
-            sb.append("</tableSchema>");
-        }
-        if (tableName!= null) {
-            sb.append("<tableName>");
-            sb.append(tableName);
-            sb.append("</tableName>");
-        }
-        if (columnName!= null) {
-            sb.append("<columnName>");
-            sb.append(columnName);
-            sb.append("</columnName>");
-        }
-        sb.append("<ordinalPosition>");
-        sb.append(ordinalPosition);
-        sb.append("</ordinalPosition>");
-        if (isDescending!= null) {
-            sb.append("<isDescending>");
-            sb.append(isDescending);
-            sb.append("</isDescending>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

@@ -47,19 +47,33 @@ import static org.jooq.Clause.UPDATE_UPDATE;
 import static org.jooq.Clause.UPDATE_WHERE;
 // ...
 // ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.SQLDialect.H2;
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
+// ...
+// ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_10;
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.SQLITE;
+// ...
 // ...
 // ...
 // ...
 import static org.jooq.conf.SettingsTools.getExecuteUpdateWithoutWhere;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.Keywords.K_FROM;
+import static org.jooq.impl.Keywords.K_LIMIT;
+import static org.jooq.impl.Keywords.K_ORDER_BY;
 import static org.jooq.impl.Keywords.K_ROW;
 import static org.jooq.impl.Keywords.K_SET;
 import static org.jooq.impl.Keywords.K_UPDATE;
@@ -67,10 +81,8 @@ import static org.jooq.impl.Keywords.K_WHERE;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Map;
-
-import javax.annotation.Generated;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -78,6 +90,9 @@ import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Field;
 import org.jooq.Operator;
+import org.jooq.OrderField;
+import org.jooq.Param;
+// ...
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record10;
@@ -136,19 +151,24 @@ import org.jooq.UpdateQuery;
  */
 final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> implements UpdateQuery<R> {
 
-    private static final long                serialVersionUID       = -660460731970074719L;
-    private static final Clause[]            CLAUSES                = { UPDATE };
+    private static final long            serialVersionUID       = -660460731970074719L;
+    private static final Clause[]        CLAUSES                = { UPDATE };
 
 
 
-    private static final EnumSet<SQLDialect> SUPPORT_RVE_SET        = EnumSet.of(H2, HSQLDB, POSTGRES);
 
-    private final FieldMapForUpdate          updateMap;
-    private final TableList                  from;
-    private final ConditionProviderImpl      condition;
-    private Row                              multiRow;
-    private Row                              multiValue;
-    private Select<?>                        multiSelect;
+    private static final Set<SQLDialect> SUPPORT_RVE_SET        = SQLDialect.supported(H2, HSQLDB, POSTGRES);
+    private static final Set<SQLDialect> NO_SUPPORT_LIMIT       = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE);
+    private static final Set<SQLDialect> REQUIRE_RVE_ROW_CLAUSE = SQLDialect.supported(POSTGRES);
+
+    private final FieldMapForUpdate      updateMap;
+    private final TableList              from;
+    private final ConditionProviderImpl  condition;
+    private Row                          multiRow;
+    private Row                          multiValue;
+    private Select<?>                    multiSelect;
+    private final SortFieldList          orderBy;
+    private Param<? extends Number>      limit;
 
     UpdateQueryImpl(Configuration configuration, WithImpl with, Table<R> table) {
         super(configuration, with, table);
@@ -156,6 +176,7 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
         this.updateMap = new FieldMapForUpdate(table, UPDATE_SET_ASSIGNMENT);
         this.from = new TableList();
         this.condition = new ConditionProviderImpl();
+        this.orderBy = new SortFieldList();
     }
 
     @Override
@@ -163,285 +184,239 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
         return updateMap;
     }
 
-// [jooq-tools] START [addValues]
 
-    @Generated("This method was generated using jOOQ-tools")
+
     @Override
     public final <T1> void addValues(Row1<T1> row, Row1<T1> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2> void addValues(Row2<T1, T2> row, Row2<T1, T2> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3> void addValues(Row3<T1, T2, T3> row, Row3<T1, T2, T3> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4> void addValues(Row4<T1, T2, T3, T4> row, Row4<T1, T2, T3, T4> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5> void addValues(Row5<T1, T2, T3, T4, T5> row, Row5<T1, T2, T3, T4, T5> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6> void addValues(Row6<T1, T2, T3, T4, T5, T6> row, Row6<T1, T2, T3, T4, T5, T6> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7> void addValues(Row7<T1, T2, T3, T4, T5, T6, T7> row, Row7<T1, T2, T3, T4, T5, T6, T7> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8> void addValues(Row8<T1, T2, T3, T4, T5, T6, T7, T8> row, Row8<T1, T2, T3, T4, T5, T6, T7, T8> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9> void addValues(Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row, Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> void addValues(Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row, Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> void addValues(Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row, Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> void addValues(Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row, Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> void addValues(Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row, Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> void addValues(Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row, Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> void addValues(Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row, Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> void addValues(Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row, Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> void addValues(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row, Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> void addValues(Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row, Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> void addValues(Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row, Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> void addValues(Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row, Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> void addValues(Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row, Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> void addValues(Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row, Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final void addValues(RowN row, RowN value) {
         addValues0(row, value);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1> void addValues(Row1<T1> row, Select<? extends Record1<T1>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2> void addValues(Row2<T1, T2> row, Select<? extends Record2<T1, T2>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3> void addValues(Row3<T1, T2, T3> row, Select<? extends Record3<T1, T2, T3>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4> void addValues(Row4<T1, T2, T3, T4> row, Select<? extends Record4<T1, T2, T3, T4>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5> void addValues(Row5<T1, T2, T3, T4, T5> row, Select<? extends Record5<T1, T2, T3, T4, T5>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6> void addValues(Row6<T1, T2, T3, T4, T5, T6> row, Select<? extends Record6<T1, T2, T3, T4, T5, T6>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7> void addValues(Row7<T1, T2, T3, T4, T5, T6, T7> row, Select<? extends Record7<T1, T2, T3, T4, T5, T6, T7>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8> void addValues(Row8<T1, T2, T3, T4, T5, T6, T7, T8> row, Select<? extends Record8<T1, T2, T3, T4, T5, T6, T7, T8>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9> void addValues(Row9<T1, T2, T3, T4, T5, T6, T7, T8, T9> row, Select<? extends Record9<T1, T2, T3, T4, T5, T6, T7, T8, T9>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> void addValues(Row10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> row, Select<? extends Record10<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> void addValues(Row11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> row, Select<? extends Record11<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> void addValues(Row12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> row, Select<? extends Record12<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> void addValues(Row13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> row, Select<? extends Record13<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> void addValues(Row14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> row, Select<? extends Record14<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> void addValues(Row15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> row, Select<? extends Record15<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> void addValues(Row16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> row, Select<? extends Record16<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> void addValues(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row, Select<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> void addValues(Row18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18> row, Select<? extends Record18<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> void addValues(Row19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19> row, Select<? extends Record19<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> void addValues(Row20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20> row, Select<? extends Record20<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> void addValues(Row21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21> row, Select<? extends Record21<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> void addValues(Row22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22> row, Select<? extends Record22<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22>> select) {
         addValues0(row, select);
     }
 
-    @Generated("This method was generated using jOOQ-tools")
     @Override
     public final void addValues(RowN row, Select<?> select) {
         addValues0(row, select);
     }
 
-// [jooq-tools] END [addValues]
+
 
     private final void addValues0(Row row, Row value) {
         multiRow = row;
@@ -504,6 +479,26 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
         condition.addConditions(operator, conditions);
     }
 
+    @Override
+    public final void addOrderBy(OrderField<?>... fields) {
+        addOrderBy(Arrays.asList(fields));
+    }
+
+    @Override
+    public final void addOrderBy(Collection<? extends OrderField<?>> fields) {
+        orderBy.addAll(Tools.sortFields(fields));
+    }
+
+    @Override
+    public final void addLimit(Number numberOfRows) {
+        addLimit(DSL.val(numberOfRows));
+    }
+
+    @Override
+    public final void addLimit(Param<? extends Number> numberOfRows) {
+        limit = numberOfRows;
+    }
+
     final Condition getWhere() {
         return condition.getWhere();
     }
@@ -512,6 +507,7 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
         return condition.hasWhere();
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     final void accept0(Context<?> ctx) {
         boolean declareTables = ctx.declareTables();
@@ -528,7 +524,7 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
 
 
            )
-           .visit(table)
+           .visit(table(ctx))
            .declareTables(declareTables)
            .end(UPDATE_UPDATE);
 
@@ -558,7 +554,7 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
 
             // [#6884] This syntax can be emulated trivially, if the RHS is not a SELECT subquery
             if (multiValue != null && !SUPPORT_RVE_SET.contains(ctx.family())) {
-                FieldMapForUpdate map = new FieldMapForUpdate(table, UPDATE_SET_ASSIGNMENT);
+                FieldMapForUpdate map = new FieldMapForUpdate(table(), UPDATE_SET_ASSIGNMENT);
 
                 for (int i = 0; i < multiRow.size(); i++) {
                     Field<?> k = multiRow.field(i);
@@ -590,7 +586,7 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
 
                     // [#6763] Incompatible change in PostgreSQL 10 requires ROW() constructor for
                     //         single-degree rows. Let's just always render it, here.
-                    if (POSTGRES_10.precedes(ctx.dialect()))
+                    if (REQUIRE_RVE_ROW_CLAUSE.contains(ctx.dialect()))
                         ctx.visit(K_ROW).sql(" ");
 
                     ctx.visit(multiValue);
@@ -627,6 +623,10 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
 
         ctx.end(UPDATE_SET);
 
+
+
+
+
         switch (ctx.family()) {
 
 
@@ -650,18 +650,49 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
                 break;
         }
 
-        ctx.start(UPDATE_WHERE);
+        // [#2059] MemSQL does not support UPDATE ... ORDER BY
+        if (limit != null && NO_SUPPORT_LIMIT.contains(ctx.family())) {
+            Field<?>[] keyFields =
+                table().getKeys().isEmpty()
+              ? new Field[] { table().rowid() }
+              : (table().getPrimaryKey() != null
+                  ? table().getPrimaryKey()
+                  : table().getKeys().get(0)).getFieldsArray();
 
-        if (hasWhere())
-            ctx.formatSeparator()
-               .visit(K_WHERE).sql(' ')
-               .visit(getWhere());
+            ctx.start(UPDATE_WHERE)
+               .formatSeparator()
+               .visit(K_WHERE).sql(' ');
 
-        ctx.end(UPDATE_WHERE)
-           .start(UPDATE_RETURNING);
+            if (keyFields.length == 1)
+                ctx.visit(keyFields[0].in(select((Field) keyFields[0]).from(table()).where(getWhere()).orderBy(orderBy).limit(limit)));
+            else
+                ctx.visit(row(keyFields).in(select(keyFields).from(table()).where(getWhere()).orderBy(orderBy).limit(limit)));
 
+            ctx.end(UPDATE_WHERE);
+        }
+        else {
+            ctx.start(UPDATE_WHERE);
+
+            if (hasWhere())
+                ctx.formatSeparator()
+                   .visit(K_WHERE).sql(' ')
+                   .visit(getWhere());
+
+            ctx.end(UPDATE_WHERE);
+
+            if (!orderBy.isEmpty())
+                ctx.formatSeparator()
+                   .visit(K_ORDER_BY).sql(' ')
+                   .visit(orderBy);
+
+            if (limit != null)
+                ctx.formatSeparator()
+                   .visit(K_LIMIT).sql(' ')
+                   .visit(limit);
+        }
+
+        ctx.start(UPDATE_RETURNING);
         toSQLReturning(ctx);
-
         ctx.end(UPDATE_RETURNING);
     }
 
@@ -680,8 +711,13 @@ final class UpdateQueryImpl<R extends Record> extends AbstractStoreQuery<R> impl
         return updateMap.size() > 0 || multiRow != null;
     }
 
-    @Override
-    final int estimatedRowCount() {
-        return Integer.MAX_VALUE;
-    }
+
+
+
+
+
+
+
+
+
 }

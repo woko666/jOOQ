@@ -47,15 +47,26 @@ import static org.jooq.SQLDialect.CUBRID;
 import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_4;
+// ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
+import static org.jooq.impl.DSL.choose;
 import static org.jooq.impl.DSL.condition;
+import static org.jooq.impl.DSL.inline;
+import static org.jooq.impl.DSL.mode;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.one;
 import static org.jooq.impl.DSL.percentileCont;
+import static org.jooq.impl.DSL.when;
+import static org.jooq.impl.DSL.zero;
+import static org.jooq.impl.Keywords.F_CONCAT;
+import static org.jooq.impl.Keywords.F_SUBSTR;
+import static org.jooq.impl.Keywords.F_XMLAGG;
+import static org.jooq.impl.Keywords.F_XMLSERIALIZE;
+import static org.jooq.impl.Keywords.F_XMLTEXT;
 import static org.jooq.impl.Keywords.K_AS;
 import static org.jooq.impl.Keywords.K_DENSE_RANK;
 import static org.jooq.impl.Keywords.K_DISTINCT;
@@ -72,16 +83,21 @@ import static org.jooq.impl.Keywords.K_RESPECT_NULLS;
 import static org.jooq.impl.Keywords.K_SEPARATOR;
 import static org.jooq.impl.Keywords.K_WHERE;
 import static org.jooq.impl.Keywords.K_WITHIN_GROUP;
+import static org.jooq.impl.SQLDataType.NUMERIC;
+import static org.jooq.impl.SelectQueryImpl.SUPPORT_WINDOW_CLAUSE;
 import static org.jooq.impl.Term.ARRAY_AGG;
 import static org.jooq.impl.Term.LIST_AGG;
 import static org.jooq.impl.Term.MEDIAN;
+import static org.jooq.impl.Term.MODE;
+import static org.jooq.impl.Term.PRODUCT;
 import static org.jooq.impl.Term.ROW_NUMBER;
+import static org.jooq.impl.Tools.castIfNeeded;
 import static org.jooq.impl.Tools.DataKey.DATA_WINDOW_DEFINITIONS;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.AggregateFilterStep;
 import org.jooq.AggregateFunction;
@@ -93,11 +109,13 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.OrderedAggregateFunction;
+// ...
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.SQLDialect;
 import org.jooq.WindowBeforeOverStep;
 import org.jooq.WindowDefinition;
+import org.jooq.WindowExcludeStep;
 import org.jooq.WindowFinalStep;
 import org.jooq.WindowFromFirstLastStep;
 import org.jooq.WindowIgnoreNullsStep;
@@ -107,6 +125,7 @@ import org.jooq.WindowPartitionByStep;
 import org.jooq.WindowRowsAndStep;
 import org.jooq.WindowRowsStep;
 import org.jooq.WindowSpecification;
+import org.jooq.impl.Tools.BooleanDataKey;
 // ...
 
 /**
@@ -125,35 +144,38 @@ class Function<T> extends AbstractField<T> implements
     WindowFromFirstLastStep<T>,
     WindowPartitionByStep<T>,
     WindowRowsStep<T>,
-    WindowRowsAndStep<T>
+    WindowRowsAndStep<T>,
+    WindowExcludeStep<T>
     {
 
 
-    private static final long                serialVersionUID      = 347252741712134044L;
-    private static final EnumSet<SQLDialect> SUPPORT_ARRAY_AGG     = EnumSet.of(HSQLDB, POSTGRES);
-    private static final EnumSet<SQLDialect> SUPPORT_GROUP_CONCAT  = EnumSet.of(CUBRID, H2, HSQLDB, MARIADB, MYSQL, SQLITE);
-    private static final EnumSet<SQLDialect> SUPPORT_STRING_AGG    = EnumSet.of(POSTGRES);
-    private static final EnumSet<SQLDialect> SUPPORT_WINDOW_CLAUSE = EnumSet.of(MYSQL, POSTGRES);
+    private static final long              serialVersionUID                   = 347252741712134044L;
+    private static final Set<SQLDialect>   SUPPORT_ARRAY_AGG                  = SQLDialect.supported(HSQLDB, POSTGRES);
+    private static final Set<SQLDialect>   SUPPORT_GROUP_CONCAT               = SQLDialect.supported(CUBRID, H2, HSQLDB, MARIADB, MYSQL, SQLITE);
+    private static final Set<SQLDialect>   SUPPORT_STRING_AGG                 = SQLDialect.supported(POSTGRES);
+    private static final Set<SQLDialect>   SUPPORT_NO_PARENS_WINDOW_REFERENCE = SQLDialect.supported(MYSQL, POSTGRES);
+    private static final Set<SQLDialect>   SUPPORT_FILTER                     = SQLDialect.supported(H2, HSQLDB, POSTGRES);
+    private static final Set<SQLDialect>   SUPPORT_DISTINCT_RVE               = SQLDialect.supported(H2, POSTGRES);
 
-    static final Field<Integer>              ASTERISK              = DSL.field("*", Integer.class);
+    static final Field<Integer>            ASTERISK                           = DSL.field("*", Integer.class);
 
     // Mutually exclusive attributes: super.getName(), this.name, this.term
-    private final Name                       name;
-    private final Term                       term;
+    private final Name                     name;
+    private final Term                     term;
 
     // Other attributes
-    private final QueryPartList<QueryPart>   arguments;
-    private final boolean                    distinct;
-    private SortFieldList                    withinGroupOrderBy;
-    private SortFieldList                    keepDenseRankOrderBy;
-    private Condition                        filter;
-    private WindowSpecificationImpl          windowSpecification;
-    private WindowDefinitionImpl             windowDefinition;
-    private Name                             windowName;
+    private final QueryPartList<QueryPart> arguments;
+    private final boolean                  distinct;
+    private SortFieldList                  withinGroupOrderBy;
+    private SortFieldList                  keepDenseRankOrderBy;
+    private Condition                      filter;
+    private WindowSpecificationImpl        windowSpecification;
+    private WindowDefinitionImpl           windowDefinition;
+    private Name                           windowName;
 
-    private boolean                          first;
-    private Boolean                          ignoreNulls;
-    private Boolean                          fromLast;
+    private boolean                        first;
+    private Boolean                        ignoreNulls;
+    private Boolean                        fromLast;
 
     // -------------------------------------------------------------------------
     // XXX Constructors
@@ -177,7 +199,7 @@ class Function<T> extends AbstractField<T> implements
         this.term = null;
         this.name = null;
         this.distinct = distinct;
-        this.arguments = new QueryPartList<QueryPart>(arguments);
+        this.arguments = new QueryPartList<>(arguments);
     }
 
     Function(Term term, boolean distinct, DataType<T> type, QueryPart... arguments) {
@@ -186,7 +208,7 @@ class Function<T> extends AbstractField<T> implements
         this.term = term;
         this.name = null;
         this.distinct = distinct;
-        this.arguments = new QueryPartList<QueryPart>(arguments);
+        this.arguments = new QueryPartList<>(arguments);
     }
 
     Function(Name name, boolean distinct, DataType<T> type, QueryPart... arguments) {
@@ -195,7 +217,7 @@ class Function<T> extends AbstractField<T> implements
         this.term = null;
         this.name = name;
         this.distinct = distinct;
-        this.arguments = new QueryPartList<QueryPart>(arguments);
+        this.arguments = new QueryPartList<>(arguments);
     }
 
     // -------------------------------------------------------------------------
@@ -222,12 +244,65 @@ class Function<T> extends AbstractField<T> implements
 
 
 
-        else if (term == MEDIAN && (                                                            ctx.family() == POSTGRES)) {
+        else if (term == MODE && ( ctx.family() == H2 || ctx.family() == POSTGRES)) {
+            ctx.visit(mode().withinGroupOrderBy(DSL.field("{0}", arguments.get(0))));
+        }
+        else if (term == MEDIAN && ( ctx.family() == POSTGRES)) {
             Field<?>[] fields = new Field[arguments.size()];
             for (int i = 0; i < fields.length; i++)
                 fields[i] = DSL.field("{0}", arguments.get(i));
 
             ctx.visit(percentileCont(new BigDecimal("0.5")).withinGroupOrderBy(fields));
+        }
+        else if (term == PRODUCT) {
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            final Field<Integer> f = (Field) DSL.field("{0}", arguments.get(0));
+            final Field<Integer> negatives = DSL.when(f.lt(zero()), inline(-1));
+
+            @SuppressWarnings("serial")
+            Field<BigDecimal> negativesSum = new CustomField<BigDecimal>("sum", NUMERIC) {
+                @Override
+                public void accept(Context<?> c) {
+                    c.visit(distinct
+                        ? DSL.sumDistinct(negatives)
+                        : DSL.sum(negatives));
+
+                    toSQLFilterClause(c);
+                    toSQLOverClause(c);
+                }
+            };
+
+            @SuppressWarnings("serial")
+            Field<BigDecimal> zerosSum = new CustomField<BigDecimal>("sum", NUMERIC) {
+                @Override
+                public void accept(Context<?> c) {
+                    c.visit(DSL.sum(choose(f).when(zero(), one())));
+
+                    toSQLFilterClause(c);
+                    toSQLOverClause(c);
+                }
+            };
+
+            @SuppressWarnings("serial")
+            Field<BigDecimal> logarithmsSum = new CustomField<BigDecimal>("sum", NUMERIC) {
+                @Override
+                public void accept(Context<?> c) {
+                    Field<BigDecimal> ln = DSL.ln(DSL.abs(DSL.nullif(f, zero())));
+
+                    c.visit(distinct
+                        ? DSL.sumDistinct(ln)
+                        : DSL.sum(ln));
+
+                    toSQLFilterClause(c);
+                    toSQLOverClause(c);
+                }
+            };
+
+            ctx.visit(
+                when(zerosSum.gt(inline(BigDecimal.ZERO)), zero())
+               .when(negativesSum.mod(inline(2)).lt(inline(BigDecimal.ZERO)), inline(-1))
+               .otherwise(one()).mul(DSL.exp(logarithmsSum))
+            );
         }
         else {
             toSQLArguments(ctx);
@@ -237,6 +312,7 @@ class Function<T> extends AbstractField<T> implements
             toSQLOverClause(ctx);
         }
     }
+
 
 
 
@@ -294,7 +370,7 @@ class Function<T> extends AbstractField<T> implements
             ctx.visit(K_DISTINCT).sql(' ');
 
         // The explicit cast is needed in Postgres
-        ctx.visit(((Field<?>) arguments.get(0)).cast(String.class));
+        ctx.visit(castIfNeeded((Field<?>) arguments.get(0), String.class));
 
         if (arguments.size() > 1)
             ctx.sql(", ").visit(arguments.get(1));
@@ -314,7 +390,7 @@ class Function<T> extends AbstractField<T> implements
     final void toSQLGroupConcat(Context<?> ctx) {
         toSQLFunctionName(ctx);
         ctx.sql('(');
-        toSQLArguments1(ctx, new QueryPartList<QueryPart>(Arrays.asList(arguments.get(0))));
+        toSQLArguments1(ctx, new QueryPartList<>(Arrays.asList(arguments.get(0))));
 
         if (!Tools.isEmpty(withinGroupOrderBy))
             ctx.sql(' ').visit(K_ORDER_BY).sql(' ')
@@ -331,12 +407,7 @@ class Function<T> extends AbstractField<T> implements
     }
 
     final void toSQLFilterClause(Context<?> ctx) {
-        if (filter != null && (
-                HSQLDB == ctx.family() ||
-
-
-
-                POSTGRES_9_4.precedes(ctx.dialect()))) {
+        if (filter != null && SUPPORT_FILTER.contains(ctx.dialect()))
             ctx.sql(' ')
                .visit(K_FILTER)
                .sql(" (")
@@ -344,7 +415,6 @@ class Function<T> extends AbstractField<T> implements
                .sql(' ')
                .visit(filter)
                .sql(')');
-        }
     }
 
     final void toSQLOverClause(Context<?> ctx) {
@@ -355,13 +425,62 @@ class Function<T> extends AbstractField<T> implements
             return;
 
         // [#1524] Don't render this clause where it is not supported
-        if (term == ROW_NUMBER && ctx.configuration().dialect() == HSQLDB)
+        if (term == ROW_NUMBER && ctx.family() == HSQLDB)
             return;
+
+        Boolean ranking = false;
+        Boolean previousRanking = null;
+
+
+
+
+
+
+        if (term != null) {
+            switch (term) {
+
+
+
+
+
+
+                case CUME_DIST:
+                case DENSE_RANK:
+                case FIRST_VALUE:
+                case LAG:
+                case LEAD:
+                case LAST_VALUE:
+                case NTH_VALUE:
+                case NTILE:
+                case PERCENT_RANK:
+                case RANK:
+                    ranking = true;
+                    break;
+            }
+        }
 
         ctx.sql(' ')
            .visit(K_OVER)
-           .sql(' ')
-           .visit(window);
+           .sql(' ');
+
+        previousRanking = (Boolean) ctx.data(BooleanDataKey.DATA_RANKING_FUNCTION, ranking);
+
+
+
+
+        ctx.visit(window);
+
+        if (TRUE.equals(previousRanking))
+            ctx.data(BooleanDataKey.DATA_RANKING_FUNCTION, previousRanking);
+        else
+            ctx.data().remove(BooleanDataKey.DATA_RANKING_FUNCTION);
+
+
+
+
+
+
+
     }
 
     @SuppressWarnings("unchecked")
@@ -370,16 +489,16 @@ class Function<T> extends AbstractField<T> implements
             return DSL.sql("({0})", windowSpecification);
 
         // [#3727] Referenced WindowDefinitions that contain a frame clause
-        // shouldn't be referenced from within parentheses (in PostgreSQL)
+        // shouldn't be referenced from within parentheses (in MySQL and PostgreSQL)
         if (windowDefinition != null)
-            if (                                                            POSTGRES == ctx.family())
+            if (SUPPORT_NO_PARENS_WINDOW_REFERENCE.contains(ctx.family()))
                 return windowDefinition;
             else
                 return DSL.sql("({0})", windowDefinition);
 
         // [#531] Inline window specifications if the WINDOW clause is not supported
         if (windowName != null) {
-            if (SUPPORT_WINDOW_CLAUSE.contains(ctx.family()))
+            if (ctx.dialect().supports(SUPPORT_WINDOW_CLAUSE))
                 return windowName;
 
             QueryPartList<WindowDefinition> windows = (QueryPartList<WindowDefinition>) ctx.data(DATA_WINDOW_DEFINITIONS);
@@ -439,6 +558,7 @@ class Function<T> extends AbstractField<T> implements
         ctx.sql('(');
         toSQLArguments0(ctx);
         ctx.sql(')');
+        toSQLArguments2(ctx);
     }
 
     final void toSQLArguments0(Context<?> ctx) {
@@ -447,26 +567,19 @@ class Function<T> extends AbstractField<T> implements
 
     final void toSQLArguments1(Context<?> ctx, QueryPartList<QueryPart> args) {
         if (distinct) {
-            ctx.visit(K_DISTINCT);
+            ctx.visit(K_DISTINCT).sql(' ');
 
-            // [#2883] PostgreSQL can use the DISTINCT keyword with formal row value expressions.
-            if ((                                                            ctx.family() == POSTGRES) && args.size() > 1)
+            // [#2883][#9109] PostgreSQL and H2 can use the DISTINCT keyword with formal row value expressions.
+            if (args.size() > 1 && SUPPORT_DISTINCT_RVE.contains(ctx.family()))
                 ctx.sql('(');
-            else
-                ctx.sql(' ');
         }
 
         if (!args.isEmpty()) {
-            if (filter == null ||
-                    HSQLDB == ctx.family() ||
-
-
-
-                    POSTGRES_9_4.precedes(ctx.dialect())) {
+            if (filter == null || SUPPORT_FILTER.contains(ctx.dialect())) {
                 ctx.visit(args);
             }
             else {
-                QueryPartList<Field<?>> expressions = new QueryPartList<Field<?>>();
+                QueryPartList<Field<?>> expressions = new QueryPartList<>();
 
                 for (QueryPart argument : args)
                     expressions.add(DSL.when(filter, argument == ASTERISK ? one() : argument));
@@ -476,35 +589,47 @@ class Function<T> extends AbstractField<T> implements
         }
 
         if (distinct)
-            if ((                                                            ctx.family() == POSTGRES) && args.size() > 1)
+            if (args.size() > 1 && SUPPORT_DISTINCT_RVE.contains(ctx.family()))
                 ctx.sql(')');
+    }
+
+    final void toSQLArguments2(Context<?> ctx) {
+        if (TRUE.equals(fromLast))
+            ctx.sql(' ').visit(K_FROM).sql(' ').visit(K_LAST);
+        else if (FALSE.equals(fromLast))
+            ctx.sql(' ').visit(K_FROM).sql(' ').visit(K_FIRST);
+
+        if (TRUE.equals(ignoreNulls)) {
+            switch (ctx.family()) {
 
 
 
 
 
+                default:
+                    ctx.sql(' ').visit(K_IGNORE_NULLS);
+                    break;
+            }
+        }
+        else if (FALSE.equals(ignoreNulls)) {
+            switch (ctx.family()) {
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
+                default:
+                    ctx.sql(' ').visit(K_RESPECT_NULLS);
+                    break;
+            }
+        }
     }
 
     final void toSQLFunctionName(Context<?> ctx) {
         if (name != null)
             ctx.visit(name);
         else if (term != null)
-            ctx.sql(term.translate(ctx.configuration().dialect()));
+            ctx.sql(term.translate(ctx.dialect()));
         else
             ctx.sql(getName());
     }
@@ -567,24 +692,29 @@ class Function<T> extends AbstractField<T> implements
 
 
 
+    @Override
+    public final WindowOverStep<T> ignoreNulls() {
+        ignoreNulls = true;
+        return this;
+    }
 
+    @Override
+    public final WindowOverStep<T> respectNulls() {
+        ignoreNulls = false;
+        return this;
+    }
 
+    @Override
+    public final WindowIgnoreNullsStep<T> fromFirst() {
+        fromLast = false;
+        return this;
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @Override
+    public final WindowIgnoreNullsStep<T> fromLast() {
+        fromLast = true;
+        return this;
+    }
 
     @Override
     public final WindowBeforeOverStep<T> filterWhere(Condition c) {
@@ -642,7 +772,10 @@ class Function<T> extends AbstractField<T> implements
 
     @Override
     public final WindowFinalStep<T> over(WindowSpecification specification) {
-        this.windowSpecification = (WindowSpecificationImpl) specification;
+        this.windowSpecification = specification instanceof WindowSpecificationImpl
+            ? (WindowSpecificationImpl) specification
+            : new WindowSpecificationImpl((WindowDefinitionImpl) specification);
+
         return this;
     }
 
@@ -703,31 +836,31 @@ class Function<T> extends AbstractField<T> implements
     }
 
     @Override
-    public final WindowFinalStep<T> rowsUnboundedPreceding() {
+    public final WindowExcludeStep<T> rowsUnboundedPreceding() {
         windowSpecification.rowsUnboundedPreceding();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rowsPreceding(int number) {
+    public final WindowExcludeStep<T> rowsPreceding(int number) {
         windowSpecification.rowsPreceding(number);
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rowsCurrentRow() {
+    public final WindowExcludeStep<T> rowsCurrentRow() {
         windowSpecification.rowsCurrentRow();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rowsUnboundedFollowing() {
+    public final WindowExcludeStep<T> rowsUnboundedFollowing() {
         windowSpecification.rowsUnboundedFollowing();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rowsFollowing(int number) {
+    public final WindowExcludeStep<T> rowsFollowing(int number) {
         windowSpecification.rowsFollowing(number);
         return this;
     }
@@ -763,31 +896,31 @@ class Function<T> extends AbstractField<T> implements
     }
 
     @Override
-    public final WindowFinalStep<T> rangeUnboundedPreceding() {
+    public final WindowExcludeStep<T> rangeUnboundedPreceding() {
         windowSpecification.rangeUnboundedPreceding();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rangePreceding(int number) {
+    public final WindowExcludeStep<T> rangePreceding(int number) {
         windowSpecification.rangePreceding(number);
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rangeCurrentRow() {
+    public final WindowExcludeStep<T> rangeCurrentRow() {
         windowSpecification.rangeCurrentRow();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rangeUnboundedFollowing() {
+    public final WindowExcludeStep<T> rangeUnboundedFollowing() {
         windowSpecification.rangeUnboundedFollowing();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> rangeFollowing(int number) {
+    public final WindowExcludeStep<T> rangeFollowing(int number) {
         windowSpecification.rangeFollowing(number);
         return this;
     }
@@ -823,32 +956,116 @@ class Function<T> extends AbstractField<T> implements
     }
 
     @Override
-    public final WindowFinalStep<T> andUnboundedPreceding() {
+    public final WindowExcludeStep<T> groupsUnboundedPreceding() {
+        windowSpecification.groupsUnboundedPreceding();
+        return this;
+    }
+
+    @Override
+    public final WindowExcludeStep<T> groupsPreceding(int number) {
+        windowSpecification.groupsPreceding(number);
+        return this;
+    }
+
+    @Override
+    public final WindowExcludeStep<T> groupsCurrentRow() {
+        windowSpecification.groupsCurrentRow();
+        return this;
+    }
+
+    @Override
+    public final WindowExcludeStep<T> groupsUnboundedFollowing() {
+        windowSpecification.groupsUnboundedFollowing();
+        return this;
+    }
+
+    @Override
+    public final WindowExcludeStep<T> groupsFollowing(int number) {
+        windowSpecification.groupsFollowing(number);
+        return this;
+    }
+
+    @Override
+    public final WindowRowsAndStep<T> groupsBetweenUnboundedPreceding() {
+        windowSpecification.groupsBetweenUnboundedPreceding();
+        return this;
+    }
+
+    @Override
+    public final WindowRowsAndStep<T> groupsBetweenPreceding(int number) {
+        windowSpecification.groupsBetweenPreceding(number);
+        return this;
+    }
+
+    @Override
+    public final WindowRowsAndStep<T> groupsBetweenCurrentRow() {
+        windowSpecification.groupsBetweenCurrentRow();
+        return this;
+    }
+
+    @Override
+    public final WindowRowsAndStep<T> groupsBetweenUnboundedFollowing() {
+        windowSpecification.groupsBetweenUnboundedFollowing();
+        return this;
+    }
+
+    @Override
+    public final WindowRowsAndStep<T> groupsBetweenFollowing(int number) {
+        windowSpecification.groupsBetweenFollowing(number);
+        return this;
+    }
+
+    @Override
+    public final WindowExcludeStep<T> andUnboundedPreceding() {
         windowSpecification.andUnboundedPreceding();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> andPreceding(int number) {
+    public final WindowExcludeStep<T> andPreceding(int number) {
         windowSpecification.andPreceding(number);
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> andCurrentRow() {
+    public final WindowExcludeStep<T> andCurrentRow() {
         windowSpecification.andCurrentRow();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> andUnboundedFollowing() {
+    public final WindowExcludeStep<T> andUnboundedFollowing() {
         windowSpecification.andUnboundedFollowing();
         return this;
     }
 
     @Override
-    public final WindowFinalStep<T> andFollowing(int number) {
+    public final WindowExcludeStep<T> andFollowing(int number) {
         windowSpecification.andFollowing(number);
+        return this;
+    }
+
+    @Override
+    public final WindowFinalStep<T> excludeCurrentRow() {
+        windowSpecification.excludeCurrentRow();
+        return this;
+    }
+
+    @Override
+    public final WindowFinalStep<T> excludeGroup() {
+        windowSpecification.excludeGroup();
+        return this;
+    }
+
+    @Override
+    public final WindowFinalStep<T> excludeTies() {
+        windowSpecification.excludeTies();
+        return this;
+    }
+
+    @Override
+    public final WindowFinalStep<T> excludeNoOthers() {
+        windowSpecification.excludeNoOthers();
         return this;
     }
 }

@@ -43,22 +43,53 @@ import static org.jooq.Clause.DELETE_DELETE;
 import static org.jooq.Clause.DELETE_RETURNING;
 import static org.jooq.Clause.DELETE_WHERE;
 // ...
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
+// ...
+import static org.jooq.SQLDialect.HSQLDB;
+// ...
+// ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+// ...
+import static org.jooq.SQLDialect.SQLITE;
+// ...
+// ...
+// ...
+// ...
 import static org.jooq.conf.SettingsTools.getExecuteDeleteWithoutWhere;
+import static org.jooq.impl.DSL.row;
+import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.Keywords.K_DELETE;
 import static org.jooq.impl.Keywords.K_FROM;
+import static org.jooq.impl.Keywords.K_LIMIT;
+import static org.jooq.impl.Keywords.K_ORDER_BY;
 import static org.jooq.impl.Keywords.K_WHERE;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DeleteQuery;
+import org.jooq.Field;
 import org.jooq.Operator;
+import org.jooq.OrderField;
+import org.jooq.Param;
+// ...
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
@@ -68,16 +99,20 @@ import org.jooq.Table;
  */
 final class DeleteQueryImpl<R extends Record> extends AbstractDMLQuery<R> implements DeleteQuery<R> {
 
-    private static final long                serialVersionUID         = -1943687511774150929L;
-    private static final Clause[]            CLAUSES                  = { DELETE };
-    private static final EnumSet<SQLDialect> SPECIAL_DELETE_AS_SYNTAX = EnumSet.of(MARIADB, MYSQL);
+    private static final long            serialVersionUID         = -1943687511774150929L;
+    private static final Clause[]        CLAUSES                  = { DELETE };
+    private static final Set<SQLDialect> SPECIAL_DELETE_AS_SYNTAX = SQLDialect.supported(MARIADB, MYSQL);
+    private static final Set<SQLDialect> NO_SUPPORT_LIMIT         = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, HSQLDB, POSTGRES, SQLITE);
 
-    private final ConditionProviderImpl condition;
+    private final ConditionProviderImpl  condition;
+    private final SortFieldList          orderBy;
+    private Param<? extends Number>      limit;
 
     DeleteQueryImpl(Configuration configuration, WithImpl with, Table<R> table) {
         super(configuration, with, table);
 
         this.condition = new ConditionProviderImpl();
+        this.orderBy = new SortFieldList();
     }
 
     final Condition getWhere() {
@@ -119,6 +154,27 @@ final class DeleteQueryImpl<R extends Record> extends AbstractDMLQuery<R> implem
     }
 
     @Override
+    public final void addOrderBy(OrderField<?>... fields) {
+        addOrderBy(Arrays.asList(fields));
+    }
+
+    @Override
+    public final void addOrderBy(Collection<? extends OrderField<?>> fields) {
+        orderBy.addAll(Tools.sortFields(fields));
+    }
+
+    @Override
+    public final void addLimit(Number numberOfRows) {
+        addLimit(DSL.val(numberOfRows));
+    }
+
+    @Override
+    public final void addLimit(Param<? extends Number> numberOfRows) {
+        limit = numberOfRows;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @Override
     final void accept0(Context<?> ctx) {
         boolean declare = ctx.declareTables();
 
@@ -130,28 +186,64 @@ final class DeleteQueryImpl<R extends Record> extends AbstractDMLQuery<R> implem
         if (SPECIAL_DELETE_AS_SYNTAX.contains(ctx.family())) {
 
             // [#2579] [#6304] TableAlias discovery
-            if (Tools.alias(table) != null)
-                ctx.visit(table)
+            if (Tools.alias(table()) != null)
+                ctx.visit(table())
                    .sql(' ');
         }
 
         ctx.visit(K_FROM).sql(' ')
            .declareTables(true)
-           .visit(table)
+           .visit(table(ctx))
            .declareTables(declare)
-           .end(DELETE_DELETE)
-           .start(DELETE_WHERE);
+           .end(DELETE_DELETE);
 
-        if (hasWhere())
-            ctx.formatSeparator()
-               .visit(K_WHERE).sql(' ')
-               .visit(getWhere());
 
-        ctx.end(DELETE_WHERE)
-           .start(DELETE_RETURNING);
 
+
+
+        // [#2059] MemSQL does not support DELETE ... ORDER BY
+        if (limit != null && NO_SUPPORT_LIMIT.contains(ctx.family())) {
+            Field<?>[] keyFields =
+                  table().getKeys().isEmpty()
+                ? new Field[] { table().rowid() }
+                : (table().getPrimaryKey() != null
+                    ? table().getPrimaryKey()
+                    : table().getKeys().get(0)).getFieldsArray();
+
+            ctx.start(DELETE_WHERE)
+               .formatSeparator()
+               .visit(K_WHERE).sql(' ');
+
+            if (keyFields.length == 1)
+                ctx.visit(keyFields[0].in(select((Field) keyFields[0]).from(table()).where(getWhere()).orderBy(orderBy).limit(limit)));
+            else
+                ctx.visit(row(keyFields).in(select(keyFields).from(table()).where(getWhere()).orderBy(orderBy).limit(limit)));
+
+            ctx.end(DELETE_WHERE);
+        }
+        else {
+            ctx.start(DELETE_WHERE);
+
+            if (hasWhere())
+                ctx.formatSeparator()
+                   .visit(K_WHERE).sql(' ')
+                   .visit(getWhere());
+
+            ctx.end(DELETE_WHERE);
+
+            if (!orderBy.isEmpty())
+                ctx.formatSeparator()
+                   .visit(K_ORDER_BY).sql(' ')
+                   .visit(orderBy);
+
+            if (limit != null)
+                ctx.formatSeparator()
+                   .visit(K_LIMIT).sql(' ')
+                   .visit(limit);
+        }
+
+        ctx.start(DELETE_RETURNING);
         toSQLReturning(ctx);
-
         ctx.end(DELETE_RETURNING);
     }
 
@@ -170,8 +262,13 @@ final class DeleteQueryImpl<R extends Record> extends AbstractDMLQuery<R> implem
         return super.isExecutable();
     }
 
-    @Override
-    final int estimatedRowCount() {
-        return Integer.MAX_VALUE;
-    }
+
+
+
+
+
+
+
+
+
 }

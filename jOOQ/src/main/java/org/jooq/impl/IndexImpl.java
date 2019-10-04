@@ -37,17 +37,30 @@
  */
 package org.jooq.impl;
 
+// ...
+// ...
+import static org.jooq.SQLDialect.MARIADB;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+// ...
+// ...
+// ...
+import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.Tools.EMPTY_SORTFIELD;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
-import org.jooq.Clause;
 import org.jooq.Condition;
 import org.jooq.Context;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.OrderField;
+import org.jooq.SQLDialect;
 import org.jooq.SortField;
 import org.jooq.Table;
 
@@ -59,12 +72,16 @@ class IndexImpl extends AbstractNamed implements Index {
     /**
      * Generated UID
      */
-    private static final long    serialVersionUID = -5253463940194393996L;
+    private static final long                serialVersionUID               = -5253463940194393996L;
 
-    private final Table<?>       table;
-    private final SortField<?>[] fields;
-    private final Condition      where;
-    private final boolean        unique;
+    // [#8723] TODO: Specify the dialects that require table qualification once they're known.
+    private static final EnumSet<SQLDialect> REQUIRE_TABLE_QUALIFICATION    = EnumSet.noneOf(SQLDialect.class);
+    private static final Set<SQLDialect>     NO_SUPPORT_INDEX_QUALIFICATION = SQLDialect.supported(MARIADB, MYSQL, POSTGRES);
+
+    private final Table<?>                   table;
+    private final SortField<?>[]             fields;
+    private final Condition                  where;
+    private final boolean                    unique;
 
     IndexImpl(Name name) {
         this(name, null, EMPTY_SORTFIELD, null, false);
@@ -79,14 +96,19 @@ class IndexImpl extends AbstractNamed implements Index {
         this.unique = unique;
     }
 
-    @Override
-    public final void accept(Context<?> ctx) {
-        ctx.visit(getQualifiedName());
-    }
+    final SortField<?>[]    $fields()      { return fields; }
+    final boolean           $unique()      { return unique; }
 
     @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+    public final void accept(Context<?> ctx) {
+        if (NO_SUPPORT_INDEX_QUALIFICATION.contains(ctx.family()))
+            ctx.visit(getUnqualifiedName());
+        else if (REQUIRE_TABLE_QUALIFICATION.contains(ctx.family()))
+            ctx.visit(getQualifiedName());
+        else if (getTable() == null)
+            ctx.visit(getUnqualifiedName());
+        else
+            ctx.visit(name(getTable().getQualifiedName().qualifier(), getUnqualifiedName()));
     }
 
     @Override

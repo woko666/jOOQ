@@ -51,11 +51,12 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
-import static org.jooq.SQLDialect.POSTGRES_9_3;
+// ...
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
@@ -80,9 +81,9 @@ import org.jooq.impl.DSL;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -356,7 +357,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      *
      * @see Table#crossJoin(TableLike)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     SelectJoinStep<R> crossJoin(TableLike<?> table);
 
     /**
@@ -380,7 +381,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossJoin(SQL)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     SelectJoinStep<R> crossJoin(SQL sql);
 
@@ -405,7 +406,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossJoin(String)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     SelectJoinStep<R> crossJoin(String sql);
 
@@ -431,7 +432,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossJoin(String, Object...)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     SelectJoinStep<R> crossJoin(String sql, Object... bindings);
 
@@ -457,7 +458,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossJoin(String, QueryPart...)
      * @see SQL
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     @PlainSQL
     SelectJoinStep<R> crossJoin(String sql, QueryPart... parts);
 
@@ -476,7 +477,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see DSL#table(Name)
      * @see Table#crossJoin(Name)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     SelectJoinStep<R> crossJoin(Name name);
 
     /**
@@ -1449,6 +1450,119 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
     @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
     SelectJoinStep<R> naturalRightOuterJoin(Name name);
 
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(TableLike)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     *
+     * @see Table#naturalFullOuterJoin(TableLike)
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    SelectJoinStep<R> naturalFullOuterJoin(TableLike<?> table);
+
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(String)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(SQL)
+     * @see Table#naturalFullOuterJoin(SQL)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    SelectJoinStep<R> naturalFullOuterJoin(SQL sql);
+
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(String)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String)
+     * @see Table#naturalFullOuterJoin(String)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    SelectJoinStep<R> naturalFullOuterJoin(String sql);
+
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(String, Object...)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String, Object...)
+     * @see DSL#sql(String, Object...)
+     * @see Table#naturalFullOuterJoin(String, Object...)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    SelectJoinStep<R> naturalFullOuterJoin(String sql, Object... bindings);
+
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(String, QueryPart...)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     * <p>
+     * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
+     * guarantee syntax integrity. You may also create the possibility of
+     * malicious SQL injection. Be sure to properly use bind variables and/or
+     * escape literals when concatenated into SQL clauses!
+     *
+     * @see DSL#table(String, QueryPart...)
+     * @see DSL#sql(String, QueryPart...)
+     * @see Table#naturalFullOuterJoin(String, QueryPart...)
+     * @see SQL
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    @PlainSQL
+    SelectJoinStep<R> naturalFullOuterJoin(String sql, QueryPart... parts);
+
+    /**
+     * Convenience method to <code>NATURAL FULL OUTER JOIN</code> a table to
+     * the last table added to the <code>FROM</code> clause using
+     * {@link Table#naturalFullOuterJoin(Name)}
+     * <p>
+     * Natural joins are supported by most RDBMS. If they aren't supported, they
+     * are emulated if jOOQ has enough information.
+     *
+     * @see DSL#table(Name)
+     * @see Table#naturalFullOuterJoin(Name)
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    SelectJoinStep<R> naturalFullOuterJoin(Name name);
+
     // -------------------------------------------------------------------------
     // XXX: SEMI and ANTI JOIN
     // -------------------------------------------------------------------------
@@ -1508,7 +1622,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      *
      * @see Table#crossApply(TableLike)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     SelectJoinStep<R> crossApply(TableLike<?> table);
 
     /**
@@ -1523,7 +1637,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossApply(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> crossApply(SQL sql);
 
@@ -1539,7 +1653,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossApply(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> crossApply(String sql);
 
@@ -1556,7 +1670,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossApply(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> crossApply(String sql, Object... bindings);
 
@@ -1573,7 +1687,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#crossApply(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> crossApply(String sql, QueryPart... parts);
 
@@ -1583,7 +1697,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see DSL#table(Name)
      * @see Table#crossApply(Name)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     SelectJoinStep<R> crossApply(Name name);
 
     /**
@@ -1591,7 +1705,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      *
      * @see Table#outerApply(TableLike)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     SelectJoinStep<R> outerApply(TableLike<?> table);
 
     /**
@@ -1606,7 +1720,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#outerApply(SQL)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> outerApply(SQL sql);
 
@@ -1622,7 +1736,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#outerApply(String)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> outerApply(String sql);
 
@@ -1639,7 +1753,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#outerApply(String, Object...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> outerApply(String sql, Object... bindings);
 
@@ -1656,7 +1770,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see Table#outerApply(String, QueryPart...)
      * @see SQL
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     @PlainSQL
     SelectJoinStep<R> outerApply(String sql, QueryPart... parts);
 
@@ -1666,7 +1780,7 @@ public interface SelectJoinStep<R extends Record> extends SelectWhereStep<R> {
      * @see DSL#table(Name)
      * @see Table#outerApply(Name)
      */
-    @Support({ POSTGRES_9_3 })
+    @Support({ POSTGRES })
     SelectJoinStep<R> outerApply(Name name);
 
     /**

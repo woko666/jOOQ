@@ -43,32 +43,49 @@ import static org.jooq.SQLDialect.FIREBIRD;
 import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 import static org.jooq.SQLDialect.MARIADB;
-import static org.jooq.SQLDialect.MYSQL_8_0;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
-
-import javax.annotation.Generated;
+// ...
+// ...
 
 /**
- * A <code>DerivedColumnList</code> is a name of a table expression with
- * optional derived column list.
+ * A derived column list.
  * <p>
- * An example of a correlation name with derived column list is:
- * <code>table(column1, column2)</code>
+ * Thist type models a table name and an optional "derived column list", which
+ * can be used to name both tables and columns in one go, e.g. when aliasing a
+ * derived table or a {@link CommonTableExpression}.
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * Table&lt;?&gt; t = name("t").fields("v").as(select(one()));
+ * //           ^^^^^^^^^^^^^^^^^^^^^ -- DerivedColumnList
+ *
+ * using(configuration)
+ *    .select()
+ *    .from(t)
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * Instances can be created using {@link Name#fields(String...)} and overloads.
  *
  * @author Lukas Eder
  */
-@Generated("This class was generated using jOOQ-tools")
 public interface DerivedColumnList10 extends QueryPart {
 
     /**
      * Specify a subselect to refer to by the <code>DerivedColumnList</code> to
      * form a common table expression.
      */
-    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL_8_0, POSTGRES })
+    @Support({ FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     <R extends Record10<?, ?, ?, ?, ?, ?, ?, ?, ?, ?>> CommonTableExpression<R> as(Select<R> select);
 
 }

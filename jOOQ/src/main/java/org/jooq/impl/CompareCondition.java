@@ -44,6 +44,8 @@ import static org.jooq.Comparator.LIKE;
 import static org.jooq.Comparator.LIKE_IGNORE_CASE;
 import static org.jooq.Comparator.NOT_LIKE;
 import static org.jooq.Comparator.NOT_LIKE_IGNORE_CASE;
+import static org.jooq.Comparator.NOT_SIMILAR_TO;
+import static org.jooq.Comparator.SIMILAR_TO;
 // ...
 // ...
 // ...
@@ -53,12 +55,16 @@ import static org.jooq.SQLDialect.POSTGRES;
 // ...
 import static org.jooq.conf.ParamType.INLINED;
 import static org.jooq.impl.DSL.inline;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.Keywords.K_AS;
 import static org.jooq.impl.Keywords.K_CAST;
 import static org.jooq.impl.Keywords.K_ESCAPE;
 import static org.jooq.impl.Keywords.K_VARCHAR;
+import static org.jooq.impl.Tools.castIfNeeded;
+import static org.jooq.impl.Tools.embeddedFields;
+import static org.jooq.impl.Tools.isEmbeddable;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Comparator;
@@ -76,7 +82,7 @@ final class CompareCondition extends AbstractCondition implements LikeEscapeStep
 
     private static final long                serialVersionUID      = -747240442279619486L;
     private static final Clause[]            CLAUSES               = { CONDITION, CONDITION_COMPARISON };
-    private static final EnumSet<SQLDialect> REQUIRES_CAST_ON_LIKE = EnumSet.of(DERBY, POSTGRES);
+    private static final Set<SQLDialect>     REQUIRES_CAST_ON_LIKE = SQLDialect.supported(DERBY, POSTGRES);
 
     private final Field<?>                   field1;
     private final Field<?>                   field2;
@@ -97,19 +103,29 @@ final class CompareCondition extends AbstractCondition implements LikeEscapeStep
 
     @Override
     public final void accept(Context<?> ctx) {
+        boolean field1Embeddable = isEmbeddable(field1);
+
+        if (field1Embeddable && isEmbeddable(field2))
+            ctx.visit(row(embeddedFields(field1)).compare(comparator, embeddedFields(field2)));
+        else if (field1Embeddable && field2 instanceof ScalarSubquery)
+            ctx.visit(row(embeddedFields(field1)).compare(comparator, ((ScalarSubquery<?>) field2).query));
+        else
+            accept0(ctx);
+    }
+
+    private final void accept0(Context<?> ctx) {
         SQLDialect family = ctx.family();
         Field<?> lhs = field1;
         Field<?> rhs = field2;
         Comparator op = comparator;
 
-        // [#1159] Some dialects cannot auto-convert the LHS operand to a
+        // [#1159] [#1725] Some dialects cannot auto-convert the LHS operand to a
         // VARCHAR when applying a LIKE predicate
-        // [#293] TODO: This could apply to other operators, too
-        if ((op == LIKE || op == NOT_LIKE)
+        if ((op == LIKE || op == NOT_LIKE || op == SIMILAR_TO || op == NOT_SIMILAR_TO)
                 && field1.getType() != String.class
                 && REQUIRES_CAST_ON_LIKE.contains(family)) {
 
-            lhs = lhs.cast(String.class);
+            lhs = castIfNeeded(lhs, String.class);
         }
 
         // [#1423] Only Postgres knows a true ILIKE operator. Other dialects

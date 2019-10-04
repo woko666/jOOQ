@@ -37,17 +37,21 @@
  */
 package org.jooq.impl;
 
+import static java.lang.Boolean.TRUE;
 import static org.jooq.SQLDialect.SQLITE;
 import static org.jooq.conf.ParamType.INDEXED;
 import static org.jooq.conf.ParamType.INLINED;
 import static org.jooq.conf.ParamType.NAMED;
-import static org.jooq.conf.RenderNameStyle.LOWER;
-import static org.jooq.conf.RenderNameStyle.UPPER;
+import static org.jooq.conf.SettingsTools.renderLocale;
 import static org.jooq.impl.Identifiers.QUOTES;
 import static org.jooq.impl.Identifiers.QUOTE_END_DELIMITER;
 import static org.jooq.impl.Identifiers.QUOTE_END_DELIMITER_ESCAPED;
 import static org.jooq.impl.Identifiers.QUOTE_START_DELIMITER;
-import static org.jooq.impl.Tools.DataKey.DATA_COUNT_BIND_VALUES;
+import static org.jooq.impl.Keywords.K_WITH;
+import static org.jooq.impl.ScopeMarkers.AFTER_LAST_TOP_LEVEL_CTE;
+import static org.jooq.impl.ScopeMarkers.BEFORE_FIRST_TOP_LEVEL_CTE;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_COUNT_BIND_VALUES;
+import static org.jooq.impl.Tools.DataKey.DATA_TOP_LEVEL_CTE;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -70,9 +74,11 @@ import org.jooq.RenderContext;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.jooq.conf.RenderFormatting;
-import org.jooq.conf.RenderKeywordStyle;
-import org.jooq.conf.RenderNameStyle;
+import org.jooq.conf.RenderKeywordCase;
+import org.jooq.conf.RenderNameCase;
+import org.jooq.conf.RenderQuotedNames;
 import org.jooq.conf.Settings;
+import org.jooq.conf.SettingsTools;
 import org.jooq.exception.ControlFlowSignal;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.Tools.DataKey;
@@ -90,7 +96,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
     private static final Pattern          NEWLINE            = Pattern.compile("[\\n\\r]");
     private static final Set<String>      SQLITE_KEYWORDS;
 
-    private final StringBuilder           sql;
+    final StringBuilder                   sql;
     private final QueryPartList<Param<?>> bindValues;
     private int                           params;
     private int                           alias;
@@ -101,8 +107,9 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
     private int                           skipUpdateCounts;
 
     // [#1632] Cached values from Settings
-    RenderKeywordStyle                    cachedRenderKeywordStyle;
-    RenderNameStyle                       cachedRenderNameStyle;
+    RenderKeywordCase                     cachedRenderKeywordCase;
+    RenderNameCase                        cachedRenderNameCase;
+    RenderQuotedNames                     cachedRenderQuotedNames;
     boolean                               cachedRenderFormatted;
 
     // [#6525] Cached values from Settings.renderFormatting
@@ -117,10 +124,11 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
         Settings settings = configuration.settings();
 
         this.sql = new StringBuilder();
-        this.bindValues = new QueryPartList<Param<?>>();
-        this.cachedRenderKeywordStyle = settings.getRenderKeywordStyle();
+        this.bindValues = new QueryPartList<>();
+        this.cachedRenderKeywordCase = SettingsTools.getRenderKeywordCase(settings);
         this.cachedRenderFormatted = Boolean.TRUE.equals(settings.isRenderFormatted());
-        this.cachedRenderNameStyle = settings.getRenderNameStyle();
+        this.cachedRenderNameCase = SettingsTools.getRenderNameCase(settings);
+        this.cachedRenderQuotedNames = SettingsTools.getRenderQuotedNames(settings);
 
         RenderFormatting formatting = settings.getRenderFormatting();
         if (formatting == null)
@@ -168,40 +176,38 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
 
     @Override
     void scopeMarkStart0(QueryPart part) {
-        ScopeStackElement e = scopeStack.get(part);
+        ScopeStackElement e = scopeStack.getOrCreate(part);
         e.positions = new int[] { sql.length(), -1 };
         e.indent = indent;
     }
 
     @Override
     void scopeMarkEnd0(QueryPart part) {
-        ScopeStackElement e = scopeStack.get(part);
+        ScopeStackElement e = scopeStack.getOrCreate(part);
         e.positions[1] = sql.length();
     }
 
     @Override
     public RenderContext scopeRegister(QueryPart part) {
-        if (scopeLevel >= 0) {
+        if (scopeStack.inScope()) {
             if (part instanceof TableImpl) {
                 Table<?> root = (Table<?>) part;
                 Table<?> child = root;
-                List<ForeignKey<?, ?>> keys = new ArrayList<ForeignKey<?, ?>>();
-                List<Table<?>> tables = new ArrayList<Table<?>>();
+                List<Table<?>> tables = new ArrayList<>();
 
                 while (root instanceof TableImpl && (child = ((TableImpl<?>) root).child) != null) {
-                    keys.add(((TableImpl<?>) root).childPath);
                     tables.add(root);
                     root = child;
                 }
 
-                ScopeStackElement e = scopeStack.get(root);
+                ScopeStackElement e = scopeStack.getOrCreate(root);
                 if (e.joinNode == null)
                     e.joinNode = new JoinNode(root);
 
                 JoinNode childNode = e.joinNode;
-                for (int i = keys.size() - 1; i >= 0; i--) {
-                    ForeignKey<?, ?> k = keys.get(i);
+                for (int i = tables.size() - 1; i >= 0; i--) {
                     Table<?> t = tables.get(i);
+                    ForeignKey<?, ?> k = ((TableImpl<?>) t).childPath;
 
                     JoinNode next = childNode.children.get(k);
                     if (next == null) {
@@ -217,16 +223,56 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
         return this;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     void scopeEnd0() {
+
+        // TODO: Think about a more appropriate location for this logic, rather
+        // than the generic DefaultRenderContext, which shouldn't know anything
+        // about the individual query parts that it is rendering.
+        TopLevelCte cte = null;
+        ScopeStackElement beforeFirstCte = null;
+        ScopeStackElement afterLastCte = null;
+
+        if (subqueryLevel() == 0
+                && (cte = (TopLevelCte) data(DATA_TOP_LEVEL_CTE)) != null
+                && !cte.isEmpty()) {
+            beforeFirstCte = scopeStack.get(BEFORE_FIRST_TOP_LEVEL_CTE);
+            afterLastCte = scopeStack.get(AFTER_LAST_TOP_LEVEL_CTE);
+        }
+
         outer:
         for (ScopeStackElement e1 : scopeStack) {
-            if (e1.positions == null || e1.joinNode == null)
-                continue outer;
+            String replaced = null;
 
-            if (!e1.joinNode.children.isEmpty()) {
-                String replaced = configuration
+            if (e1.positions == null) {
+                continue outer;
+            }
+            else if (e1 == beforeFirstCte) {
+                boolean single = cte != null && cte.size() == 1;
+                RenderContext render = configuration.dsl().renderContext();
+
+                // There is no WITH clause
+                if (afterLastCte != null && e1.positions[0] == afterLastCte.positions[0])
+                    render.visit(K_WITH);
+
+                if (single)
+                    render.formatIndentStart()
+                          .formatSeparator();
+                else
+                    render.sql(' ');
+
+                render.declareCTE(true).visit(cte).declareCTE(false);
+
+                if (single)
+                    render.formatIndentEnd();
+
+                replaced = render.render();
+            }
+            else if (e1.joinNode == null) {
+                continue outer;
+            }
+            else if (!e1.joinNode.children.isEmpty()) {
+                replaced = configuration
                     .dsl()
                     .renderContext()
                     .declareTables(true)
@@ -238,7 +284,9 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
                     .formatNewLine()
                     .sql(')')
                     .render();
+            }
 
+            if (replaced != null) {
                 sql.replace(e1.positions[0], e1.positions[1], replaced);
                 int shift = replaced.length() - (e1.positions[1] - e1.positions[0]);
 
@@ -332,6 +380,30 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
     }
 
     @Override
+    public final RenderContext sql(long l) {
+        sql.append(l);
+        separator = false;
+        newline = false;
+        return this;
+    }
+
+    @Override
+    public final RenderContext sql(float f) {
+        sql.append(f);
+        separator = false;
+        newline = false;
+        return this;
+    }
+
+    @Override
+    public final RenderContext sql(double d) {
+        sql.append(d);
+        separator = false;
+        newline = false;
+        return this;
+    }
+
+    @Override
     public final RenderContext formatNewLine() {
         if (cachedRenderFormatted) {
             sql(cachedNewline, true);
@@ -393,8 +465,13 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
 
     @Override
     public final RenderContext formatIndentStart(int i) {
-        if (cachedRenderFormatted)
+        if (cachedRenderFormatted) {
             indent += i;
+
+            // [#9193] If we've already generated the separator (and indentation)
+            if (newline)
+                sql.append(cachedIndentation);
+        }
 
         return this;
     }
@@ -409,7 +486,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
 
     private final Deque<Integer> indentLock() {
         if (indentLock == null)
-            indentLock = new ArrayDeque<Integer>();
+            indentLock = new ArrayDeque<>();
 
         return indentLock;
     }
@@ -459,22 +536,21 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
         ||
 
             // [#2367] ... yet, do quote when an identifier is a SQLite keyword
-            (family == SQLITE && SQLITE_KEYWORDS.contains(literal.toUpperCase()))
+            (family == SQLITE && SQLITE_KEYWORDS.contains(literal.toUpperCase(renderLocale(configuration().settings()))))
 
         ||
 
             // [#1982] [#3360] ... yet, do quote when an identifier contains special characters
             (family == SQLITE && !IDENTIFIER_PATTERN.matcher(literal).matches());
 
-        if (!needsQuote) {
-            if (LOWER == cachedRenderNameStyle)
-                literal = literal.toLowerCase();
-            else if (UPPER == cachedRenderNameStyle)
-                literal = literal.toUpperCase();
+        if (RenderNameCase.LOWER == cachedRenderNameCase ||
+            RenderNameCase.LOWER_IF_UNQUOTED == cachedRenderNameCase && !quote())
+            literal = literal.toLowerCase(renderLocale(configuration().settings()));
+        else if (RenderNameCase.UPPER == cachedRenderNameCase ||
+                 RenderNameCase.UPPER_IF_UNQUOTED == cachedRenderNameCase && !quote())
+            literal = literal.toUpperCase(renderLocale(configuration().settings()));
 
-            sql(literal, true);
-        }
-        else {
+        if (needsQuote) {
             char[][][] quotes = QUOTES.get(family);
 
             char start = quotes[QUOTE_START_DELIMITER][0][0];
@@ -491,6 +567,9 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
                 sql(literal, true);
 
             sql(end);
+        }
+        else {
+            sql(literal, true);
         }
 
         return this;
@@ -521,7 +600,12 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             if (!param.isInline()) {
                 bindValues.add(param);
 
-                switch (family()) {
+                Integer threshold = settings().getInlineThreshold();
+                if (threshold != null && threshold > 0) {
+                    checkForceInline(threshold);
+                }
+                else {
+                    switch (family()) {
 
 
 
@@ -547,17 +631,20 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
 
 
 
-                    // [#5701] Tests were conducted with PostgreSQL 9.5 and pgjdbc 9.4.1209
-                    case POSTGRES:
-                        checkForceInline(32767);
-                        break;
 
-                    case SQLITE:
-                        checkForceInline(999);
-                        break;
 
-                    default:
-                        break;
+                        // [#5701] Tests were conducted with PostgreSQL 9.5 and pgjdbc 9.4.1209
+                        case POSTGRES:
+                            checkForceInline(32767);
+                            break;
+
+                        case SQLITE:
+                            checkForceInline(999);
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -565,7 +652,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
 
     private final void checkForceInline(int max) throws ForceInlineSignal {
         if (bindValues.size() > max)
-            if (Boolean.TRUE.equals(data(DATA_COUNT_BIND_VALUES)))
+            if (TRUE.equals(data(DATA_COUNT_BIND_VALUES)))
                 throw new ForceInlineSignal();
     }
 
@@ -619,7 +706,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
     // ------------------------------------------------------------------------
 
     static {
-        SQLITE_KEYWORDS = new HashSet<String>();
+        SQLITE_KEYWORDS = new HashSet<>();
 
         // [#2367] Taken from http://www.sqlite.org/lang_keywords.html
         SQLITE_KEYWORDS.addAll(Arrays.asList(
@@ -650,6 +737,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "CONSTRAINT",
             "CREATE",
             "CROSS",
+            "CURRENT",
             "CURRENT_DATE",
             "CURRENT_TIME",
             "CURRENT_TIMESTAMP",
@@ -661,22 +749,27 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "DESC",
             "DETACH",
             "DISTINCT",
+            "DO",
             "DROP",
             "EACH",
             "ELSE",
             "END",
             "ESCAPE",
             "EXCEPT",
+            "EXCLUDE",
             "EXCLUSIVE",
             "EXISTS",
             "EXPLAIN",
             "FAIL",
+            "FILTER",
+            "FOLLOWING",
             "FOR",
             "FOREIGN",
             "FROM",
             "FULL",
             "GLOB",
             "GROUP",
+            "GROUPS",
             "HAVING",
             "IF",
             "IGNORE",
@@ -701,6 +794,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "NATURAL",
             "NO",
             "NOT",
+            "NOTHING",
             "NOTNULL",
             "NULL",
             "OF",
@@ -708,12 +802,18 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "ON",
             "OR",
             "ORDER",
+            "OTHERS",
             "OUTER",
+            "OVER",
+            "PARTITION",
             "PLAN",
             "PRAGMA",
+            "PRECEDING",
             "PRIMARY",
             "QUERY",
             "RAISE",
+            "RANGE",
+            "RECURSIVE",
             "REFERENCES",
             "REGEXP",
             "REINDEX",
@@ -724,6 +824,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "RIGHT",
             "ROLLBACK",
             "ROW",
+            "ROWS",
             "SAVEPOINT",
             "SELECT",
             "SET",
@@ -731,9 +832,11 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "TEMP",
             "TEMPORARY",
             "THEN",
+            "TIES",
             "TO",
             "TRANSACTION",
             "TRIGGER",
+            "UNBOUNDED",
             "UNION",
             "UNIQUE",
             "UPDATE",
@@ -743,10 +846,13 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
             "VIEW",
             "VIRTUAL",
             "WHEN",
-            "WHERE"
+            "WHERE",
+            "WINDOW",
+            "WITH",
+            "WITHOUT"
         ));
 
-        /* [trial] */
+
 
         /*
          * So, you've found the piece of logic that displays our beautifully-crafted ASCII-art logo that
@@ -810,7 +916,7 @@ class DefaultRenderContext extends AbstractContext<RenderContext> implements Ren
                    "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  " + message +
                    "\n                                      ");
         }
-        /* [/trial] */
+
     }
 
     /**

@@ -38,8 +38,10 @@
 package org.jooq;
 
 // ...
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 import static org.jooq.SQLDialect.POSTGRES;
+// ...
 
 /**
  * The step in the <code>ALTER SCHEMA</code> DSL used to specify
@@ -71,21 +73,21 @@ public interface AlterSchemaStep {
      * Add a <code>RENAME TO</code> clause to the <code>ALTER SCHEMA</code>
      * statement.
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     AlterSchemaFinalStep renameTo(Schema newName);
 
     /**
      * Add a <code>RENAME TO</code> clause to the <code>ALTER SCHEMA</code>
      * statement.
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     AlterSchemaFinalStep renameTo(Name newName);
 
     /**
      * Add a <code>RENAME TO</code> clause to the <code>ALTER SCHEMA</code>
      * statement.
      */
-    @Support({ HSQLDB, POSTGRES })
+    @Support({ H2, HSQLDB, POSTGRES })
     AlterSchemaFinalStep renameTo(String newName);
 
 }

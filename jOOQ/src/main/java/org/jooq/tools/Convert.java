@@ -83,11 +83,14 @@ import java.util.regex.Pattern;
 import org.jooq.Converter;
 import org.jooq.EnumType;
 import org.jooq.Field;
+import org.jooq.JSON;
+import org.jooq.JSONB;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.UDTRecord;
 import org.jooq.exception.DataTypeException;
 import org.jooq.tools.jdbc.MockArray;
+import org.jooq.tools.reflect.Reflect;
 import org.jooq.types.UByte;
 import org.jooq.types.UInteger;
 import org.jooq.types.ULong;
@@ -122,8 +125,8 @@ public final class Convert {
     private static final Pattern UUID_PATTERN = Pattern.compile("(\\p{XDigit}{8})-?(\\p{XDigit}{4})-?(\\p{XDigit}{4})-?(\\p{XDigit}{4})-?(\\p{XDigit}{12})");
 
     static {
-        Set<String> trueValues = new HashSet<String>();
-        Set<String> falseValues = new HashSet<String>();
+        Set<String> trueValues = new HashSet<>();
+        Set<String> falseValues = new HashSet<>();
 
         trueValues.add("1");
         trueValues.add("1.0");
@@ -317,17 +320,20 @@ public final class Convert {
      * Conversion type-safety
      */
     private static final <T, U> U convert0(Object from, Converter<T, ? extends U> converter) throws DataTypeException {
-        ConvertAll<T> all = new ConvertAll<T>(converter.fromType());
+        ConvertAll<T> all = new ConvertAll<>(converter.fromType());
         return converter.from(all.from(from));
     }
 
     /**
      * Convert an object to a type. These are the conversion rules:
      * <ul>
-     * <li><code>null</code> is always converted to <code>null</code>,
-     * regardless of the target type.</li>
+     * <li><code>null</code> is always converted to <code>null</code>, or the
+     * primitive default value, or {@link Optional#empty()}, regardless of the
+     * target type.</li>
      * <li>Identity conversion (converting a value to its own type) is always
      * possible.</li>
+     * <li>Primitive types can be converted to their wrapper types and vice
+     * versa</li>
      * <li>All types can be converted to <code>String</code></li>
      * <li>All types can be converted to <code>Object</code></li>
      * <li>All <code>Number</code> types can be converted to other
@@ -364,10 +370,6 @@ public final class Convert {
      * can be converted into each other.</li>
      * <li>All <code>String</code> types can be converted into {@link URI},
      * {@link URL} and {@link File}</li>
-     * <li>Primitive target types behave like their wrapper types, except that
-     * <code>null</code> is converted into the initialisation value (e.g.
-     * <code>0</code> for <code>int</code>, <code>false</code> for
-     * <code>boolean</code>)</li>
      * <li><code>byte[]</code> can be converted into <code>String</code>, using
      * the platform's default charset</li>
      * <li><code>Object[]</code> can be converted into any other array type, if
@@ -396,7 +398,7 @@ public final class Convert {
      * @see #convert(Object, Class)
      */
     public static final <T> List<T> convert(Collection<?> collection, Class<? extends T> type) throws DataTypeException {
-        return convert(collection, new ConvertAll<T>(type));
+        return convert(collection, new ConvertAll<>(type));
     }
 
     /**
@@ -417,12 +419,11 @@ public final class Convert {
      * Type safe conversion
      */
     private static final <T, U> List<U> convert0(Collection<?> collection, Converter<T, ? extends U> converter) throws DataTypeException {
-        ConvertAll<T> all = new ConvertAll<T>(converter.fromType());
-        List<U> result = new ArrayList<U>(collection.size());
+        ConvertAll<T> all = new ConvertAll<>(converter.fromType());
+        List<U> result = new ArrayList<>(collection.size());
 
-        for (Object o : collection) {
+        for (Object o : collection)
             result.add(convert(all.from(o), converter));
-        }
 
         return result;
     }
@@ -521,11 +522,11 @@ public final class Convert {
                     // [#3062] [#5796] Default collections if no specific collection type was requested
                     if (Collection.class.isAssignableFrom(toClass) &&
                             toClass.isAssignableFrom(ArrayList.class)) {
-                        return (U) new ArrayList<Object>(Arrays.asList(fromArray));
+                        return (U) new ArrayList<>(Arrays.asList(fromArray));
                     }
                     else if (Collection.class.isAssignableFrom(toClass) &&
                             toClass.isAssignableFrom(LinkedHashSet.class)) {
-                        return (U) new LinkedHashSet<Object>(Arrays.asList(fromArray));
+                        return (U) new LinkedHashSet<>(Arrays.asList(fromArray));
                     }
 
                     // [#3443] Conversion from Object[] to JDBC Array
@@ -580,10 +581,12 @@ public final class Convert {
                         return (U) (((Boolean) from) ? Byte.valueOf((byte) 1) : Byte.valueOf((byte) 0));
 
                     try {
-                        return (U) Byte.valueOf(new BigDecimal(from.toString().trim()).byteValue());
+                        String fromString = from.toString().trim();
+                        Integer asInt = Ints.tryParse(fromString);
+                        return (U) Byte.valueOf(asInt != null ? asInt.byteValue() : new BigDecimal(fromString).byteValue());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
                 else if (wrapperTo == Short.class) {
@@ -594,10 +597,12 @@ public final class Convert {
                         return (U) (((Boolean) from) ? Short.valueOf((short) 1) : Short.valueOf((short) 0));
 
                     try {
-                        return (U) Short.valueOf(new BigDecimal(from.toString().trim()).shortValue());
+                        String fromString = from.toString().trim();
+                        Integer asInt = Ints.tryParse(fromString);
+                        return (U) Short.valueOf(asInt != null ? asInt.shortValue() : new BigDecimal(fromString).shortValue());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
                 else if (wrapperTo == Integer.class) {
@@ -608,10 +613,12 @@ public final class Convert {
                         return (U) (((Boolean) from) ? Integer.valueOf(1) : Integer.valueOf(0));
 
                     try {
-                        return (U) Integer.valueOf(new BigDecimal(from.toString().trim()).intValue());
+                        String fromString = from.toString().trim();
+                        Integer asInt = Ints.tryParse(fromString);
+                        return (U) Integer.valueOf(asInt != null ? asInt.intValue() : new BigDecimal(fromString).intValue());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
                 else if (wrapperTo == Long.class) {
@@ -632,10 +639,12 @@ public final class Convert {
 
 
                     try {
-                        return (U) Long.valueOf(new BigDecimal(from.toString().trim()).longValue());
+                        String fromString = from.toString().trim();
+                        Long asLong = Longs.tryParse(fromString);
+                        return (U) Long.valueOf(asLong != null ? asLong.longValue() : new BigDecimal(fromString).longValue());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
 
@@ -648,7 +657,9 @@ public final class Convert {
                         if (wrapperFrom == Boolean.class)
                             return (U) (((Boolean) from) ? ubyte(1) : ubyte(0));
 
-                        return (U) ubyte(new BigDecimal(from.toString().trim()).shortValue());
+                        String fromString = from.toString().trim();
+                        Integer asInt = Ints.tryParse(fromString);
+                        return (U) ubyte(asInt != null ? asInt.shortValue() : new BigDecimal(fromString).shortValue());
                     }
                     catch (NumberFormatException e) {
                         return null;
@@ -662,7 +673,9 @@ public final class Convert {
                         if (wrapperFrom == Boolean.class)
                             return (U) (((Boolean) from) ? ushort(1) : ushort(0));
 
-                        return (U) ushort(new BigDecimal(from.toString().trim()).intValue());
+                        String fromString = from.toString().trim();
+                        Integer asInt = Ints.tryParse(fromString);
+                        return (U) ushort(asInt != null ? asInt.intValue() : new BigDecimal(fromString).intValue());
                     }
                     catch (NumberFormatException e) {
                         return null;
@@ -676,7 +689,9 @@ public final class Convert {
                         if (wrapperFrom == Boolean.class)
                             return (U) (((Boolean) from) ? uint(1) : uint(0));
 
-                        return (U) uint(new BigDecimal(from.toString().trim()).longValue());
+                        String fromString = from.toString().trim();
+                        Long asLong = Longs.tryParse(fromString);
+                        return (U) uint(asLong != null ? asLong.longValue() : new BigDecimal(fromString).longValue());
                     }
                     catch (NumberFormatException e) {
                         return null;
@@ -695,7 +710,10 @@ public final class Convert {
 
 
                     try {
-                        return (U) ulong(new BigDecimal(from.toString().trim()).toBigInteger().toString());
+                        String fromString = from.toString().trim();
+                        // tryParse() will return null in case of overflow
+                        Long asLong = Longs.tryParse(fromString);
+                        return asLong != null ? (U) ulong(asLong.longValue()) : (U) ulong(new BigDecimal(fromString).toBigInteger());
                     }
                     catch (NumberFormatException e) {
                         return null;
@@ -714,7 +732,7 @@ public final class Convert {
                         return (U) Float.valueOf(from.toString().trim());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
                 else if (wrapperTo == Double.class) {
@@ -728,7 +746,7 @@ public final class Convert {
                         return (U) Double.valueOf(from.toString().trim());
                     }
                     catch (NumberFormatException e) {
-                        return null;
+                        return Reflect.initValue(toClass);
                     }
                 }
                 else if (toClass == BigDecimal.class) {
@@ -768,7 +786,7 @@ public final class Convert {
                         return (U) (((Boolean) from) ? Character.valueOf('1') : Character.valueOf('0'));
 
                     if (from.toString().length() < 1)
-                        return null;
+                        return Reflect.initValue(toClass);
 
                     return (U) Character.valueOf(from.toString().charAt(0));
                 }
@@ -989,6 +1007,16 @@ public final class Convert {
                     catch (IllegalArgumentException e) {
                         return null;
                     }
+                }
+
+                // [#8943] JSON data types can be read from Strings
+                else if (fromClass == String.class && toClass == JSON.class) {
+                    return (U) JSON.valueOf((String) from);
+                }
+
+                // [#8943] JSONB data types can be read from Strings
+                else if (fromClass == String.class && toClass == JSONB.class) {
+                    return (U) JSONB.valueOf((String) from);
                 }
 
                 // [#3023] Record types can be converted using the supplied Configuration's

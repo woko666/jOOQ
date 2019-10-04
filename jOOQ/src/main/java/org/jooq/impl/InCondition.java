@@ -49,27 +49,49 @@ import static org.jooq.Clause.CONDITION;
 import static org.jooq.Clause.CONDITION_IN;
 import static org.jooq.Clause.CONDITION_NOT_IN;
 import static org.jooq.Comparator.IN;
+// ...
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
+import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
+// ...
+import static org.jooq.SQLDialect.HSQLDB;
+// ...
+// ...
+import static org.jooq.SQLDialect.MARIADB;
+// ...
+import static org.jooq.SQLDialect.MYSQL;
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+// ...
 // ...
 // ...
 // ...
 // ...
 import static org.jooq.conf.ParamType.INDEXED;
 import static org.jooq.impl.DSL.falseCondition;
+import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.trueCondition;
 import static org.jooq.impl.Keywords.K_AND;
 import static org.jooq.impl.Keywords.K_OR;
+import static org.jooq.impl.Tools.embeddedFields;
+import static org.jooq.impl.Tools.isEmbeddable;
 import static org.jooq.tools.StringUtils.defaultIfNull;
 
 import java.util.AbstractList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Comparator;
 import org.jooq.Context;
 import org.jooq.Field;
+import org.jooq.RowN;
 import org.jooq.SQLDialect;
 
 /**
@@ -77,15 +99,16 @@ import org.jooq.SQLDialect;
  */
 final class InCondition<T> extends AbstractCondition {
 
-    private static final long                serialVersionUID  = -1653924248576930761L;
-    private static final int                 IN_LIMIT          = 1000;
-    private static final Clause[]            CLAUSES_IN        = { CONDITION, CONDITION_IN };
-    private static final Clause[]            CLAUSES_IN_NOT    = { CONDITION, CONDITION_NOT_IN };
-    private static final EnumSet<SQLDialect> REQUIRES_IN_LIMIT = EnumSet.of(FIREBIRD);
+    private static final long            serialVersionUID       = -1653924248576930761L;
+    private static final int             IN_LIMIT               = 1000;
+    private static final Clause[]        CLAUSES_IN             = { CONDITION, CONDITION_IN };
+    private static final Clause[]        CLAUSES_IN_NOT         = { CONDITION, CONDITION_NOT_IN };
+    private static final Set<SQLDialect> REQUIRES_IN_LIMIT      = SQLDialect.supported(FIREBIRD);
+    private static final Set<SQLDialect> NO_SUPPORT_EMPTY_LISTS = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, HSQLDB, MARIADB, MYSQL, POSTGRES);
 
-    private final Field<T>                   field;
-    private final Field<?>[]                 values;
-    private final Comparator                 comparator;
+    private final Field<T>               field;
+    private final Field<?>[]             values;
+    private final Comparator             comparator;
 
     InCondition(Field<T> field, Field<?>[] values, Comparator comparator) {
         this.field = field;
@@ -100,9 +123,28 @@ final class InCondition<T> extends AbstractCondition {
 
     @Override
     public final void accept(Context<?> ctx) {
+        if (isEmbeddable(field))
+            if (comparator == IN)
+                ctx.visit(row(embeddedFields(field)).in(rows()));
+            else
+                ctx.visit(row(embeddedFields(field)).notIn(rows()));
+        else
+            accept0(ctx);
+    }
+
+    private final RowN[] rows() {
+        RowN[] result = new RowN[values.length];
+
+        for (int i = 0; i < values.length; i++)
+            result[i] = row(embeddedFields(values[i]));
+
+        return result;
+    }
+
+    private final void accept0(Context<?> ctx) {
         List<Field<?>> list = Arrays.asList(values);
 
-        if (list.size() == 0) {
+        if (list.size() == 0 && NO_SUPPORT_EMPTY_LISTS.contains(ctx.family())) {
             if (comparator == IN)
                 ctx.visit(falseCondition());
             else
@@ -161,9 +203,9 @@ final class InCondition<T> extends AbstractCondition {
         }
     }
 
-    private static List<Field<?>> padded(Context<?> ctx, List<Field<?>> list) {
+    static <T> List<T> padded(Context<?> ctx, List<T> list) {
         return ctx.paramType() == INDEXED && TRUE.equals(ctx.settings().isInListPadding())
-            ? new PaddedList<Field<?>>(list, REQUIRES_IN_LIMIT.contains(ctx.family())
+            ? new PaddedList<>(list, REQUIRES_IN_LIMIT.contains(ctx.family())
                 ? IN_LIMIT
                 : Integer.MAX_VALUE,
                   defaultIfNull(ctx.settings().getInListPadBase(), 2))
@@ -179,10 +221,9 @@ final class InCondition<T> extends AbstractCondition {
            .visit(comparator.toKeyword())
            .sql(" (");
 
-        if (subValues.size() > 1) {
+        if (subValues.size() > 1)
             ctx.formatIndentStart()
                .formatNewLine();
-        }
 
         String separator = "";
         for (Field<?> value : subValues) {
@@ -193,15 +234,14 @@ final class InCondition<T> extends AbstractCondition {
             separator = ", ";
         }
 
-        if (subValues.size() > 1) {
+        if (subValues.size() > 1)
             ctx.formatIndentEnd()
                .formatNewLine();
-        }
 
         ctx.sql(')');
     }
 
-    private static class PaddedList<T> extends AbstractList<T> {
+    static class PaddedList<T> extends AbstractList<T> {
         private final List<T> delegate;
         private final int     realSize;
         private final int     padSize;

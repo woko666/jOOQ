@@ -37,10 +37,11 @@
  */
 package org.jooq.impl;
 
+import static org.jooq.impl.DefaultExecuteContext.localConnection;
+import static org.jooq.impl.DefaultExecuteContext.localTargetConnection;
 import static org.jooq.tools.reflect.Reflect.on;
 
 import java.sql.Blob;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 
@@ -90,16 +91,12 @@ public class BlobBinding implements Binding<byte[], byte[]> {
 
     @Override
     public final void set(BindingSetStatementContext<byte[]> ctx) throws SQLException {
-        Blob blob = newBlob(ctx.configuration(), ctx.value());
-        DefaultExecuteContext.register(blob);
-        ctx.statement().setBlob(ctx.index(), blob);
+        ctx.statement().setBlob(ctx.index(), ctx.autoFree(newBlob(ctx.configuration(), ctx.value())));
     }
 
     @Override
     public final void set(BindingSetSQLOutputContext<byte[]> ctx) throws SQLException {
-        Blob blob = newBlob(ctx.configuration(), ctx.value());
-        DefaultExecuteContext.register(blob);
-        ctx.output().writeBlob(blob);
+        ctx.output().writeBlob(ctx.autoFree(newBlob(ctx.configuration(), ctx.value())));
     }
 
     @Override
@@ -139,12 +136,9 @@ public class BlobBinding implements Binding<byte[], byte[]> {
     }
 
     private final Blob newBlob(Configuration configuration, byte[] bytes) throws SQLException {
-        Connection c = configuration.connectionProvider().acquire();
+        Blob blob;
 
-        try {
-            Blob blob = null;
-
-            switch (configuration.family()) {
+        switch (configuration.family()) {
 
 
 
@@ -156,17 +150,13 @@ public class BlobBinding implements Binding<byte[], byte[]> {
 
 
 
-                default: {
-                    blob = c.createBlob();
-                    break;
-                }
+            default: {
+                blob = localConnection().createBlob();
+                break;
             }
+        }
 
-            blob.setBytes(1, bytes);
-            return blob;
-        }
-        finally {
-            configuration.connectionProvider().release(c);
-        }
+        blob.setBytes(1, bytes);
+        return blob;
     }
 }

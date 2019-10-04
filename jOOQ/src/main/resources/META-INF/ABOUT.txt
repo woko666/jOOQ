@@ -9,6 +9,7 @@ Authors and contributors of jOOQ or parts of jOOQ in alphabetical order:
 - Ben Manes
 - Brent Douglas
 - Brett Meyer
+- Christian Stein
 - Christopher Deckers
 - Ed Schaller
 - Eric Peters
@@ -24,6 +25,7 @@ Authors and contributors of jOOQ or parts of jOOQ in alphabetical order:
 - Johannes Bühler
 - Joseph B Phillips
 - Joseph Pachod
+- Knut Wannheden
 - Laurent Pireyn
 - Luc Marchaud
 - Lukas Eder
@@ -32,6 +34,7 @@ Authors and contributors of jOOQ or parts of jOOQ in alphabetical order:
 - Michael Simons
 - Michał Kołodziejski
 - Miguel Gonzalez Sanchez
+- Mustafa Yücel
 - Nathaniel Fischer
 - Oliver Flege
 - Peter Ertl

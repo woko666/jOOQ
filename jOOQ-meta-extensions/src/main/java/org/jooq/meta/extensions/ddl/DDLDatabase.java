@@ -37,17 +37,15 @@
  */
 package org.jooq.meta.extensions.ddl;
 
+import static org.jooq.conf.SettingsTools.renderLocale;
 import static org.jooq.impl.DSL.name;
 import static org.jooq.tools.StringUtils.isBlank;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -58,14 +56,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jooq.DSLContext;
+import org.jooq.Name;
+import org.jooq.Name.Quoted;
 import org.jooq.Queries;
 import org.jooq.Query;
+import org.jooq.ResultQuery;
+import org.jooq.VisitContext;
+import org.jooq.conf.ParseUnknownFunctions;
+import org.jooq.conf.Settings;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
+import org.jooq.impl.DefaultVisitListener;
 import org.jooq.impl.ParserException;
 import org.jooq.meta.SchemaDefinition;
-import org.jooq.meta.extensions.tools.FileComparator;
 import org.jooq.meta.h2.H2Database;
+import org.jooq.meta.tools.FilePattern;
+import org.jooq.meta.tools.FilePattern.Loader;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.jdbc.JDBCUtils;
 
@@ -90,26 +96,24 @@ public class DDLDatabase extends H2Database {
 
     private Connection              connection;
     private DSLContext              ctx;
-    private Comparator<File>        fileComparator;
+    private boolean                 publicIsDefault;
 
     @Override
     protected DSLContext create0() {
         if (connection == null) {
+            Settings defaultSettings = new Settings();
+
             String scripts = getProperties().getProperty("scripts");
             String encoding = getProperties().getProperty("encoding", "UTF-8");
             String sort = getProperties().getProperty("sort", "semantic").toLowerCase();
+            String unqualifiedSchema = getProperties().getProperty("unqualifiedSchema", "none").toLowerCase();
+            final String defaultNameCase = getProperties().getProperty("defaultNameCase", "as_is").toUpperCase();
+            boolean parseIgnoreComments = !"false".equalsIgnoreCase(getProperties().getProperty("parseIgnoreComments"));
+            String parseIgnoreCommentStart = getProperties().getProperty("parseIgnoreCommentStart", defaultSettings.getParseIgnoreCommentStart());
+            String parseIgnoreCommentStop = getProperties().getProperty("parseIgnoreCommentStop", defaultSettings.getParseIgnoreCommentStop());
 
-            if ("alphanumeric".equals(sort))
-                fileComparator = new Comparator<File>() {
-                    @Override
-                    public int compare(File o1, File o2) {
-                        return o1.compareTo(o2);
-                    }
-                };
-            else if ("none".equals(sort))
-                fileComparator = null;
-            else
-                fileComparator = FileComparator.INSTANCE;
+            publicIsDefault = "none".equals(unqualifiedSchema);
+            Comparator<File> fileComparator = FilePattern.fileComparator(sort);
 
             if (isBlank(scripts)) {
                 scripts = "";
@@ -121,43 +125,51 @@ public class DDLDatabase extends H2Database {
                 info.put("user", "sa");
                 info.put("password", "");
                 connection = new org.h2.Driver().connect("jdbc:h2:mem:jooq-meta-extensions-" + UUID.randomUUID(), info);
-                ctx = DSL.using(connection);
+                ctx = DSL.using(connection, new Settings()
+                    .withParseIgnoreComments(parseIgnoreComments)
+                    .withParseIgnoreCommentStart(parseIgnoreCommentStart)
+                    .withParseIgnoreCommentStop(parseIgnoreCommentStop)
+                    .withParseUnknownFunctions(ParseUnknownFunctions.IGNORE)
+                );
 
-                InputStream in = null;
-                boolean loaded = false;
-                in = DDLDatabase.class.getResourceAsStream(scripts);
-                if (in != null) {
-                    log.info("Reading from classpath: " + scripts);
-                    load(encoding, in);
-                    loaded = true;
-                }
-                else {
-                    File file = new File(scripts);
+                // [#7771] [#8011] Ignore all parsed storage clauses when executing the statements
+                ctx.data("org.jooq.ddl.ignore-storage-clauses", true);
 
-                    if (file.exists()) {
-                        load(encoding, file, null);
-                        loaded = true;
-                    }
-                    else if (scripts.contains("*") || scripts.contains("?")) {
-                        file = new File(scripts.replaceAll("[*?].*", ""));
+                // [#8910] Parse things a bit differently for use with the DDLDatabase
+                ctx.data("org.jooq.ddl.parse-for-ddldatabase", true);
 
-                        if (file.exists()) {
-                            Pattern pattern = Pattern.compile(scripts
-                                .replace("\\", "/")
-                                .replace(".", "\\.")
-                                .replace("?", ".")
-                                .replace("**", ".+?")
-                                .replace("*", "[^/]*")
-                            );
+                if (!"AS_IS".equals(defaultNameCase)) {
+                    ctx.configuration().set(new DefaultVisitListener() {
+                        @Override
+                        public void visitStart(VisitContext c) {
+                            if (c.queryPart() instanceof Name) {
+                                Name[] parts = ((Name) c.queryPart()).parts();
+                                boolean changed = false;
 
-                            load(encoding, file, pattern);
-                            loaded = true;
+                                for (int i = 0; i < parts.length; i++) {
+                                    if (parts[i].quoted() == Quoted.UNQUOTED) {
+                                        parts[i] = DSL.quotedName(
+                                            "UPPER".equals(defaultNameCase)
+                                          ? parts[i].first().toUpperCase(renderLocale(ctx.settings()))
+                                          : parts[i].first().toLowerCase(renderLocale(ctx.settings()))
+                                        );
+                                        changed = true;
+                                    }
+                                }
+
+                                if (changed)
+                                    c.queryPart(DSL.name(parts));
+                            }
                         }
-                    }
+                    });
                 }
 
-                if (!loaded)
-                    log.error("Could not find script source : " + scripts);
+                FilePattern.load(encoding, scripts, fileComparator, new Loader() {
+                    @Override
+                    public void load(String e, InputStream in) {
+                        DDLDatabase.this.load(e, in);
+                    }
+                });
             }
             catch (ParserException e) {
                 log.error("An exception occurred while parsing script source : " + scripts + ". Please report this error to https://github.com/jOOQ/jOOQ/issues/new", e);
@@ -168,29 +180,7 @@ public class DDLDatabase extends H2Database {
             }
         }
 
-        return ctx;
-    }
-
-    private void load(String encoding, File file, Pattern pattern) throws IOException {
-        if (file.isFile()) {
-            if (pattern == null || pattern.matcher(file.getCanonicalPath().replace("\\", "/")).matches()) {
-                log.info("Reading from: " + file + " [*]");
-                load(encoding, new FileInputStream(file));
-            }
-        }
-        else if (file.isDirectory()) {
-            log.info("Reading from: " + file);
-
-            File[] files = file.listFiles();
-
-            if (files != null) {
-                if (fileComparator != null)
-                    Arrays.sort(files, fileComparator);
-
-                for (File f : files)
-                    load(encoding, f, pattern);
-            }
-        }
+        return DSL.using(connection);
     }
 
     private void load(String encoding, InputStream in) {
@@ -203,8 +193,13 @@ public class DDLDatabase extends H2Database {
                 repeat:
                 for (;;) {
                     try {
-                        query.execute();
                         log.info(query);
+
+                        if (query instanceof ResultQuery)
+                            log.info("\n" + ((ResultQuery<?>) query).fetch());
+                        else
+                            log.info("Update count: " + query.execute());
+
                         break repeat;
                     }
                     catch (DataAccessException e) {
@@ -230,6 +225,20 @@ public class DDLDatabase extends H2Database {
                 }
             }
         }
+        catch (DataAccessException e) {
+
+            // [#9138] Make users aware of the new parse ignore comment syntax
+            log.error("DDLDatabase Error", "Your SQL string could not be parsed or simulated. This may have a variety of reasons, including:\n"
+                + "- The jOOQ parser doesn't understand your SQL\n"
+                + "- The jOOQ DDL simulation logic (translating to H2) cannot simulate your SQL\n"
+                + "\n"
+                + "If you think this is a bug or a feature worth requesting, please report it here: https://github.com/jOOQ/jOOQ/issues/new/choose\n"
+                + "\n"
+                + "As a workaround, you can use the Settings.parseIgnoreComments syntax documented here:\n"
+                + "https://www.jooq.org/doc/latest/manual/sql-building/dsl-context/custom-settings/settings-parser/");
+
+            throw e;
+        }
         finally {
             if (in != null)
                 try {
@@ -249,7 +258,7 @@ public class DDLDatabase extends H2Database {
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>(super.getSchemata0());
+        List<SchemaDefinition> result = new ArrayList<>(super.getSchemata0());
 
         // [#5608] The H2-specific INFORMATION_SCHEMA is undesired in the DDLDatabase's output
         //         we're explicitly omitting it here for user convenience.
@@ -259,5 +268,26 @@ public class DDLDatabase extends H2Database {
                 it.remove();
 
         return result;
+    }
+
+    @Override
+    @Deprecated
+    public String getOutputSchema(String inputSchema) {
+        String outputSchema = super.getOutputSchema(inputSchema);
+
+        if (publicIsDefault && "PUBLIC".equals(outputSchema))
+            return "";
+
+        return outputSchema;
+    }
+
+    @Override
+    public String getOutputSchema(String inputCatalog, String inputSchema) {
+        String outputSchema = super.getOutputSchema(inputCatalog, inputSchema);
+
+        if (publicIsDefault && "PUBLIC".equals(outputSchema))
+            return "";
+
+        return outputSchema;
     }
 }

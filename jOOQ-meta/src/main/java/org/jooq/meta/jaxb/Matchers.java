@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -17,6 +10,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlType;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -37,10 +32,10 @@ import javax.xml.bind.annotation.XmlType;
 @SuppressWarnings({
     "all"
 })
-public class Matchers implements Serializable
+public class Matchers implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElementWrapper(name = "schemas")
     @XmlElement(name = "schema")
     protected List<MatchersSchemaType> schemas;
@@ -253,39 +248,20 @@ public class Matchers implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("schemas", "schema", schemas);
+        builder.append("tables", "table", tables);
+        builder.append("fields", "field", fields);
+        builder.append("routines", "routine", routines);
+        builder.append("sequences", "sequence", sequences);
+        builder.append("enums", "enum", enums);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (schemas!= null) {
-            sb.append("<schemas>");
-            sb.append(schemas);
-            sb.append("</schemas>");
-        }
-        if (tables!= null) {
-            sb.append("<tables>");
-            sb.append(tables);
-            sb.append("</tables>");
-        }
-        if (fields!= null) {
-            sb.append("<fields>");
-            sb.append(fields);
-            sb.append("</fields>");
-        }
-        if (routines!= null) {
-            sb.append("<routines>");
-            sb.append(routines);
-            sb.append("</routines>");
-        }
-        if (sequences!= null) {
-            sb.append("<sequences>");
-            sb.append(sequences);
-            sb.append("</sequences>");
-        }
-        if (enums!= null) {
-            sb.append("<enums>");
-            sb.append(enums);
-            sb.append("</enums>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

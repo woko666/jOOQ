@@ -42,16 +42,21 @@ import static org.jooq.Clause.DROP_TABLE_TABLE;
 // ...
 // ...
 // ...
+// ...
 import static org.jooq.SQLDialect.DERBY;
 import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.MYSQL;
 // ...
 // ...
 // ...
 import static org.jooq.impl.Keywords.K_CASCADE;
+import static org.jooq.impl.Keywords.K_DROP;
 import static org.jooq.impl.Keywords.K_DROP_TABLE;
 import static org.jooq.impl.Keywords.K_IF_EXISTS;
+import static org.jooq.impl.Keywords.K_TABLE;
+import static org.jooq.impl.Keywords.K_TEMPORARY;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
@@ -64,7 +69,7 @@ import org.jooq.Table;
 /**
  * @author Lukas Eder
  */
-final class DropTableImpl extends AbstractQuery implements
+final class DropTableImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for DROP TABLE behaviour
     DropTableStep {
@@ -72,14 +77,15 @@ final class DropTableImpl extends AbstractQuery implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID     = 8904572826501186329L;
-    private static final Clause[]            CLAUSES              = { DROP_TABLE };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS = EnumSet.of(DERBY, FIREBIRD);
+    private static final long            serialVersionUID     = 8904572826501186329L;
+    private static final Clause[]        CLAUSES              = { DROP_TABLE };
+    private static final Set<SQLDialect> NO_SUPPORT_IF_EXISTS = SQLDialect.supported(DERBY, FIREBIRD);
+    private static final Set<SQLDialect> TEMPORARY_SEMANTIC   = SQLDialect.supported(MYSQL);
 
-    private final Table<?>                   table;
-    private final boolean                    temporary;
-    private final boolean                    ifExists;
-    private boolean                          cascade;
+    private final Table<?>               table;
+    private final boolean                temporary;
+    private final boolean                ifExists;
+    private boolean                      cascade;
 
     DropTableImpl(Configuration configuration, Table<?> table) {
         this(configuration, table, false, false);
@@ -96,6 +102,9 @@ final class DropTableImpl extends AbstractQuery implements
         this.ifExists = ifExists;
         this.temporary = temporary;
     }
+
+    final Table<?>          $table()        { return table; }
+    final boolean           $ifExists()     { return ifExists; }
 
     // ------------------------------------------------------------------------
     // XXX: DSL API
@@ -134,12 +143,16 @@ final class DropTableImpl extends AbstractQuery implements
     }
 
     private void accept0(Context<?> ctx) {
-        ctx.start(DROP_TABLE_TABLE)
-           .visit(K_DROP_TABLE).sql(' ');
+        ctx.start(DROP_TABLE_TABLE);
 
-        // [#6371] The keyword isn't strictly required in any dialect we've seen so far.
-        if (temporary)
-            ;
+        // [#6371] [#9019] While many dialects do not require this keyword, in
+        //                 some dialects (e.g. MySQL), there is a semantic
+        //                 difference, e.g. with respect to transactions.
+        if (temporary && TEMPORARY_SEMANTIC.contains(ctx.family()))
+            ctx.visit(K_DROP).sql(' ').visit(K_TEMPORARY).sql(' ').visit(K_TABLE).sql(' ');
+        else
+            ctx.visit(K_DROP_TABLE).sql(' ');
+
 
         if (ifExists && supportsIfExists(ctx))
             ctx.visit(K_IF_EXISTS).sql(' ');

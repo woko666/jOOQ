@@ -37,6 +37,9 @@
  */
 package org.jooq.impl;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+// ...
 // ...
 // ...
 import static org.jooq.SQLDialect.HSQLDB;
@@ -44,8 +47,10 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 // ...
-import static org.jooq.conf.RenderNameStyle.LOWER;
-import static org.jooq.conf.RenderNameStyle.UPPER;
+// ...
+// ...
+import static org.jooq.conf.SettingsTools.renderLocale;
+import static org.jooq.impl.DSL.name;
 import static org.jooq.impl.DSL.select;
 import static org.jooq.impl.DSL.unquotedName;
 import static org.jooq.impl.Keywords.K_BEGIN;
@@ -58,13 +63,16 @@ import static org.jooq.impl.Keywords.K_FROM;
 import static org.jooq.impl.Keywords.K_IN;
 import static org.jooq.impl.Keywords.K_INTO;
 import static org.jooq.impl.Keywords.K_OPEN;
+import static org.jooq.impl.Keywords.K_OUTPUT;
 import static org.jooq.impl.Keywords.K_RETURNING;
 import static org.jooq.impl.Keywords.K_ROWCOUNT;
 import static org.jooq.impl.Keywords.K_SELECT;
 import static org.jooq.impl.Keywords.K_SQL;
 import static org.jooq.impl.Keywords.K_TABLE;
 import static org.jooq.impl.Tools.EMPTY_FIELD;
-import static org.jooq.impl.Tools.DataKey.DATA_EMULATE_BULK_INSERT_RETURNING;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_EMULATE_BULK_INSERT_RETURNING;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_UNALIAS_ALIASED_EXPRESSIONS;
+import static org.jooq.impl.Tools.DataKey.DATA_DML_TARGET_TABLE;
 import static org.jooq.util.sqlite.SQLiteDSL.rowid;
 
 import java.sql.CallableStatement;
@@ -72,26 +80,34 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.jooq.Asterisk;
 import org.jooq.Binding;
+import org.jooq.CommonTableExpression;
+import org.jooq.Condition;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DSLContext;
 import org.jooq.DataType;
+import org.jooq.Delete;
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
 import org.jooq.Field;
 import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.Param;
+// ...
 import org.jooq.QualifiedAsterisk;
 import org.jooq.Record;
 import org.jooq.Result;
@@ -99,9 +115,12 @@ import org.jooq.SQLDialect;
 import org.jooq.Select;
 import org.jooq.SelectFieldOrAsterisk;
 import org.jooq.Table;
+import org.jooq.UniqueKey;
 import org.jooq.conf.ExecuteWithoutWhere;
-import org.jooq.conf.RenderNameStyle;
+import org.jooq.conf.RenderNameCase;
+import org.jooq.conf.SettingsTools;
 import org.jooq.exception.DataAccessException;
+import org.jooq.impl.Tools.BooleanDataKey;
 import org.jooq.impl.Tools.DataKey;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.jdbc.JDBCUtils;
@@ -109,19 +128,26 @@ import org.jooq.tools.jdbc.JDBCUtils;
 /**
  * @author Lukas Eder
  */
-abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
+abstract class AbstractDMLQuery<R extends Record> extends AbstractRowCountQuery {
 
     /**
      * Generated UID
      */
-    private static final long                    serialVersionUID         = -7438014075226919192L;
-    private static final JooqLogger              log                      = JooqLogger.getLogger(AbstractQuery.class);
+    private static final long                    serialVersionUID                 = -7438014075226919192L;
+    private static final JooqLogger              log                              = JooqLogger.getLogger(AbstractQuery.class);
 
 
 
 
-    final WithImpl                               with;
-    final Table<R>                               table;
+
+
+
+
+
+
+
+    private final WithImpl                       with;
+    private final Table<R>                       table;
     final SelectFieldList<SelectFieldOrAsterisk> returning;
     final List<Field<?>>                         returningResolvedAsterisks;
     Result<Record>                               returnedResult;
@@ -132,8 +158,8 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
 
         this.with = with;
         this.table = table;
-        this.returning = new SelectFieldList<SelectFieldOrAsterisk>();
-        this.returningResolvedAsterisks = new ArrayList<Field<?>>();
+        this.returning = new SelectFieldList<>();
+        this.returningResolvedAsterisks = new ArrayList<>();
     }
 
     // @Override
@@ -203,20 +229,141 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 log.warn("API misuse", "Column " + field + " has been requested through the returning() clause, which is not present in table " + table + ". Use StoreQuery.getResult() or the returningResult() clause instead.");
     }
 
+    final Table<R> table() {
+        return table;
+    }
+
+    final Table<?> table(Context<?> ctx) {
+
+
+
+
+
+
+
+        return table();
+    }
+
     // @Override
     public final Result<?> getResult() {
         if (returnedResult == null)
-            returnedResult = new ResultImpl<Record>(configuration(), returningResolvedAsterisks);
+            returnedResult = new ResultImpl<>(configuration(), returningResolvedAsterisks);
 
         return returnedResult;
     }
 
     @Override
     public final void accept(Context<?> ctx) {
-        if (with != null)
-            ctx.visit(with).formatSeparator();
+        WithImpl w = with;
+
+        ctx.data(DATA_DML_TARGET_TABLE, table);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        if (w != null)
+            ctx.visit(w).formatSeparator();
 
         boolean previousDeclareFields = ctx.declareFields();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -394,13 +541,77 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
         {
             accept0(ctx);
         }
+
+
+
+
+
+
+        ctx.data().remove(DATA_DML_TARGET_TABLE);
     }
 
-    /**
-     * The estimated number of affected rows, {@link Integer#MAX_VALUE}, if
-     * unknown.
-     */
-    abstract int estimatedRowCount();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -465,6 +676,49 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     final void toSQLReturning(Context<?> ctx) {
         if (!returning.isEmpty()) {
             switch (ctx.family()) {
@@ -496,6 +750,11 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
 
     @Override
     protected final void prepare(ExecuteContext ctx) throws SQLException {
+        prepare0(ctx);
+        Tools.setFetchSize(ctx, 0);
+    }
+
+    private void prepare0(ExecuteContext ctx) throws SQLException {
         Connection connection = ctx.connection();
 
 
@@ -541,11 +800,12 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 case CUBRID:
 
                     super.prepare(ctx);
-                    return;
+                    break;
 
                 // Some dialects can only return AUTO_INCREMENT values
                 // Other values have to be fetched in a second step
                 // [#1260] TODO CUBRID supports this, but there's a JDBC bug
+
 
 
 
@@ -560,7 +820,7 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 case MARIADB:
                 case MYSQL:
                     ctx.statement(connection.prepareStatement(ctx.sql(), Statement.RETURN_GENERATED_KEYS));
-                    return;
+                    break;
 
                 // The default is to return all requested fields directly
 
@@ -578,25 +838,25 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 case HSQLDB:
                 default: {
                     String[] names = new String[returningResolvedAsterisks.size()];
-                    RenderNameStyle style = configuration().settings().getRenderNameStyle();
+                    RenderNameCase style = SettingsTools.getRenderNameCase(configuration().settings());
 
-                    for (int i = 0; i < names.length; i++) {
-
-                        // [#2845] Field names should be passed to JDBC in the case
-                        // imposed by the user. For instance, if the user uses
-                        // PostgreSQL generated case-insensitive Fields (default to lower case)
-                        // and wants to query HSQLDB (default to upper case), they may choose
-                        // to overwrite casing using RenderKeywordStyle.
-                        if (style == UPPER)
-                            names[i] = returningResolvedAsterisks.get(i).getName().toUpperCase();
-                        else if (style == LOWER)
-                            names[i] = returningResolvedAsterisks.get(i).getName().toLowerCase();
-                        else
+                    // [#2845] Field names should be passed to JDBC in the case
+                    // imposed by the user. For instance, if the user uses
+                    // PostgreSQL generated case-insensitive Fields (default to lower case)
+                    // and wants to query HSQLDB (default to upper case), they may choose
+                    // to overwrite casing using RenderNameCase.
+                    if (style == RenderNameCase.UPPER)
+                        for (int i = 0; i < names.length; i++)
+                            names[i] = returningResolvedAsterisks.get(i).getName().toUpperCase(renderLocale(configuration().settings()));
+                    else if (style == RenderNameCase.LOWER)
+                        for (int i = 0; i < names.length; i++)
+                            names[i] = returningResolvedAsterisks.get(i).getName().toLowerCase(renderLocale(configuration().settings()));
+                    else
+                        for (int i = 0; i < names.length; i++)
                             names[i] = returningResolvedAsterisks.get(i).getName();
-                    }
 
                     ctx.statement(connection.prepareStatement(ctx.sql(), names));
-                    return;
+                    break;
                 }
             }
         }
@@ -629,13 +889,14 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                     ctx.rows(result);
                     listener.executeEnd(ctx);
 
-                    DSLContext create = DSL.using(ctx.configuration());
+                    DSLContext create = ctx.dsl();
                     returnedResult =
                     create.select(returning)
                           .from(table)
                           .where(rowid().equal(rowid().getDataType().convert(create.lastID())))
                           .fetch();
 
+                    returnedResult.attach(((DefaultExecuteContext) ctx).originalConfiguration());
                     return result;
                 }
 
@@ -655,9 +916,29 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                     ctx.rows(result);
                     listener.executeEnd(ctx);
 
-                    selectReturning(ctx.configuration(), ctx.dsl().lastID());
+                    selectReturning(
+                        ((DefaultExecuteContext) ctx).originalConfiguration(),
+                        ctx.configuration(),
+                        ctx.dsl().lastID()
+                    );
+
                     return result;
                 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 // Some dialects can only retrieve "identity" (AUTO_INCREMENT) values
                 // Additional values have to be fetched explicitly
@@ -670,33 +951,11 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
 
 
 
-
                 case DERBY:
                 case H2:
                 case MARIADB:
                 case MYSQL: {
-                    listener.executeStart(ctx);
-                    result = ctx.statement().executeUpdate();
-                    ctx.rows(result);
-                    listener.executeEnd(ctx);
-
-                    rs = ctx.statement().getGeneratedKeys();
-
-                    try {
-                        List<Object> list = new ArrayList<Object>();
-
-                        // Some JDBC drivers seem to illegally return null
-                        // from getGeneratedKeys() sometimes
-                        if (rs != null)
-                            while (rs.next())
-                                list.add(rs.getObject(1));
-
-                        selectReturning(ctx.configuration(), list.toArray());
-                        return result;
-                    }
-                    finally {
-                        JDBCUtils.safeClose(rs);
-                    }
+                    return executeReturningGeneratedKeysFetchAdditionalRows(ctx, listener);
                 }
 
 
@@ -710,9 +969,7 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 // in the Postgres JDBC driver
                 case FIREBIRD:
                 case POSTGRES: {
-                    listener.executeStart(ctx);
-                    rs = ctx.statement().executeQuery();
-                    listener.executeEnd(ctx);
+                    rs = executeReturningQuery(ctx, listener);
                     break;
                 }
 
@@ -795,23 +1052,19 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
 
 
 
+
                 case HSQLDB:
                 default: {
-                    listener.executeStart(ctx);
-                    result = ctx.statement().executeUpdate();
-                    ctx.rows(result);
-                    listener.executeEnd(ctx);
-
-                    rs = ctx.statement().getGeneratedKeys();
+                    rs = executeReturningGeneratedKeys(ctx, listener);
                     break;
                 }
             }
 
-            ExecuteContext ctx2 = new DefaultExecuteContext(ctx.configuration());
+            ExecuteContext ctx2 = new DefaultExecuteContext(((DefaultExecuteContext) ctx).originalConfiguration());
             ExecuteListener listener2 = ExecuteListeners.get(ctx2);
 
             ctx2.resultSet(rs);
-            returnedResult = new CursorImpl<Record>(ctx2, listener2, returningResolvedAsterisks.toArray(EMPTY_FIELD), null, false, true).fetch();
+            returnedResult = new CursorImpl<>(ctx2, listener2, returningResolvedAsterisks.toArray(EMPTY_FIELD), null, false, true).fetch();
 
             // [#5366] HSQLDB currently doesn't support fetching updated records in UPDATE statements.
             // [#5408] Other dialects may fall through the switch above (PostgreSQL, Firebird, Oracle) and must
@@ -825,12 +1078,77 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
         }
     }
 
+    private final ResultSet executeReturningGeneratedKeys(ExecuteContext ctx, ExecuteListener listener) throws SQLException {
+        listener.executeStart(ctx);
+        int result = ctx.statement().executeUpdate();
+        ctx.rows(result);
+        listener.executeEnd(ctx);
+
+        return ctx.statement().getGeneratedKeys();
+    }
+
+    private final int executeReturningGeneratedKeysFetchAdditionalRows(ExecuteContext ctx, ExecuteListener listener) throws SQLException {
+        ResultSet rs;
+
+        listener.executeStart(ctx);
+        int result = ctx.statement().executeUpdate();
+        ctx.rows(result);
+        listener.executeEnd(ctx);
+
+        try {
+            rs = ctx.statement().getGeneratedKeys();
+        }
+        catch (SQLException e) {
+
+
+
+
+
+
+
+            throw e;
+        }
+
+        try {
+            List<Object> list = new ArrayList<>();
+
+            // Some JDBC drivers seem to illegally return null
+            // from getGeneratedKeys() sometimes
+            if (rs != null)
+                while (rs.next())
+                    list.add(rs.getObject(1));
+
+            selectReturning(
+                ((DefaultExecuteContext) ctx).originalConfiguration(),
+                ctx.configuration(),
+                list.toArray()
+            );
+
+            return result;
+        }
+        finally {
+            JDBCUtils.safeClose(rs);
+        }
+    }
+
+    private final ResultSet executeReturningQuery(ExecuteContext ctx, ExecuteListener listener) throws SQLException {
+        listener.executeStart(ctx);
+        ResultSet rs = ctx.statement().executeQuery();
+        listener.executeEnd(ctx);
+
+        return rs;
+    }
+
     /**
      * Get the returning record in those dialects that do not support fetching
      * arbitrary fields from JDBC's {@link Statement#getGeneratedKeys()} method.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private final void selectReturning(Configuration configuration, Object... values) {
+    private final void selectReturning(
+        Configuration originalConfiguration,
+        Configuration derivedConfiguration,
+        Object... values
+    ) {
         if (values != null && values.length > 0) {
 
             // This shouldn't be null, as relevant dialects should
@@ -843,18 +1161,20 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
 
                 // Only the IDENTITY value was requested. No need for an
                 // additional query
-                if (returningResolvedAsterisks.size() == 1 && new Fields<Record>(returningResolvedAsterisks).field(field) != null) {
+                if (returningResolvedAsterisks.size() == 1 && new Fields<>(returningResolvedAsterisks).field(field) != null) {
                     for (final Object id : ids) {
                         ((Result) getResult()).add(
-                        Tools.newRecord(true, table, configuration)
-                             .operate(new RecordOperation<R, RuntimeException>() {
+                        Tools.newRecord(
+                                true,
+                                RecordImpl.class,
+                                returningResolvedAsterisks.toArray(EMPTY_FIELD),
+                                originalConfiguration)
+                             .operate(new RecordOperation<RecordImpl, RuntimeException>() {
 
                                 @Override
-                                public R operate(R record) throws RuntimeException {
-                                    int index = record.fieldsRow().indexOf(field);
-
-                                    ((AbstractRecord) record).values[index] = id;
-                                    ((AbstractRecord) record).originals[index] = id;
+                                public RecordImpl operate(RecordImpl record) throws RuntimeException {
+                                    record.values[0] = id;
+                                    record.originals[0] = id;
 
                                     return record;
                                 }
@@ -865,10 +1185,13 @@ abstract class AbstractDMLQuery<R extends Record> extends AbstractQuery {
                 // Other values are requested, too. Run another query
                 else {
                     returnedResult =
-                    configuration.dsl().select(returning)
-                                       .from(table)
-                                       .where(field.in(ids))
-                                       .fetch();
+                    derivedConfiguration.dsl()
+                                        .select(returning)
+                                        .from(table)
+                                        .where(field.in(ids))
+                                        .fetch();
+
+                    returnedResult.attach(originalConfiguration);
                 }
             }
         }

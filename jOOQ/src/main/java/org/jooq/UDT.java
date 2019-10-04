@@ -40,7 +40,10 @@ package org.jooq;
 import java.util.stream.Stream;
 
 /**
- * UDT definition
+ * UDT definition.
+ * <p>
+ * Instances of this type cannot be created directly. They are available from
+ * generated code.
  *
  * @param <R> The record type
  * @author Lukas Eder
@@ -141,6 +144,33 @@ public interface UDT<R extends UDTRecord<R>> extends Named {
     Field<?>[] fields(int... fieldIndexes);
 
     /**
+     * Get a field's index from this udt.
+     *
+     * @param field The field to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this udt.
+     */
+    int indexOf(Field<?> field);
+
+    /**
+     * Get a field's index from this udt.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this udt.
+     */
+    int indexOf(String fieldName);
+
+    /**
+     * Get a field's index from this udt.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this udt
+     */
+    int indexOf(Name fieldName);
+
+    /**
      * Get the UDT catalog.
      */
     Catalog getCatalog();
@@ -149,6 +179,7 @@ public interface UDT<R extends UDTRecord<R>> extends Named {
      * Get the UDT schema.
      */
     Schema getSchema();
+
 
 
 

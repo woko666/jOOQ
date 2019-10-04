@@ -39,8 +39,11 @@ package org.jooq;
 
 import static org.jooq.SQLDialect.CUBRID;
 // ...
-import static org.jooq.SQLDialect.FIREBIRD_3_0;
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
 // ...
 // ...
 // ...
@@ -91,22 +94,33 @@ public interface MergeNotMatchedSetStep<R extends Record> {
      * Set values for <code>INSERT</code> in the <code>MERGE</code> statement's
      * <code>WHEN NOT MATCHED</code> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     <T> MergeNotMatchedSetMoreStep<R> set(Field<T> field, T value);
 
     /**
      * Set values for <code>INSERT</code> in the <code>MERGE</code> statement's
      * <code>WHEN NOT MATCHED</INSERT> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     <T> MergeNotMatchedSetMoreStep<R> set(Field<T> field, Field<T> value);
 
     /**
      * Set values for <code>INSERT</code> in the <code>MERGE</code> statement's
      * <code>WHEN NOT MATCHED</INSERT> clause.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     <T> MergeNotMatchedSetMoreStep<R> set(Field<T> field, Select<? extends Record1<T>> value);
+
+    /**
+     * Set a <code>null</code> value for <code>INSERT</code> in the
+     * <code>MERGE</code> statement's <code>WHEN NOT MATCHED</INSERT> clause.
+     * <p>
+     * This method is convenience for calling {@link #set(Field, Object)},
+     * without the necessity of casting the Java <code>null</code> literal to
+     * <code>(T)</code>.
+     */
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
+    <T> MergeNotMatchedSetMoreStep<R> setNull(Field<T> field);
 
     /**
      * Set multiple values for <code>INSERT</code> in the <code>MERGE</code>
@@ -119,7 +133,7 @@ public interface MergeNotMatchedSetStep<R extends Record> {
      * <code>Field&lt;T&gt;</code>. jOOQ will attempt to convert values to their
      * corresponding field's type.
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     MergeNotMatchedSetMoreStep<R> set(Map<?, ?> map);
 
     /**
@@ -127,10 +141,10 @@ public interface MergeNotMatchedSetStep<R extends Record> {
      * statement's <code>WHEN NOT MATCHED</code> clause.
      * <p>
      * This is the same as calling {@link #set(Map)} with the argument record
-     * treated as a <code>Map&lt;Field&lt;?>, Object></code>.
+     * treated as a <code>Map&lt;Field&lt;?&gt;, Object&gt;</code>.
      *
      * @see #set(Map)
      */
-    @Support({ CUBRID, FIREBIRD_3_0, HSQLDB })
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB })
     MergeNotMatchedSetMoreStep<R> set(Record record);
 }

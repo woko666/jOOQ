@@ -48,18 +48,22 @@ import static org.jooq.SQLDialect.FIREBIRD;
 // ...
 // ...
 // ...
+// ...
 import static org.jooq.impl.Keywords.K_CASCADE;
-import static org.jooq.impl.Keywords.K_DROP_SCHEMA;
+import static org.jooq.impl.Keywords.K_DATABASE;
+import static org.jooq.impl.Keywords.K_DROP;
 import static org.jooq.impl.Keywords.K_IF_EXISTS;
 import static org.jooq.impl.Keywords.K_RESTRICT;
+import static org.jooq.impl.Keywords.K_SCHEMA;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DropSchemaFinalStep;
 import org.jooq.DropSchemaStep;
+// ...
 import org.jooq.SQLDialect;
 import org.jooq.Schema;
 
@@ -67,7 +71,7 @@ import org.jooq.Schema;
 /**
  * @author Lukas Eder
  */
-final class DropSchemaImpl extends AbstractQuery implements
+final class DropSchemaImpl extends AbstractRowCountQuery implements
 
     // Cascading interface implementations for DROP VIEW behaviour
     DropSchemaStep {
@@ -75,14 +79,19 @@ final class DropSchemaImpl extends AbstractQuery implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID     = 8904572826501186329L;
-    private static final Clause[]            CLAUSES              = { DROP_SCHEMA };
-    private static final EnumSet<SQLDialect> NO_SUPPORT_IF_EXISTS = EnumSet.of(DERBY, FIREBIRD);
-    private static final EnumSet<SQLDialect> REQUIRES_RESTRICT    = EnumSet.of(DERBY);
+    private static final long            serialVersionUID           = 8904572826501186329L;
+    private static final Clause[]        CLAUSES                    = { DROP_SCHEMA };
+    private static final Set<SQLDialect> NO_SUPPORT_IF_EXISTS       = SQLDialect.supported(DERBY, FIREBIRD);
+    private static final Set<SQLDialect> REQUIRES_RESTRICT          = SQLDialect.supported(DERBY);
 
-    private final Schema                     schema;
-    private final boolean                    ifExists;
-    private boolean                          cascade;
+
+
+
+
+
+    private final Schema                 schema;
+    private final boolean                ifExists;
+    private boolean                      cascade;
 
     DropSchemaImpl(Configuration configuration, Schema schema) {
         this(configuration, schema, false);
@@ -94,6 +103,10 @@ final class DropSchemaImpl extends AbstractQuery implements
         this.schema = schema;
         this.ifExists = ifExists;
     }
+
+    final Schema  $schema()      { return schema; }
+    final boolean $ifExists()    { return ifExists; }
+    final boolean $cascade()     { return cascade; }
 
     // ------------------------------------------------------------------------
     // XXX: DSL API
@@ -133,7 +146,14 @@ final class DropSchemaImpl extends AbstractQuery implements
 
     private void accept0(Context<?> ctx) {
         ctx.start(DROP_SCHEMA_SCHEMA)
-           .visit(K_DROP_SCHEMA);
+           .visit(K_DROP);
+
+
+
+
+
+
+            ctx.sql(' ').visit(K_SCHEMA);
 
         if (ifExists && supportsIfExists(ctx))
             ctx.sql(' ').visit(K_IF_EXISTS);

@@ -37,13 +37,18 @@
  */
 package org.jooq.impl;
 
-import org.jooq.Configuration;
+import static org.jooq.impl.Keywords.F_LTRIM;
+import static org.jooq.impl.Keywords.F_TRIM;
+import static org.jooq.impl.Keywords.K_FROM;
+import static org.jooq.impl.Keywords.K_LEADING;
+
+import org.jooq.Context;
 import org.jooq.Field;
 
 /**
  * @author Lukas Eder
  */
-final class LTrim extends AbstractFunction<String> {
+final class LTrim extends AbstractField<String> {
 
     /**
      * Generated UID
@@ -51,21 +56,47 @@ final class LTrim extends AbstractFunction<String> {
     private static final long   serialVersionUID = -7273879239726265322L;
 
     private final Field<String> argument;
+    private final Field<String> characters;
 
     LTrim(Field<String> argument) {
-        super("ltrim", SQLDataType.VARCHAR, argument);
+        this(argument, null);
+    }
+
+    LTrim(Field<String> argument, Field<String> characters) {
+        super(DSL.name("ltrim"), SQLDataType.VARCHAR);
 
         this.argument = argument;
+        this.characters = characters;
     }
 
     @Override
-    final Field<String> getFunction0(Configuration configuration) {
-        switch (configuration.family()) {
-            case FIREBIRD:
-                return DSL.field("{trim}({leading} {from} {0})", SQLDataType.VARCHAR, argument);
+    public final void accept(Context<?> ctx) {
+        if (characters == null) {
+            switch (ctx.family()) {
+                case FIREBIRD:
+                    ctx.visit(F_TRIM).sql('(').visit(K_LEADING).sql(' ').visit(K_FROM).sql(' ').visit(argument).sql(')');
+                    break;
 
-            default:
-                return DSL.function("ltrim", SQLDataType.VARCHAR, argument);
+                default:
+                    ctx.visit(F_LTRIM).sql('(').visit(argument).sql(')');
+                    break;
+            }
+        }
+        else {
+            switch (ctx.family()) {
+
+
+
+
+
+                case SQLITE:
+                    ctx.visit(F_LTRIM).sql('(').visit(argument).sql(", ").visit(characters).sql(')');
+                    break;
+
+                default:
+                    ctx.visit(F_TRIM).sql('(').visit(K_LEADING).sql(' ').visit(characters).sql(' ').visit(K_FROM).sql(' ').visit(argument).sql(')');
+                    break;
+            }
         }
     }
 }

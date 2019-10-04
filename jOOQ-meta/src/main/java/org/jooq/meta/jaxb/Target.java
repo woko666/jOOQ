@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.meta.jaxb;
 
 import java.io.Serializable;
@@ -15,6 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.jooq.util.jaxb.tools.StringAdapter;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -30,10 +25,10 @@ import org.jooq.util.jaxb.tools.StringAdapter;
 @SuppressWarnings({
     "all"
 })
-public class Target implements Serializable
+public class Target implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElement(defaultValue = "org.jooq.generated")
     @XmlJavaTypeAdapter(StringAdapter.class)
     protected String packageName = "org.jooq.generated";
@@ -52,21 +47,16 @@ public class Target implements Serializable
      * jOOQ may append the schema name to this package if generating multiple schemas,
      * e.g. org.jooq.generated.schema1, org.jooq.generated.schema2
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getPackageName() {
         return packageName;
     }
 
     /**
-     * Sets the value of the packageName property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The destination package of your generated classes (within the destination directory)
+     * <p>
+     * jOOQ may append the schema name to this package if generating multiple schemas,
+     * e.g. org.jooq.generated.schema1, org.jooq.generated.schema2
      *
      */
     public void setPackageName(String value) {
@@ -76,21 +66,13 @@ public class Target implements Serializable
     /**
      * The destination directory of your generated classes
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getDirectory() {
         return directory;
     }
 
     /**
-     * Sets the value of the directory property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The destination directory of your generated classes
      *
      */
     public void setDirectory(String value) {
@@ -100,21 +82,13 @@ public class Target implements Serializable
     /**
      * The file encoding to be used with all output files.
      *
-     * @return
-     *     possible object is
-     *     {@link String }
-     *
      */
     public String getEncoding() {
         return encoding;
     }
 
     /**
-     * Sets the value of the encoding property.
-     *
-     * @param value
-     *     allowed object is
-     *     {@link String }
+     * The file encoding to be used with all output files.
      *
      */
     public void setEncoding(String value) {
@@ -145,16 +119,31 @@ public class Target implements Serializable
         this.clean = value;
     }
 
+    /**
+     * The destination package of your generated classes (within the destination directory)
+     * <p>
+     * jOOQ may append the schema name to this package if generating multiple schemas,
+     * e.g. org.jooq.generated.schema1, org.jooq.generated.schema2
+     *
+     */
     public Target withPackageName(String value) {
         setPackageName(value);
         return this;
     }
 
+    /**
+     * The destination directory of your generated classes
+     *
+     */
     public Target withDirectory(String value) {
         setDirectory(value);
         return this;
     }
 
+    /**
+     * The file encoding to be used with all output files.
+     *
+     */
     public Target withEncoding(String value) {
         setEncoding(value);
         return this;
@@ -166,29 +155,18 @@ public class Target implements Serializable
     }
 
     @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("packageName", packageName);
+        builder.append("directory", directory);
+        builder.append("encoding", encoding);
+        builder.append("clean", clean);
+    }
+
+    @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (packageName!= null) {
-            sb.append("<packageName>");
-            sb.append(packageName);
-            sb.append("</packageName>");
-        }
-        if (directory!= null) {
-            sb.append("<directory>");
-            sb.append(directory);
-            sb.append("</directory>");
-        }
-        if (encoding!= null) {
-            sb.append("<encoding>");
-            sb.append(encoding);
-            sb.append("</encoding>");
-        }
-        if (clean!= null) {
-            sb.append("<clean>");
-            sb.append(clean);
-            sb.append("</clean>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override

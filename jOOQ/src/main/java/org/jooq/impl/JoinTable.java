@@ -37,6 +37,7 @@
  */
 package org.jooq.impl;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static org.jooq.Clause.TABLE;
 import static org.jooq.Clause.TABLE_JOIN;
@@ -45,6 +46,7 @@ import static org.jooq.Clause.TABLE_JOIN_CROSS;
 import static org.jooq.Clause.TABLE_JOIN_CROSS_APPLY;
 import static org.jooq.Clause.TABLE_JOIN_INNER;
 import static org.jooq.Clause.TABLE_JOIN_NATURAL;
+import static org.jooq.Clause.TABLE_JOIN_NATURAL_OUTER_FULL;
 import static org.jooq.Clause.TABLE_JOIN_NATURAL_OUTER_LEFT;
 import static org.jooq.Clause.TABLE_JOIN_NATURAL_OUTER_RIGHT;
 import static org.jooq.Clause.TABLE_JOIN_ON;
@@ -58,10 +60,12 @@ import static org.jooq.Clause.TABLE_JOIN_STRAIGHT;
 import static org.jooq.Clause.TABLE_JOIN_USING;
 import static org.jooq.JoinType.CROSS_APPLY;
 import static org.jooq.JoinType.CROSS_JOIN;
+import static org.jooq.JoinType.FULL_OUTER_JOIN;
 import static org.jooq.JoinType.JOIN;
 import static org.jooq.JoinType.LEFT_ANTI_JOIN;
 import static org.jooq.JoinType.LEFT_OUTER_JOIN;
 import static org.jooq.JoinType.LEFT_SEMI_JOIN;
+import static org.jooq.JoinType.NATURAL_FULL_OUTER_JOIN;
 import static org.jooq.JoinType.NATURAL_JOIN;
 import static org.jooq.JoinType.NATURAL_LEFT_OUTER_JOIN;
 import static org.jooq.JoinType.NATURAL_RIGHT_OUTER_JOIN;
@@ -85,21 +89,20 @@ import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.exists;
 import static org.jooq.impl.DSL.notExists;
 import static org.jooq.impl.DSL.selectOne;
-import static org.jooq.impl.Keywords.K_AND;
 import static org.jooq.impl.Keywords.K_CROSS_JOIN_LATERAL;
-import static org.jooq.impl.Keywords.K_INNER_JOIN;
+import static org.jooq.impl.Keywords.K_LEFT_JOIN_LATERAL;
 import static org.jooq.impl.Keywords.K_LEFT_OUTER_JOIN_LATERAL;
 import static org.jooq.impl.Keywords.K_ON;
 import static org.jooq.impl.Keywords.K_PARTITION_BY;
 import static org.jooq.impl.Keywords.K_USING;
+import static org.jooq.impl.Tools.BooleanDataKey.DATA_COLLECT_SEMI_ANTI_JOIN;
 import static org.jooq.impl.Tools.DataKey.DATA_COLLECTED_SEMI_ANTI_JOIN;
-import static org.jooq.impl.Tools.DataKey.DATA_COLLECT_SEMI_ANTI_JOIN;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Condition;
@@ -110,6 +113,7 @@ import org.jooq.JoinType;
 import org.jooq.Keyword;
 import org.jooq.Name;
 import org.jooq.Operator;
+// ...
 import org.jooq.QueryPart;
 import org.jooq.Record;
 import org.jooq.SQL;
@@ -122,6 +126,7 @@ import org.jooq.TableOnConditionStep;
 import org.jooq.TableOptionalOnStep;
 import org.jooq.TableOuterJoinStep;
 import org.jooq.TablePartitionByStep;
+import org.jooq.conf.RenderOptionalKeyword;
 import org.jooq.exception.DataAccessException;
 
 /**
@@ -139,23 +144,29 @@ implements
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID           = 8377996833996498178L;
-    private static final Clause[]            CLAUSES                    = { TABLE, TABLE_JOIN };
-    private static final EnumSet<SQLDialect> EMULATE_NATURAL_JOIN       = EnumSet.of(CUBRID);
-    private static final EnumSet<SQLDialect> EMULATE_NATURAL_OUTER_JOIN = EnumSet.of(CUBRID, H2);
-    private static final EnumSet<SQLDialect> EMULATE_JOIN_USING         = EnumSet.of(CUBRID, H2);
-    private static final EnumSet<SQLDialect> EMULATE_APPLY              = EnumSet.of(POSTGRES);
-
-    final Table<?>                           lhs;
-    final Table<?>                           rhs;
+    private static final long             serialVersionUID           = 8377996833996498178L;
+    private static final Clause[]         CLAUSES                    = { TABLE, TABLE_JOIN };
 
 
 
 
+    private static final Set<SQLDialect>  EMULATE_NATURAL_JOIN       = SQLDialect.supported(CUBRID);
+    private static final Set<SQLDialect>  EMULATE_NATURAL_OUTER_JOIN = SQLDialect.supported(CUBRID, H2);
+    private static final Set<SQLDialect>  EMULATE_JOIN_USING         = SQLDialect.supported(CUBRID, H2);
+    private static final Set<SQLDialect>  EMULATE_APPLY              = SQLDialect.supported(POSTGRES);
 
-    private final JoinType                   type;
-    private final ConditionProviderImpl      condition;
-    private final QueryPartList<Field<?>>    using;
+    final Table<?>                        lhs;
+    final Table<?>                        rhs;
+
+
+
+
+
+
+
+    private final JoinType                type;
+    private final ConditionProviderImpl   condition;
+    private final QueryPartList<Field<?>> using;
 
     JoinTable(TableLike<?> lhs, TableLike<?> rhs, JoinType type) {
 
@@ -177,7 +188,7 @@ implements
         this.type = type;
 
         this.condition = new ConditionProviderImpl();
-        this.using = new QueryPartList<Field<?>>();
+        this.using = new QueryPartList<>();
     }
 
     // ------------------------------------------------------------------------
@@ -189,7 +200,7 @@ implements
     public final List<ForeignKey<Record, ?>> getReferences() {
         List<? extends ForeignKey<?, ?>> lhsReferences = lhs.getReferences();
         List<? extends ForeignKey<?, ?>> rhsReferences = rhs.getReferences();
-        List<ForeignKey<?, ?>> result = new ArrayList<ForeignKey<?, ?>>(lhsReferences.size() + rhsReferences.size());
+        List<ForeignKey<?, ?>> result = new ArrayList<>(lhsReferences.size() + rhsReferences.size());
         result.addAll(lhsReferences);
         result.addAll(rhsReferences);
         return (List) result;
@@ -199,19 +210,7 @@ implements
     public final void accept(Context<?> ctx) {
         JoinType translatedType = translateType(ctx);
         Clause translatedClause = translateClause(translatedType);
-
-        Keyword keyword = translatedType.toKeyword();
-
-        if (translatedType == CROSS_APPLY && EMULATE_APPLY.contains(ctx.family()))
-            keyword = K_CROSS_JOIN_LATERAL;
-        else if (translatedType == OUTER_APPLY && EMULATE_APPLY.contains(ctx.family()))
-            keyword = K_LEFT_OUTER_JOIN_LATERAL;
-
-
-
-
-
-
+        Keyword keyword = translateKeyword(ctx, translatedType);
 
         toSQLTable(ctx, lhs);
 
@@ -230,23 +229,24 @@ implements
         switch (translatedType) {
             case LEFT_SEMI_JOIN:
             case LEFT_ANTI_JOIN:
-                if (ctx.data(DATA_COLLECT_SEMI_ANTI_JOIN) != null) {
+                if (TRUE.equals(ctx.data(DATA_COLLECT_SEMI_ANTI_JOIN))) {
 
                     @SuppressWarnings("unchecked")
                     List<Condition> semiAntiJoinPredicates = (List<Condition>) ctx.data(DATA_COLLECTED_SEMI_ANTI_JOIN);
 
                     if (semiAntiJoinPredicates == null) {
-                        semiAntiJoinPredicates = new ArrayList<Condition>();
+                        semiAntiJoinPredicates = new ArrayList<>();
                         ctx.data(DATA_COLLECTED_SEMI_ANTI_JOIN, semiAntiJoinPredicates);
                     }
 
+                    Condition c = !using.isEmpty() ? usingCondition() : condition;
                     switch (translatedType) {
                         case LEFT_SEMI_JOIN:
-                            semiAntiJoinPredicates.add(exists(selectOne().from(rhs).where(condition)));
+                            semiAntiJoinPredicates.add(exists(selectOne().from(rhs).where(c)));
                             break;
 
                         case LEFT_ANTI_JOIN:
-                            semiAntiJoinPredicates.add(notExists(selectOne().from(rhs).where(condition)));
+                            semiAntiJoinPredicates.add(notExists(selectOne().from(rhs).where(c)));
                             break;
                     }
 
@@ -280,18 +280,82 @@ implements
                     NATURAL_JOIN,
                     NATURAL_LEFT_OUTER_JOIN,
                     NATURAL_RIGHT_OUTER_JOIN,
+                    NATURAL_FULL_OUTER_JOIN,
                     CROSS_APPLY,
-                    OUTER_APPLY).contains(translatedType))
+                    OUTER_APPLY).contains(translatedType)) {
+            ctx.formatIndentStart();
             toSQLJoinCondition(ctx);
-        else if (OUTER_APPLY == translatedType && EMULATE_APPLY.contains(ctx.family()))
-            ctx.formatSeparator()
+            ctx.formatIndentEnd();
+        }
+        else if (OUTER_APPLY == translatedType && EMULATE_APPLY.contains(ctx.family())) {
+            ctx.formatIndentStart()
+               .formatSeparator()
                .start(TABLE_JOIN_ON)
                .visit(K_ON)
                .sql(" 1 = 1")
-               .end(TABLE_JOIN_ON);
+               .end(TABLE_JOIN_ON)
+               .formatIndentEnd();
+        }
 
         ctx.end(translatedClause)
            .formatIndentEnd();
+    }
+
+    private final Keyword translateKeyword(Context<?> ctx, JoinType translatedType) {
+        Keyword keyword;
+
+        switch (translatedType) {
+            case JOIN:
+            case NATURAL_JOIN:
+                if (ctx.settings().getRenderOptionalInnerKeyword() == RenderOptionalKeyword.ON)
+                    keyword = translatedType.toKeyword(true);
+
+
+
+
+
+
+
+                else
+                    keyword = translatedType.toKeyword();
+
+                break;
+
+            case LEFT_OUTER_JOIN:
+            case NATURAL_LEFT_OUTER_JOIN:
+            case RIGHT_OUTER_JOIN:
+            case NATURAL_RIGHT_OUTER_JOIN:
+            case FULL_OUTER_JOIN:
+            case NATURAL_FULL_OUTER_JOIN:
+                if (ctx.settings().getRenderOptionalOuterKeyword() == RenderOptionalKeyword.OFF)
+                    keyword = translatedType.toKeyword(false);
+
+
+
+
+
+
+
+                else
+                    keyword = translatedType.toKeyword();
+
+                break;
+
+            default:
+                keyword = translatedType.toKeyword();
+                break;
+        }
+
+        if (translatedType == CROSS_APPLY && EMULATE_APPLY.contains(ctx.family()))
+            keyword = K_CROSS_JOIN_LATERAL;
+        else if (translatedType == OUTER_APPLY && EMULATE_APPLY.contains(ctx.family()))
+            if (ctx.settings().getRenderOptionalOuterKeyword() == RenderOptionalKeyword.OFF)
+                keyword = K_LEFT_JOIN_LATERAL;
+            else
+                keyword = K_LEFT_OUTER_JOIN_LATERAL;
+
+
+        return keyword;
     }
 
     private void toSQLTable(Context<?> ctx, Table<?> table) {
@@ -331,6 +395,7 @@ implements
             case FULL_OUTER_JOIN:          return TABLE_JOIN_OUTER_FULL;
             case NATURAL_LEFT_OUTER_JOIN:  return TABLE_JOIN_NATURAL_OUTER_LEFT;
             case NATURAL_RIGHT_OUTER_JOIN: return TABLE_JOIN_NATURAL_OUTER_RIGHT;
+            case NATURAL_FULL_OUTER_JOIN:  return TABLE_JOIN_NATURAL_OUTER_FULL;
             case CROSS_APPLY:              return TABLE_JOIN_CROSS_APPLY;
             case OUTER_APPLY:              return TABLE_JOIN_OUTER_APPLY;
             case LEFT_SEMI_JOIN:           return TABLE_JOIN_SEMI_LEFT;
@@ -352,6 +417,8 @@ implements
             return LEFT_OUTER_JOIN;
         else if (emulateNaturalRightOuterJoin(context))
             return RIGHT_OUTER_JOIN;
+        else if (emulateNaturalFullOuterJoin(context))
+            return FULL_OUTER_JOIN;
         else
             return type;
     }
@@ -376,33 +443,17 @@ implements
         return type == NATURAL_RIGHT_OUTER_JOIN && EMULATE_NATURAL_OUTER_JOIN.contains(context.family());
     }
 
+    private final boolean emulateNaturalFullOuterJoin(Context<?> context) {
+        return type == NATURAL_FULL_OUTER_JOIN && EMULATE_NATURAL_OUTER_JOIN.contains(context.family());
+    }
+
     private final void toSQLJoinCondition(Context<?> context) {
         if (!using.isEmpty()) {
 
             // [#582] Some dialects don't explicitly support a JOIN .. USING
             // syntax. This can be emulated with JOIN .. ON
             if (EMULATE_JOIN_USING.contains(context.family())) {
-                boolean first = true;
-                for (Field<?> field : using) {
-                    context.formatSeparator();
-
-                    if (first) {
-                        first = false;
-
-                        context.start(TABLE_JOIN_ON)
-                               .visit(K_ON);
-                    }
-                    else {
-                        context.visit(K_AND);
-                    }
-
-                    context.sql(' ')
-                           .visit(Tools.qualify(lhs, field))
-                           .sql(" = ")
-                           .visit(Tools.qualify(rhs, field));
-                }
-
-                context.end(TABLE_JOIN_ON);
+                toSQLJoinCondition(context, usingCondition());
             }
 
             // Native supporters of JOIN .. USING
@@ -421,44 +472,49 @@ implements
         // common fields in lhs and rhs of the JOIN clause
         else if (emulateNaturalJoin(context) ||
                  emulateNaturalLeftOuterJoin(context) ||
-                 emulateNaturalRightOuterJoin(context)) {
+                 emulateNaturalRightOuterJoin(context) ||
+                 emulateNaturalFullOuterJoin(context)) {
 
-            boolean first = true;
-            for (Field<?> field : lhs.fields()) {
-                Field<?> other = rhs.field(field);
-
-                if (other != null) {
-                    context.formatSeparator();
-
-                    if (first) {
-                        first = false;
-
-                        context.start(TABLE_JOIN_ON)
-                               .visit(K_ON);
-                    }
-                    else {
-                        context.visit(K_AND);
-                    }
-
-                    context.sql(' ')
-                           .visit(field)
-                           .sql(" = ")
-                           .visit(other);
-                }
-            }
-
-            context.end(TABLE_JOIN_ON);
+            toSQLJoinCondition(context, naturalCondition());
         }
 
         // Regular JOIN condition
         else {
-            context.formatSeparator()
-                   .start(TABLE_JOIN_ON)
-                   .visit(K_ON)
-                   .sql(' ')
-                   .visit(condition)
-                   .end(TABLE_JOIN_ON);
+            toSQLJoinCondition(context, condition);
         }
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private final Condition naturalCondition() {
+        List<Condition> conditions = new ArrayList<>(using.size());
+
+        for (Field<?> field : lhs.fields()) {
+            Field<?> other = rhs.field(field);
+
+            if (other != null)
+                conditions.add(field.eq((Field) other));
+        }
+
+        return DSL.and(conditions);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private final Condition usingCondition() {
+        List<Condition> conditions = new ArrayList<>(using.size());
+
+        for (Field<?> field : using)
+            conditions.add(Tools.qualify(lhs, field).eq((Field) Tools.qualify(rhs, field)));
+
+        return DSL.and(conditions);
+    }
+
+    private final void toSQLJoinCondition(Context<?> context, Condition c) {
+        context.formatSeparator()
+               .start(TABLE_JOIN_ON)
+               .visit(K_ON)
+               .sql(' ')
+               .visit(c)
+               .end(TABLE_JOIN_ON);
     }
 
     @Override
@@ -468,12 +524,12 @@ implements
 
     @Override
     public final Table<Record> as(Name alias) {
-        return new TableAlias<Record>(this, alias, true);
+        return new TableAlias<>(this, alias, true);
     }
 
     @Override
     public final Table<Record> as(Name alias, Name... fieldAliases) {
-        return new TableAlias<Record>(this, alias, fieldAliases, true);
+        return new TableAlias<>(this, alias, fieldAliases, true);
     }
 
     @Override
@@ -484,7 +540,7 @@ implements
     @Override
     final Fields<Record> fields0() {
         if (type == LEFT_SEMI_JOIN || type == LEFT_ANTI_JOIN) {
-            return new Fields<Record>(lhs.asTable().fields());
+            return new Fields<>(lhs.asTable().fields());
         }
         else {
             Field<?>[] l = lhs.asTable().fields();
@@ -494,7 +550,7 @@ implements
             System.arraycopy(l, 0, all, 0, l.length);
             System.arraycopy(r, 0, all, l.length, r.length);
 
-            return new Fields<Record>(all);
+            return new Fields<>(all);
         }
     }
 
@@ -506,6 +562,8 @@ implements
     // ------------------------------------------------------------------------
     // Join API
     // ------------------------------------------------------------------------
+
+
 
 
 

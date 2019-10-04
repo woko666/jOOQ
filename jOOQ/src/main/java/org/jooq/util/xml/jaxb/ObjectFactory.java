@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import javax.xml.bind.annotation.XmlRegistry;
@@ -138,6 +131,14 @@ public class ObjectFactory {
      */
     public Parameter createParameter() {
         return new Parameter();
+    }
+
+    /**
+     * Create an instance of {@link ElementType }
+     *
+     */
+    public ElementType createElementType() {
+        return new ElementType();
     }
 
 }

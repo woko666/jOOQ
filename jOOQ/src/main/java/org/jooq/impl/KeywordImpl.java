@@ -37,17 +37,17 @@
  */
 package org.jooq.impl;
 
-import org.jooq.Clause;
 import org.jooq.Context;
 import org.jooq.Keyword;
-import org.jooq.conf.RenderKeywordStyle;
+import org.jooq.conf.RenderKeywordCase;
+import org.jooq.conf.SettingsTools;
 
 /**
  * A default {@link Keyword} implementation.
  *
  * @author Lukas Eder
  */
-public class KeywordImpl extends AbstractQueryPart implements Keyword {
+final class KeywordImpl extends AbstractQueryPart implements Keyword {
 
     /**
      * Generated UID
@@ -55,35 +55,58 @@ public class KeywordImpl extends AbstractQueryPart implements Keyword {
     private static final long serialVersionUID = 9137269798087732005L;
 
     private final String      asIs;
-    private final String      upper;
-    private final String      lower;
-    private final String      pascal;
+
+    private       String      lower;
+    private       String      upper;
+    private       String      pascal;
 
     KeywordImpl(String keyword) {
         this.asIs = keyword;
-        this.upper = keyword.toUpperCase();
-        this.lower = keyword.toLowerCase();
-        this.pascal = keyword.length() > 0
-                    ? keyword.substring(0, 1).toUpperCase() + keyword.substring(1, keyword.length()).toLowerCase()
-                    : keyword;
     }
 
     @Override
     public final void accept(Context<?> ctx) {
-        RenderKeywordStyle style = ctx.settings().getRenderKeywordStyle();
-
-        if (RenderKeywordStyle.AS_IS == style)
-            ctx.sql(asIs, true);
-        else if (RenderKeywordStyle.UPPER == style)
-            ctx.sql(upper, true);
-        else if (RenderKeywordStyle.PASCAL == style)
-            ctx.sql(pascal, true);
-        else
-            ctx.sql(lower, true);
+        ctx.sql(render(ctx), true);
     }
 
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
+    private String render(Context<?> ctx) {
+        RenderKeywordCase style = SettingsTools.getRenderKeywordCase(ctx.settings());
+
+        switch (style) {
+            case AS_IS:  return asIs;
+            case LOWER:  return lower == null  ? lower  = asIs.toLowerCase() : lower;
+            case UPPER:  return upper == null  ? upper  = asIs.toUpperCase() : upper;
+            case PASCAL: return pascal == null ? pascal = pascal(asIs)       : pascal;
+            default:
+                throw new UnsupportedOperationException("Unsupported style: " + style);
+        }
+    }
+
+    private static final String pascal(String keyword) {
+        if (keyword.isEmpty())
+            return keyword;
+        else if (keyword.indexOf(' ') >= 0) {
+            StringBuilder sb = new StringBuilder();
+
+            int prev = 0;
+            int next = 0;
+
+            do {
+                next = keyword.indexOf(' ', prev);
+
+                if (prev > 0)
+                    sb.append(' ');
+
+                sb.append(Character.toUpperCase(keyword.charAt(prev)));
+                sb.append(keyword.substring(prev + 1, next == -1 ? keyword.length() : next).toLowerCase());
+
+                prev = next + 1;
+            }
+            while (next != -1);
+
+            return sb.toString();
+        }
+        else
+            return Character.toUpperCase(keyword.charAt(0)) + keyword.substring(1).toLowerCase();
     }
 }

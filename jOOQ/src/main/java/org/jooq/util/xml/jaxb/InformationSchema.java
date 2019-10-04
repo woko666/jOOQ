@@ -1,24 +1,18 @@
 
-
-
-
-
-
-
-
 package org.jooq.util.xml.jaxb;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import org.jooq.util.jaxb.tools.XMLAppendable;
+import org.jooq.util.jaxb.tools.XMLBuilder;
 
 
 /**
@@ -31,18 +25,19 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent&gt;
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType"&gt;
  *       &lt;all&gt;
- *         &lt;element name="catalogs" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Catalogs" minOccurs="0"/&gt;
- *         &lt;element name="schemata" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Schemata" minOccurs="0"/&gt;
- *         &lt;element name="sequences" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Sequences" minOccurs="0"/&gt;
- *         &lt;element name="tables" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Tables" minOccurs="0"/&gt;
- *         &lt;element name="columns" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Columns" minOccurs="0"/&gt;
- *         &lt;element name="table_constraints" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}TableConstraints" minOccurs="0"/&gt;
- *         &lt;element name="key_column_usages" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}KeyColumnUsages" minOccurs="0"/&gt;
- *         &lt;element name="referential_constraints" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}ReferentialConstraints" minOccurs="0"/&gt;
- *         &lt;element name="indexes" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Indexes" minOccurs="0"/&gt;
- *         &lt;element name="index_column_usages" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}IndexColumnUsages" minOccurs="0"/&gt;
- *         &lt;element name="routines" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Routines" minOccurs="0"/&gt;
- *         &lt;element name="parameters" type="{http://www.jooq.org/xsd/jooq-meta-3.11.0.xsd}Parameters" minOccurs="0"/&gt;
+ *         &lt;element name="catalogs" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Catalogs" minOccurs="0"/&gt;
+ *         &lt;element name="schemata" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Schemata" minOccurs="0"/&gt;
+ *         &lt;element name="sequences" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Sequences" minOccurs="0"/&gt;
+ *         &lt;element name="tables" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Tables" minOccurs="0"/&gt;
+ *         &lt;element name="columns" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Columns" minOccurs="0"/&gt;
+ *         &lt;element name="table_constraints" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}TableConstraints" minOccurs="0"/&gt;
+ *         &lt;element name="key_column_usages" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}KeyColumnUsages" minOccurs="0"/&gt;
+ *         &lt;element name="referential_constraints" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}ReferentialConstraints" minOccurs="0"/&gt;
+ *         &lt;element name="indexes" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Indexes" minOccurs="0"/&gt;
+ *         &lt;element name="index_column_usages" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}IndexColumnUsages" minOccurs="0"/&gt;
+ *         &lt;element name="routines" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Routines" minOccurs="0"/&gt;
+ *         &lt;element name="parameters" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}Parameters" minOccurs="0"/&gt;
+ *         &lt;element name="element_types" type="{http://www.jooq.org/xsd/jooq-meta-3.12.0.xsd}ElementTypes" minOccurs="0"/&gt;
  *       &lt;/all&gt;
  *     &lt;/restriction&gt;
  *   &lt;/complexContent&gt;
@@ -59,10 +54,10 @@ import javax.xml.bind.annotation.XmlType;
 @SuppressWarnings({
     "all"
 })
-public class InformationSchema implements Serializable
+public class InformationSchema implements Serializable, XMLAppendable
 {
 
-    private final static long serialVersionUID = 31100L;
+    private final static long serialVersionUID = 31200L;
     @XmlElementWrapper(name = "catalogs")
     @XmlElement(name = "catalog")
     protected List<Catalog> catalogs;
@@ -99,6 +94,9 @@ public class InformationSchema implements Serializable
     @XmlElementWrapper(name = "parameters")
     @XmlElement(name = "parameter")
     protected List<Parameter> parameters;
+    @XmlElementWrapper(name = "element_types")
+    @XmlElement(name = "element_type")
+    protected List<ElementType> elementTypes;
 
     public List<Catalog> getCatalogs() {
         if (catalogs == null) {
@@ -230,6 +228,17 @@ public class InformationSchema implements Serializable
 
     public void setParameters(List<Parameter> parameters) {
         this.parameters = parameters;
+    }
+
+    public List<ElementType> getElementTypes() {
+        if (elementTypes == null) {
+            elementTypes = new ArrayList<ElementType>();
+        }
+        return elementTypes;
+    }
+
+    public void setElementTypes(List<ElementType> elementTypes) {
+        this.elementTypes = elementTypes;
     }
 
     public InformationSchema withCatalogs(Catalog... values) {
@@ -484,70 +493,49 @@ public class InformationSchema implements Serializable
         return this;
     }
 
+    public InformationSchema withElementTypes(ElementType... values) {
+        if (values!= null) {
+            for (ElementType value: values) {
+                getElementTypes().add(value);
+            }
+        }
+        return this;
+    }
+
+    public InformationSchema withElementTypes(Collection<ElementType> values) {
+        if (values!= null) {
+            getElementTypes().addAll(values);
+        }
+        return this;
+    }
+
+    public InformationSchema withElementTypes(List<ElementType> elementTypes) {
+        setElementTypes(elementTypes);
+        return this;
+    }
+
+    @Override
+    public final void appendTo(XMLBuilder builder) {
+        builder.append("catalogs", "catalog", catalogs);
+        builder.append("schemata", "schema", schemata);
+        builder.append("sequences", "sequence", sequences);
+        builder.append("tables", "table", tables);
+        builder.append("columns", "column", columns);
+        builder.append("table_constraints", "table_constraint", tableConstraints);
+        builder.append("key_column_usages", "key_column_usage", keyColumnUsages);
+        builder.append("referential_constraints", "referential_constraint", referentialConstraints);
+        builder.append("indexes", "index", indexes);
+        builder.append("index_column_usages", "index_column_usage", indexColumnUsages);
+        builder.append("routines", "routine", routines);
+        builder.append("parameters", "parameter", parameters);
+        builder.append("element_types", "element_type", elementTypes);
+    }
+
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (catalogs!= null) {
-            sb.append("<catalogs>");
-            sb.append(catalogs);
-            sb.append("</catalogs>");
-        }
-        if (schemata!= null) {
-            sb.append("<schemata>");
-            sb.append(schemata);
-            sb.append("</schemata>");
-        }
-        if (sequences!= null) {
-            sb.append("<sequences>");
-            sb.append(sequences);
-            sb.append("</sequences>");
-        }
-        if (tables!= null) {
-            sb.append("<tables>");
-            sb.append(tables);
-            sb.append("</tables>");
-        }
-        if (columns!= null) {
-            sb.append("<columns>");
-            sb.append(columns);
-            sb.append("</columns>");
-        }
-        if (tableConstraints!= null) {
-            sb.append("<tableConstraints>");
-            sb.append(tableConstraints);
-            sb.append("</tableConstraints>");
-        }
-        if (keyColumnUsages!= null) {
-            sb.append("<keyColumnUsages>");
-            sb.append(keyColumnUsages);
-            sb.append("</keyColumnUsages>");
-        }
-        if (referentialConstraints!= null) {
-            sb.append("<referentialConstraints>");
-            sb.append(referentialConstraints);
-            sb.append("</referentialConstraints>");
-        }
-        if (indexes!= null) {
-            sb.append("<indexes>");
-            sb.append(indexes);
-            sb.append("</indexes>");
-        }
-        if (indexColumnUsages!= null) {
-            sb.append("<indexColumnUsages>");
-            sb.append(indexColumnUsages);
-            sb.append("</indexColumnUsages>");
-        }
-        if (routines!= null) {
-            sb.append("<routines>");
-            sb.append(routines);
-            sb.append("</routines>");
-        }
-        if (parameters!= null) {
-            sb.append("<parameters>");
-            sb.append(parameters);
-            sb.append("</parameters>");
-        }
-        return sb.toString();
+        XMLBuilder builder = XMLBuilder.nonFormatting();
+        appendTo(builder);
+        return builder.toString();
     }
 
     @Override
@@ -670,6 +658,15 @@ public class InformationSchema implements Serializable
                 return false;
             }
         }
+        if (elementTypes == null) {
+            if (other.elementTypes!= null) {
+                return false;
+            }
+        } else {
+            if (!elementTypes.equals(other.elementTypes)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -689,6 +686,7 @@ public class InformationSchema implements Serializable
         result = ((prime*result)+((indexColumnUsages == null)? 0 :indexColumnUsages.hashCode()));
         result = ((prime*result)+((routines == null)? 0 :routines.hashCode()));
         result = ((prime*result)+((parameters == null)? 0 :parameters.hashCode()));
+        result = ((prime*result)+((elementTypes == null)? 0 :elementTypes.hashCode()));
         return result;
     }
 

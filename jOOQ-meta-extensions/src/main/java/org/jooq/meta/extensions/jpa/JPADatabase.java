@@ -46,8 +46,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.UUID;
@@ -100,7 +103,9 @@ public class JPADatabase extends H2Database {
     static final String     HIBERNATE_DIALECT = SQLDialect.H2.thirdParty().hibernateDialect();
     static final JooqLogger log               = JooqLogger.getLogger(JPADatabase.class);
 
-    private Connection      connection;
+    Connection              connection;
+    boolean                 publicIsDefault;
+    Map<String, Object>     userSettings      = new HashMap<>();
 
     @Override
     public void close() {
@@ -118,7 +123,14 @@ public class JPADatabase extends H2Database {
                 log.warn("No packages defined", "It is highly recommended that you provide explicit packages to scan");
             }
 
-            boolean useAttributeConverters = Boolean.valueOf(getProperties().getProperty("use-attribute-converters", "true"));
+            // [#9058] Properties use camelCase notation.
+            boolean useAttributeConverters = Boolean.valueOf(
+                getProperties().getProperty("useAttributeConverters",
+                    getProperties().getProperty("use-attribute-converters", "true")
+                )
+            );
+            String unqualifiedSchema = getProperties().getProperty("unqualifiedSchema", "none").toLowerCase();
+            publicIsDefault = "none".equals(unqualifiedSchema);
 
             try {
                 Properties info = new Properties();
@@ -126,16 +138,27 @@ public class JPADatabase extends H2Database {
                 info.put("password", "");
                 connection = new org.h2.Driver().connect("jdbc:h2:mem:jooq-meta-extensions-" + UUID.randomUUID(), info);
 
-                MetadataSources metadata = new MetadataSources(
-                    new StandardServiceRegistryBuilder()
-                        .applySetting("hibernate.dialect", HIBERNATE_DIALECT)
-                        .applySetting("javax.persistence.schema-generation-connection", connection)
-                        .applySetting("javax.persistence.create-database-schemas", true)
+                // [#6709] Apply default settings first, then allow custom overrides
+                Map<String, Object> settings = new LinkedHashMap<>();
+                settings.put("hibernate.dialect", HIBERNATE_DIALECT);
+                settings.put("javax.persistence.schema-generation-connection", connection);
+                settings.put("javax.persistence.create-database-schemas", true);
 
-                        // [#5607] JPADatabase causes warnings - This prevents them
-                        .applySetting(AvailableSettings.CONNECTION_PROVIDER, connectionProvider())
-                        .build()
-                );
+                // [#5607] JPADatabase causes warnings - This prevents them
+                settings.put(AvailableSettings.CONNECTION_PROVIDER, connectionProvider());
+
+                for (Entry<Object, Object> entry : getProperties().entrySet()) {
+                    String key = "" + entry.getKey();
+
+                    if (key.startsWith("hibernate.") || key.startsWith("javax.persistence."))
+                        userSettings.put(key, entry.getValue());
+                }
+                settings.putAll(userSettings);
+
+                StandardServiceRegistryBuilder builder = new StandardServiceRegistryBuilder();
+                builder.applySettings(settings);
+
+                MetadataSources metadata = new MetadataSources(builder.applySettings(settings).build());
 
                 ClassPathScanningCandidateComponentProvider scanner =
                     new ClassPathScanningCandidateComponentProvider(true);
@@ -203,9 +226,12 @@ public class JPADatabase extends H2Database {
             for (Entry<Name, AttributeConverter<?, ?>> entry : extractor.extract().entrySet()) {
                 Class<?> convertToEntityAttribute = null;
 
-                for (Method method : entry.getValue().getClass().getMethods())
-                    if ("convertToEntityAttribute".equals(method.getName()))
+                for (Method method : entry.getValue().getClass().getMethods()) {
+                    if (!method.isBridge() && "convertToEntityAttribute".equals(method.getName())) {
                         convertToEntityAttribute = method.getReturnType();
+                        break;
+                    }
+                }
 
                 if (convertToEntityAttribute == null) {
                     log.info("AttributeConverter", "Cannot use AttributeConverter: " + entry.getValue().getClass().getName());
@@ -216,7 +242,7 @@ public class JPADatabase extends H2Database {
                 // to the available qualification
                 String regex = "(.*?\\.)?" + entry.getKey().unquotedName().toString().replace(".", "\\.");
                 ForcedType forcedType = new ForcedType()
-                    .withExpression("(?i:" + regex + ")")
+                    .withIncludeExpression("(?i:" + regex + ")")
                     .withUserType(convertToEntityAttribute.getName())
                     .withConverter(String.format("new %s(%s.class)",
                         JPAConverter.class.getName(),
@@ -230,13 +256,13 @@ public class JPADatabase extends H2Database {
 
         // AttributeConverter is part of JPA 2.1. Older JPA providers may not have this type, yet
         catch (NoClassDefFoundError e) {
-            log.info("AttributeConverter", "Cannot load AttributeConverters: " + e.getMessage());
+            log.warn("AttributeConverter", "Cannot load AttributeConverters due to missing class: " + e.getMessage());
         }
     }
 
     @Override
     protected List<SchemaDefinition> getSchemata0() throws SQLException {
-        List<SchemaDefinition> result = new ArrayList<SchemaDefinition>(super.getSchemata0());
+        List<SchemaDefinition> result = new ArrayList<>(super.getSchemata0());
 
         // [#5608] The H2-specific INFORMATION_SCHEMA is undesired in the JPADatabase's output
         //         we're explicitly omitting it here for user convenience.
@@ -246,5 +272,26 @@ public class JPADatabase extends H2Database {
                 it.remove();
 
         return result;
+    }
+
+    @Override
+    @Deprecated
+    public String getOutputSchema(String inputSchema) {
+        String outputSchema = super.getOutputSchema(inputSchema);
+
+        if (publicIsDefault && "PUBLIC".equals(outputSchema))
+            return "";
+
+        return outputSchema;
+    }
+
+    @Override
+    public String getOutputSchema(String inputCatalog, String inputSchema) {
+        String outputSchema = super.getOutputSchema(inputCatalog, inputSchema);
+
+        if (publicIsDefault && "PUBLIC".equals(outputSchema))
+            return "";
+
+        return outputSchema;
     }
 }

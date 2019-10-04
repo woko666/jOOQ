@@ -41,6 +41,7 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.jooq.impl.DSL.noCondition;
 import static org.jooq.impl.DSL.row;
 import static org.jooq.impl.DSL.using;
 import static org.jooq.impl.Tools.EMPTY_RECORD;
@@ -48,6 +49,7 @@ import static org.jooq.impl.Tools.EMPTY_RECORD;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -164,8 +166,8 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
 
             // [#2536] [#3327] We cannot batch INSERT RETURNING calls yet
             if (!FALSE.equals(configuration.settings().isReturnRecordToPojo()))
-                for (P object : objects)
-                    insert(object);
+                for (R record : records(objects, false))
+                    record.insert();
             else
                 using(configuration).batchInsert(records(objects, false)).execute();
 
@@ -194,8 +196,8 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
             // [#2536] [#3327] We cannot batch UPDATE RETURNING calls yet
             if (!FALSE.equals(configuration.settings().isReturnRecordToPojo()) &&
                  TRUE.equals(configuration.settings().isReturnAllOnUpdatableRecord()))
-                for (P object : objects)
-                    update(object);
+                for (R record : records(objects, true))
+                    record.update();
             else
                 using(configuration).batchUpdate(records(objects, true)).execute();
 
@@ -224,8 +226,8 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
             // [#2536] [#3327] We cannot batch DELETE RETURNING calls yet
             if (!FALSE.equals(configuration.settings().isReturnRecordToPojo()) &&
                  TRUE.equals(configuration.settings().isReturnAllOnUpdatableRecord()))
-                for (P object : objects)
-                    delete(object);
+                for (R record : records(objects, true))
+                    record.delete();
             else
                 using(configuration).batchDelete(records(objects, true)).execute();
 
@@ -282,23 +284,35 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
     public /* non-final */ List<P> findAll() {
         return using(configuration)
                  .selectFrom(table)
-                 .fetch()
-                 .map(mapper());
+                 .fetch(mapper());
     }
 
     @Override
     public /* non-final */ P findById(T id) {
         Field<?>[] pk = pk();
-        R record = null;
 
-        if (pk != null) {
-            record = using(configuration)
+        if (pk != null)
+            return using(configuration)
                         .selectFrom(table)
                         .where(equal(pk, id))
-                        .fetchOne();
-        }
+                        .fetchOne(mapper());
 
-        return record == null ? null : mapper().map(record);
+        return null;
+    }
+
+    @Override
+    public /* non-final */ <Z> List<P> fetchRange(Field<Z> field, Z lowerInclusive, Z upperInclusive) {
+        return using(configuration)
+                .selectFrom(table)
+                .where(
+                    lowerInclusive == null
+                  ? upperInclusive == null
+                    ? noCondition()
+                    : field.le(upperInclusive)
+                  : upperInclusive == null
+                    ? field.ge(lowerInclusive)
+                    : field.between(lowerInclusive, upperInclusive))
+                .fetch(mapper());
     }
 
     @SuppressWarnings("unchecked")
@@ -307,18 +321,15 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
         return using(configuration)
                  .selectFrom(table)
                  .where(field.in(values))
-                 .fetch()
-                 .map(mapper());
+                 .fetch(mapper());
     }
 
     @Override
     public /* non-final */ <Z> P fetchOne(Field<Z> field, Z value) {
-        R record = using(configuration)
+        return using(configuration)
                      .selectFrom(table)
                      .where(field.equal(value))
-                     .fetchOne();
-
-        return record == null ? null : mapper().map(record);
+                     .fetchOne(mapper());
     }
 
 
@@ -341,8 +352,6 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
     // ------------------------------------------------------------------------
     // XXX: Template methods for generated subclasses
     // ------------------------------------------------------------------------
-
-    protected abstract T getId(P object);
 
     @SuppressWarnings("unchecked")
     protected /* non-final */ T compositeKeyRecord(Object... values) {
@@ -399,20 +408,29 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
     }
 
     private /* non-final */ List<R> records(Collection<P> objects, boolean forUpdate) {
-        List<R> result = new ArrayList<R>(objects.size());
+        List<R> result = new ArrayList<>(objects.size());
         Field<?>[] pk = pk();
+        DSLContext ctx;
+
+        // [#7731] Create a Record -> POJO mapping to allow for reusing the below
+        //         derived Configuration for improved reflection caching.
+        IdentityHashMap<R, Object> mapping = null;
+
+        // [#2536] Upon store(), insert(), update(), delete(), returned values in the record
+        //         are copied back to the relevant POJO using the RecordListener SPI
+        if (!FALSE.equals(configuration.settings().isReturnRecordToPojo())) {
+            mapping = new IdentityHashMap<>();
+            ctx = using(configuration.derive(providers(configuration.recordListenerProviders(), mapping)));
+        }
+        else {
+            ctx = using(configuration);
+        }
 
         for (P object : objects) {
-
-            // [#2536] Upon store(), insert(), update(), delete(), returned values in the record
-            //         are copied back to the relevant POJO using the RecordListener SPI
-            DSLContext ctx = using(
-                ! FALSE.equals(configuration.settings().isReturnRecordToPojo())
-                ? configuration.derive(providers(configuration.recordListenerProviders(), object))
-                : configuration
-            );
-
             R record = ctx.newRecord(table, object);
+
+            if (mapping != null)
+                mapping.put(record, object);
 
             if (forUpdate && pk != null)
                 for (Field<?> field : pk)
@@ -425,7 +443,7 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
         return result;
     }
 
-    private /* non-final */ RecordListenerProvider[] providers(final RecordListenerProvider[] providers, final Object object) {
+    private /* non-final */ RecordListenerProvider[] providers(final RecordListenerProvider[] providers, final IdentityHashMap<R, Object> mapping) {
         RecordListenerProvider[] result = Arrays.copyOf(providers, providers.length + 1);
 
         result[providers.length] = new DefaultRecordListenerProvider(new DefaultRecordListener() {
@@ -434,7 +452,7 @@ public abstract class DAOImpl<R extends UpdatableRecord<R>, P, T> implements DAO
 
                 // TODO: [#2536] Use mapper()
                 if (record != null)
-                    record.into(object);
+                    record.into(mapping.get(record));
             }
 
             @Override

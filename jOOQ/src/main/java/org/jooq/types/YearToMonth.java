@@ -37,6 +37,7 @@
  */
 package org.jooq.types;
 
+import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,12 +80,19 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
      * Generated UID
      */
     private static final long    serialVersionUID = 1308553645456594273L;
-    private static final Pattern PATTERN_SQL      = Pattern.compile("([+-])?(\\d+)-(\\d+)");
-    private static final Pattern PATTERN_ISO      = Pattern.compile("([+-])?P(?:([+-]?\\d+)Y)?(?:([+-]?\\d+)M)?", Pattern.CASE_INSENSITIVE);
+    private static final Pattern PATTERN_SQL      = Pattern.compile("^([+-])?(\\d+)-(\\d+)$");
+    private static final Pattern PATTERN_ISO      = Pattern.compile("^([+-])?P(?:([+-]?\\d+)Y)?(?:([+-]?\\d+)M)?$", Pattern.CASE_INSENSITIVE);
 
     private final boolean        negative;
     private final int            years;
     private final int            months;
+
+    /**
+     * Create a new year-month interval.
+     */
+    public YearToMonth() {
+        this(0, 0, false);
+    }
 
     /**
      * Create a new year-month interval.
@@ -100,11 +108,11 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
         this(years, months, false);
     }
 
-    private YearToMonth(int years, int months, boolean negative) {
+    YearToMonth(int years, int months, boolean negative) {
 
         // Perform normalisation. Specifically, Postgres may return intervals
         // such as 0-13
-        if (months >= 12) {
+        if (Math.abs(months) >= 12) {
             years += (months / 12);
             months %= 12;
         }
@@ -127,11 +135,7 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
             Matcher matcher;
 
             if ((matcher = PATTERN_SQL.matcher(string)).find()) {
-                boolean negative = "-".equals(matcher.group(1));
-                int years = Integer.parseInt(matcher.group(2));
-                int months = Integer.parseInt(matcher.group(3));
-
-                return new YearToMonth(years, months, negative);
+                return YearToSecond.parseYM(matcher, 0);
             }
 
             if ((matcher = PATTERN_ISO.matcher(string)).find()) {
@@ -149,6 +153,19 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
 
         return null;
     }
+
+
+    @Override
+    public final Duration toDuration() {
+        long hours = years * 8766L  // 365.25 * 24
+                   + months * 720L; // 30 * 24
+
+        if (negative)
+            hours = -hours;
+
+        return Duration.ofHours(hours);
+    }
+
 
     // -------------------------------------------------------------------------
     // XXX Interval API
@@ -227,9 +244,11 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
     @Override
     public final int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + months;
-        result = prime * result + years;
+        int result = 0;
+        if (months != 0)
+            result = prime * result + months;
+        if (years != 0)
+            result = prime * result + years;
         return result;
     }
 
@@ -239,14 +258,18 @@ public final class YearToMonth extends Number implements Interval, Comparable<Ye
             return true;
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass())
+        if (getClass() == obj.getClass()) {
+            YearToMonth other = (YearToMonth) obj;
+            if (months != other.months)
+                return false;
+            if (years != other.years)
+                return false;
+            return true;
+        }
+        else if (obj instanceof YearToSecond)
+            return obj.equals(this);
+        else
             return false;
-        YearToMonth other = (YearToMonth) obj;
-        if (months != other.months)
-            return false;
-        if (years != other.years)
-            return false;
-        return true;
     }
 
     @Override

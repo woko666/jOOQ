@@ -37,14 +37,11 @@
  */
 package org.jooq.impl;
 
-import static org.jooq.impl.DSL.condition;
 import static org.jooq.impl.DSL.inline;
 
 import org.jooq.Clause;
-import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.Field;
-import org.jooq.QueryPartInternal;
 
 /**
  * @author Lukas Eder
@@ -63,16 +60,7 @@ final class FieldCondition extends AbstractCondition {
 
     @Override
     public void accept(Context<?> ctx) {
-        ctx.visit(delegate(ctx.configuration()));
-    }
-
-    @Override
-    public final Clause[] clauses(Context<?> ctx) {
-        return null;
-    }
-
-    private final QueryPartInternal delegate(Configuration configuration) {
-        switch (configuration.family()) {
+        switch (ctx.family()) {
 
             // [#2485] These don't work nicely, yet
             case CUBRID:
@@ -89,7 +77,9 @@ final class FieldCondition extends AbstractCondition {
 
 
 
-                return (QueryPartInternal) condition("{0} = {1}", field, inline(true));
+
+                ctx.visit(field.eq(inline(true, field.getDataType())));
+                break;
 
 
 
@@ -107,7 +97,14 @@ final class FieldCondition extends AbstractCondition {
             case POSTGRES:
             case SQLITE:
             default:
-                return (QueryPartInternal) field;
+                ctx.visit(Tools.hasDefaultConverter(field) ? field : field.eq(inline(true, field.getDataType())));
+                break;
         }
     }
+
+    @Override // Avoid AbstractCondition implementation
+    public final Clause[] clauses(Context<?> ctx) {
+        return null;
+    }
+
 }

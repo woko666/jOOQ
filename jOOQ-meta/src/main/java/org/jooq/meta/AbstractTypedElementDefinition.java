@@ -110,7 +110,7 @@ public abstract class AbstractTypedElementDefinition<T extends Definition>
 
     @Override
     public List<Definition> getDefinitionPath() {
-        List<Definition> result = new ArrayList<Definition>();
+        List<Definition> result = new ArrayList<>();
 
         result.addAll(getContainer().getDefinitionPath());
         result.add(this);
@@ -142,6 +142,21 @@ public abstract class AbstractTypedElementDefinition<T extends Definition>
     }
 
     public static final DataType<?> getDataType(Database db, String t, int p, int s) {
+
+
+        // [#8493] Synthetic SQLDataType aliases used by the code generator only
+        if ("OFFSETDATETIME".equalsIgnoreCase(t))
+            return SQLDataType.OFFSETDATETIME.precision(p);
+        else if ("OFFSETTIME".equalsIgnoreCase(t))
+            return SQLDataType.OFFSETTIME.precision(p);
+        else if ("LOCALDATE".equalsIgnoreCase(t))
+            return SQLDataType.LOCALDATE;
+        else if ("LOCALDATETIME".equalsIgnoreCase(t))
+            return SQLDataType.LOCALDATETIME.precision(p);
+        else if ("LOCALTIME".equalsIgnoreCase(t))
+            return SQLDataType.LOCALTIME.precision(p);
+        else
+
         if (db.getForceIntegerTypesOnZeroScaleDecimals())
             return DefaultDataType.getDataType(db.getDialect(), t, p, s);
 
@@ -172,7 +187,21 @@ public abstract class AbstractTypedElementDefinition<T extends Definition>
                 // [#5239] [#5762] [#6453] Don't rely on getSQLType()
                 if (SQLDataType.DATE.equals(dataType.getSQLDataType())) {
                     DataType<?> forcedDataType = getDataType(db, SQLDataType.TIMESTAMP.getTypeName(), 0, 0);
-                    result = new DefaultDataTypeDefinition(db, child.getSchema(), forcedDataType.getTypeName(), 0, 0, 0, result.isNullable(), result.getDefaultValue(), (Name) null, null, DateAsTimestampBinding.class.getName());
+                    String binding = DateAsTimestampBinding.class.getName();
+
+
+                    if (db.javaTimeTypes())
+                        binding = org.jooq.impl.LocalDateAsLocalDateTimeBinding.class.getName();
+
+
+                    result = new DefaultDataTypeDefinition(
+                        db,
+                        child.getSchema(),
+                        forcedDataType.getTypeName(),
+                        0, 0, 0,
+                        result.isNullable(), result.getDefaultValue(), (Name) null, null,
+                        binding
+                    );
                 }
             }
         }

@@ -41,11 +41,16 @@ package org.jooq;
 // ...
 import static org.jooq.SQLDialect.CUBRID;
 // ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
+// ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+import static org.jooq.SQLDialect.POSTGRES;
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 // ...
@@ -94,25 +99,26 @@ public interface LoaderOptionsStep<R extends Record> extends LoaderSourceStep<R>
     // -------------------------------------------------------------------------
 
     /**
-     * Instruct the <code>Loader</code> to update duplicate records if the main
-     * unique key's value is already in the database. This is only supported if
-     * {@link InsertQuery#onDuplicateKeyUpdate(boolean)} is supported, too.
+     * Instruct the <code>Loader</code> to update duplicate records if any of
+     * the unique keys' values are already in the database. This is only
+     * supported if {@link InsertQuery#onDuplicateKeyUpdate(boolean)} is
+     * supported, too.
      * <p>
-     * If the loaded table does not have a primary key, then all records are
+     * If the loaded table does not have any unqiue keys, then all records are
      * inserted and this clause behaves like {@link #onDuplicateKeyIgnore()}
      * <p>
      * If you don't specify a behaviour, {@link #onDuplicateKeyError()} will be
      * the default. This cannot be combined with {@link #onDuplicateKeyError()}
      * or {@link #onDuplicateKeyIgnore()}
      */
-    @Support({ CUBRID, HSQLDB, MARIADB, MYSQL, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
     LoaderOptionsStep<R> onDuplicateKeyUpdate();
 
     /**
-     * Instruct the <code>Loader</code> to skip duplicate records if the main
-     * unique key's value is already in the database.
+     * Instruct the <code>Loader</code> to skip duplicate records if any of the
+     * unique keys' values are already in the database.
      * <p>
-     * If the loaded table does not have a primary key, then all records are
+     * If the loaded table does not have any unique keys, then all records are
      * inserted. This may influence the JDBC driver's outcome on
      * {@link Connection#getWarnings()}, depending on your JDBC driver's
      * implementation

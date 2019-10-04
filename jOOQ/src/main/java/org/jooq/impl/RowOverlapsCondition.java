@@ -52,14 +52,16 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.SQLITE;
 // ...
 // ...
 import static org.jooq.impl.Keywords.K_OVERLAPS;
+import static org.jooq.impl.Tools.castIfNeeded;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 import org.jooq.Clause;
 import org.jooq.Configuration;
@@ -78,13 +80,13 @@ final class RowOverlapsCondition<T1, T2> extends AbstractCondition {
     /**
      * Generated UID
      */
-    private static final long                serialVersionUID              = 85887551884667824L;
-    private static final Clause[]            CLAUSES                       = { CONDITION, CONDITION_OVERLAPS };
-    private static final EnumSet<SQLDialect> EMULATE_NON_STANDARD_OVERLAPS = EnumSet.of(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
-    private static final EnumSet<SQLDialect> EMULATE_INTERVAL_OVERLAPS     = EnumSet.of(HSQLDB);
+    private static final long            serialVersionUID              = 85887551884667824L;
+    private static final Clause[]        CLAUSES                       = { CONDITION, CONDITION_OVERLAPS };
+    private static final Set<SQLDialect> EMULATE_NON_STANDARD_OVERLAPS = SQLDialect.supported(CUBRID, DERBY, FIREBIRD, H2, MARIADB, MYSQL, SQLITE);
+    private static final Set<SQLDialect> EMULATE_INTERVAL_OVERLAPS     = SQLDialect.supported(HSQLDB);
 
-    private final Row2<T1, T2>               left;
-    private final Row2<T1, T2>               right;
+    private final Row2<T1, T2>           left;
+    private final Row2<T1, T2>           right;
 
     RowOverlapsCondition(Row2<T1, T2> left, Row2<T1, T2> right) {
         this.left = left;
@@ -96,7 +98,7 @@ final class RowOverlapsCondition<T1, T2> extends AbstractCondition {
         ctx.visit(delegate(ctx.configuration()));
     }
 
-    @Override
+    @Override // Avoid AbstractCondition implementation
     public final Clause[] clauses(Context<?> ctx) {
         return null;
     }
@@ -129,13 +131,13 @@ final class RowOverlapsCondition<T1, T2> extends AbstractCondition {
             // All other OVERLAPS predicates can be emulated simply
             else {
                 return (QueryPartInternal)
-                       right1.le(left2.cast(right1)).and(
-                       left1.le(right2.cast(left1)));
+                       right1.le(castIfNeeded(left2, right1)).and(
+                       left1.le(castIfNeeded(right2, left1)));
             }
         }
 
         // These dialects seem to have trouble with INTERVAL OVERLAPS predicates
-        else if (intervalOverlaps && EMULATE_INTERVAL_OVERLAPS    .contains(configuration.dialect())) {
+        else if (intervalOverlaps && EMULATE_INTERVAL_OVERLAPS.contains(configuration.family())) {
                 return (QueryPartInternal)
                         right1.le(left1.add(left2)).and(
                         left1.le(right1.add(right2)));

@@ -39,8 +39,12 @@ package org.jooq;
 
 // ...
 import static org.jooq.SQLDialect.CUBRID;
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.H2;
+import static org.jooq.SQLDialect.MARIADB;
 // ...
-import static org.jooq.SQLDialect.POSTGRES_9_5;
+import static org.jooq.SQLDialect.POSTGRES;
+import static org.jooq.SQLDialect.SQLITE;
 // ...
 
 import java.util.Collection;
@@ -56,9 +60,10 @@ import org.jooq.impl.DSL;
  * create.insertInto(table, field1, field2)
  *       .values(value1, value2)
  *       .values(value3, value4)
- *       .onDuplicateKeyUpdate()
- *       .set(field1, value1)
+ *       .onConflict(field1)
+ *       .doUpdate()
  *       .set(field2, value2)
+ *       .where(field3.eq(value5))
  *       .execute();
  * </pre></code>
  * <p>
@@ -85,34 +90,38 @@ import org.jooq.impl.DSL;
 public interface InsertOnConflictWhereStep<R extends Record> extends InsertReturningStep<R> {
 
     /**
-     * Add a <code>WHERE</code> clause to the query, connecting them with each
-     * other with {@link Operator#AND}.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> where(Condition condition);
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> where(Condition condition);
 
     /**
-     * Add a <code>WHERE</code> clause to the query, connecting them with each
-     * other with {@link Operator#AND}.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause,
+     * connecting them with each other using {@link Operator#AND}.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> where(Condition... conditions);
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> where(Condition... conditions);
 
     /**
-     * Add a <code>WHERE</code> clause to the query, connecting them with each
-     * other with {@link Operator#AND}.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause,
+     * connecting them with each other using {@link Operator#AND}.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> where(Collection<? extends Condition> conditions);
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> where(Collection<? extends Condition> conditions);
 
     /**
-     * Add a <code>WHERE</code> clause to the query.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> where(Field<Boolean> field);
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> where(Field<Boolean> field);
 
     /**
-     * Add a <code>WHERE</code> clause to the query.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
      * guarantee syntax integrity. You may also create the possibility of
@@ -122,12 +131,13 @@ public interface InsertOnConflictWhereStep<R extends Record> extends InsertRetur
      * @see DSL#condition(SQL)
      * @see SQL
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     @PlainSQL
-    InsertReturningStep<R> where(SQL sql);
+    InsertOnConflictConditionStep<R> where(SQL sql);
 
     /**
-     * Add a <code>WHERE</code> clause to the query.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
      * guarantee syntax integrity. You may also create the possibility of
@@ -137,12 +147,13 @@ public interface InsertOnConflictWhereStep<R extends Record> extends InsertRetur
      * @see DSL#condition(String)
      * @see SQL
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     @PlainSQL
-    InsertReturningStep<R> where(String sql);
+    InsertOnConflictConditionStep<R> where(String sql);
 
     /**
-     * Add a <code>WHERE</code> clause to the query.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
      * guarantee syntax integrity. You may also create the possibility of
@@ -153,12 +164,13 @@ public interface InsertOnConflictWhereStep<R extends Record> extends InsertRetur
      * @see DSL#sql(String, Object...)
      * @see SQL
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     @PlainSQL
-    InsertReturningStep<R> where(String sql, Object... bindings);
+    InsertOnConflictConditionStep<R> where(String sql, Object... bindings);
 
     /**
-     * Add a <code>WHERE</code> clause to the query.
+     * Add a <code>WHERE</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      * <p>
      * <b>NOTE</b>: When inserting plain SQL into jOOQ objects, you must
      * guarantee syntax integrity. You may also create the possibility of
@@ -169,19 +181,21 @@ public interface InsertOnConflictWhereStep<R extends Record> extends InsertRetur
      * @see DSL#sql(String, QueryPart...)
      * @see SQL
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
+    @Support({ CUBRID, DERBY, H2, MARIADB, POSTGRES, SQLITE })
     @PlainSQL
-    InsertReturningStep<R> where(String sql, QueryPart... parts);
+    InsertOnConflictConditionStep<R> where(String sql, QueryPart... parts);
 
     /**
-     * Add a <code>WHERE EXISTS</code> clause to the query.
+     * Add a <code>WHERE EXISTS</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> whereExists(Select<?> select);
+    @Support({ CUBRID, DERBY, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> whereExists(Select<?> select);
 
     /**
-     * Add a <code>WHERE NOT EXISTS</code> clause to the query.
+     * Add a <code>WHERE NOT EXISTS</code> clause to the <code>INSERT</code> statement's
+     * <code>ON DUPLICATE KEY UPDATE</code> or <code>ON CONFLICT ... DO UPDATE</code> clause.
      */
-    @Support({ CUBRID, POSTGRES_9_5 })
-    InsertReturningStep<R> whereNotExists(Select<?> select);
+    @Support({ CUBRID, DERBY, POSTGRES, SQLITE })
+    InsertOnConflictConditionStep<R> whereNotExists(Select<?> select);
 }

@@ -42,7 +42,9 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
- * An object that can behave like a table (a table-like object)
+ * An object that can behave like a table (a table-like object).
+ * <p>
+ * Instances of this type cannot be created directly, only of its subtypes.
  *
  * @param <R> The record type
  * @author Lukas Eder
@@ -200,6 +202,33 @@ public interface TableLike<R extends Record> extends QueryPart {
      * @see Row#fields(int...)
      */
     Field<?>[] fields(int... fieldIndexes);
+
+    /**
+     * Get a field's index from this table.
+     *
+     * @param field The field to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this table.
+     */
+    int indexOf(Field<?> field);
+
+    /**
+     * Get a field's index from this table.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this table.
+     */
+    int indexOf(String fieldName);
+
+    /**
+     * Get a field's index from this table.
+     *
+     * @param fieldName The field name to look for
+     * @return The field's index or <code>-1</code> if the field is not
+     *         contained in this table
+     */
+    int indexOf(Name fieldName);
 
     /**
      * The underlying table representation of this object.

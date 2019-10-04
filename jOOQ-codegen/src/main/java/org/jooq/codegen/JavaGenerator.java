@@ -40,6 +40,7 @@ package org.jooq.codegen;
 
 import static java.util.Arrays.asList;
 // ...
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 import static org.jooq.SQLDialect.POSTGRES;
 import static org.jooq.SortOrder.DESC;
@@ -111,6 +112,7 @@ import org.jooq.impl.CatalogImpl;
 import org.jooq.impl.DAOImpl;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultDataType;
+import org.jooq.impl.EmbeddableRecordImpl;
 import org.jooq.impl.Internal;
 import org.jooq.impl.PackageImpl;
 import org.jooq.impl.SQLDataType;
@@ -131,6 +133,8 @@ import org.jooq.meta.Database;
 import org.jooq.meta.DefaultDataTypeDefinition;
 import org.jooq.meta.Definition;
 import org.jooq.meta.DomainDefinition;
+import org.jooq.meta.EmbeddableColumnDefinition;
+import org.jooq.meta.EmbeddableDefinition;
 import org.jooq.meta.EnumDefinition;
 import org.jooq.meta.ForeignKeyDefinition;
 import org.jooq.meta.IdentityDefinition;
@@ -146,6 +150,7 @@ import org.jooq.meta.TableDefinition;
 import org.jooq.meta.TypedElementDefinition;
 import org.jooq.meta.UDTDefinition;
 import org.jooq.meta.UniqueKeyDefinition;
+import org.jooq.meta.jaxb.GeneratedAnnotationType;
 // ...
 // ...
 // ...
@@ -154,6 +159,8 @@ import org.jooq.meta.postgres.PostgresDatabase;
 import org.jooq.tools.JooqLogger;
 import org.jooq.tools.StopWatch;
 import org.jooq.tools.StringUtils;
+import org.jooq.tools.reflect.Reflect;
+import org.jooq.tools.reflect.ReflectException;
 // ...
 // ...
 
@@ -227,22 +234,23 @@ public class JavaGenerator extends AbstractGenerator {
     /**
      * All files modified by this generator.
      */
-    private Set<File>                             files                        = new LinkedHashSet<File>();
+    private Set<File>                             files                        = new LinkedHashSet<>();
 
     /**
      * These directories were not modified by this generator, but flagged as not
      * for removal (e.g. because of {@link #schemaVersions} or
      * {@link #catalogVersions}).
      */
-    private Set<File>                             directoriesNotForRemoval     = new LinkedHashSet<File>();
+    private Set<File>                             directoriesNotForRemoval     = new LinkedHashSet<>();
 
     private final boolean                         scala;
     private final String                          tokenVoid;
+    private final Files                           fileCache;
 
     static {
-        SQLDATATYPE_LITERAL_LOOKUP = new IdentityHashMap<DataType<?>, String>();
-        SQLDATATYPE_WITH_LENGTH = new HashSet<String>();
-        SQLDATATYPE_WITH_PRECISION = new HashSet<String>();
+        SQLDATATYPE_LITERAL_LOOKUP = new IdentityHashMap<>();
+        SQLDATATYPE_WITH_LENGTH = new HashSet<>();
+        SQLDATATYPE_WITH_PRECISION = new HashSet<>();
 
         try {
             for (java.lang.reflect.Field f : SQLDataType.class.getFields()) {
@@ -281,13 +289,14 @@ public class JavaGenerator extends AbstractGenerator {
 
         this.scala = (language == SCALA);
         this.tokenVoid = (scala ? "Unit" : "void");
+        this.fileCache = new Files();
     }
 
     @Override
     public final void generate(Database db) {
         this.isoDate = DatatypeConverter.printDateTime(Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-        this.schemaVersions = new LinkedHashMap<SchemaDefinition, String>();
-        this.catalogVersions = new LinkedHashMap<CatalogDefinition, String>();
+        this.schemaVersions = new LinkedHashMap<>();
+        this.catalogVersions = new LinkedHashMap<>();
 
         this.database = db;
         this.database.addFilter(new AvoidAmbiguousClassesFilter());
@@ -416,6 +425,7 @@ public class JavaGenerator extends AbstractGenerator {
             && database.getEnums(schema).isEmpty()
             && database.getPackages(schema).isEmpty()
             && database.getRoutines(schema).isEmpty()
+            && database.getSequences(schema).isEmpty()
             && database.getTables(schema).isEmpty()
             && database.getUDTs(schema).isEmpty())
             return false;
@@ -502,6 +512,10 @@ public class JavaGenerator extends AbstractGenerator {
 
         if (generateTables() && database.getTables(schema).size() > 0) {
             generateTables(schema);
+        }
+
+        if (generateEmbeddables() && database.getEmbeddables(schema).size() > 0) {
+            generateEmbeddables(schema);
         }
 
         if (generatePojos() && database.getTables(schema).size() > 0) {
@@ -591,7 +605,7 @@ public class JavaGenerator extends AbstractGenerator {
 
     private class AvoidAmbiguousClassesFilter implements Database.Filter {
 
-        private Map<String, String> included = new HashMap<String, String>();
+        private Map<String, String> included = new HashMap<>();
 
         @Override
         public boolean exclude(Definition definition) {
@@ -724,9 +738,9 @@ public class JavaGenerator extends AbstractGenerator {
         else
             out.println("public class Keys {");
 
-        List<IdentityDefinition> allIdentities = new ArrayList<IdentityDefinition>();
-        List<UniqueKeyDefinition> allUniqueKeys = new ArrayList<UniqueKeyDefinition>();
-        List<ForeignKeyDefinition> allForeignKeys = new ArrayList<ForeignKeyDefinition>();
+        List<IdentityDefinition> allIdentities = new ArrayList<>();
+        List<UniqueKeyDefinition> allUniqueKeys = new ArrayList<>();
+        List<ForeignKeyDefinition> allForeignKeys = new ArrayList<>();
 
         out.tab(1).header("IDENTITY definitions");
         out.println();
@@ -891,7 +905,7 @@ public class JavaGenerator extends AbstractGenerator {
         else
             out.println("public class Indexes {");
 
-        List<IndexDefinition> allIndexes = new ArrayList<IndexDefinition>();
+        List<IndexDefinition> allIndexes = new ArrayList<>();
 
         out.tab(1).header("INDEX definitions");
         out.println();
@@ -1008,27 +1022,41 @@ public class JavaGenerator extends AbstractGenerator {
             out.println();
 
             if (scala)
-            	out.tab(1).println("private object Identities%s {", block);
+                out.tab(1).println("private object Identities%s {", block);
             else
                 out.tab(1).println("private static class Identities%s {", block);
         }
 
         printDeprecationIfUnknownType(out, identityTypeFull);
         if (scala)
-            out.tab(2).println("val %s : %s[%s, %s] = %s.createIdentity(%s, %s)",
+            out.tab(2).print("val %s : %s[%s, %s] = ",
                 getStrategy().getJavaIdentifier(identity),
                 Identity.class,
                 out.ref(getStrategy().getFullJavaClassName(identity.getTable(), Mode.RECORD)),
+                identityType);
+        else
+            out.tab(2).print("public static %s<%s, %s> %s = ",
+                Identity.class,
+                out.ref(getStrategy().getFullJavaClassName(identity.getTable(), Mode.RECORD)),
                 identityType,
+                getStrategy().getJavaIdentifier(identity));
+
+        printCreateIdentity(out, identity);
+
+        if (scala)
+            out.println();
+        else
+            out.println(";");
+    }
+
+    private void printCreateIdentity(JavaWriter out, IdentityDefinition identity) {
+        if (scala)
+            out.print("%s.createIdentity(%s, %s)",
                 Internal.class,
                 out.ref(getStrategy().getFullJavaIdentifier(identity.getColumn().getContainer()), 2),
                 out.ref(getStrategy().getFullJavaIdentifier(identity.getColumn()), colRefSegments(identity.getColumn())));
         else
-            out.tab(2).println("public static %s<%s, %s> %s = %s.createIdentity(%s, %s);",
-                Identity.class,
-                out.ref(getStrategy().getFullJavaClassName(identity.getTable(), Mode.RECORD)),
-                identityType,
-                getStrategy().getJavaIdentifier(identity),
+            out.print("%s.createIdentity(%s, %s)",
                 Internal.class,
                 out.ref(getStrategy().getFullJavaIdentifier(identity.getColumn().getContainer()), 2),
                 out.ref(getStrategy().getFullJavaIdentifier(identity.getColumn()), colRefSegments(identity.getColumn())));
@@ -1046,25 +1074,39 @@ public class JavaGenerator extends AbstractGenerator {
             out.println();
 
             if (scala)
-            	out.tab(1).println("private object UniqueKeys%s {", block);
+                out.tab(1).println("private object UniqueKeys%s {", block);
             else
                 out.tab(1).println("private static class UniqueKeys%s {", block);
         }
 
         if (scala)
-            out.tab(2).println("val %s : %s[%s] = %s.createUniqueKey(%s, \"%s\", [[%s]])",
+            out.tab(2).print("val %s : %s[%s] = ",
                 getStrategy().getJavaIdentifier(uniqueKey),
                 UniqueKey.class,
+                out.ref(getStrategy().getFullJavaClassName(uniqueKey.getTable(), Mode.RECORD)));
+        else
+            out.tab(2).print("public static final %s<%s> %s = ",
+                UniqueKey.class,
                 out.ref(getStrategy().getFullJavaClassName(uniqueKey.getTable(), Mode.RECORD)),
+                getStrategy().getJavaIdentifier(uniqueKey));
+
+        printCreateUniqueKey(out, uniqueKey);
+
+        if (scala)
+            out.println();
+        else
+            out.println(";");
+    }
+
+    private void printCreateUniqueKey(JavaWriter out, UniqueKeyDefinition uniqueKey) {
+        if (scala)
+            out.print("%s.createUniqueKey(%s, \"%s\", [[%s]])",
                 Internal.class,
                 out.ref(getStrategy().getFullJavaIdentifier(uniqueKey.getTable()), 2),
                 escapeString(uniqueKey.getOutputName()),
                 out.ref(getStrategy().getFullJavaIdentifiers(uniqueKey.getKeyColumns()), colRefSegments(null)));
         else
-            out.tab(2).println("public static final %s<%s> %s = %s.createUniqueKey(%s, \"%s\", [[%s]]);",
-                UniqueKey.class,
-                out.ref(getStrategy().getFullJavaClassName(uniqueKey.getTable(), Mode.RECORD)),
-                getStrategy().getJavaIdentifier(uniqueKey),
+            out.print("%s.createUniqueKey(%s, \"%s\", [[%s]])",
                 Internal.class,
                 out.ref(getStrategy().getFullJavaIdentifier(uniqueKey.getTable()), 2),
                 escapeString(uniqueKey.getOutputName()),
@@ -1083,13 +1125,13 @@ public class JavaGenerator extends AbstractGenerator {
             out.println();
 
             if (scala)
-            	out.tab(1).println("private object ForeignKeys%s {", block);
+                out.tab(1).println("private object ForeignKeys%s {", block);
             else
                 out.tab(1).println("private static class ForeignKeys%s {", block);
         }
 
         if (scala)
-        	out.tab(2).println("val %s : %s[%s, %s] = %s.createForeignKey(%s, %s, \"%s\", [[%s]])",
+            out.tab(2).println("val %s : %s[%s, %s] = %s.createForeignKey(%s, %s, \"%s\", [[%s]])",
                 getStrategy().getJavaIdentifier(foreignKey),
                 ForeignKey.class,
                 out.ref(getStrategy().getFullJavaClassName(foreignKey.getKeyTable(), Mode.RECORD)),
@@ -1149,29 +1191,35 @@ public class JavaGenerator extends AbstractGenerator {
         generateRecord0(udt, out);
     }
 
-    private final void generateRecord0(Definition tableOrUdt, JavaWriter out) {
-        final UniqueKeyDefinition key = (tableOrUdt instanceof TableDefinition)
-            ? ((TableDefinition) tableOrUdt).getPrimaryKey()
+    private final void generateRecord0(Definition tableUdtOrEmbeddable, JavaWriter out) {
+        final UniqueKeyDefinition key = (tableUdtOrEmbeddable instanceof TableDefinition)
+            ? ((TableDefinition) tableUdtOrEmbeddable).getPrimaryKey()
             : null;
-        final String className = getStrategy().getJavaClassName(tableOrUdt, Mode.RECORD);
-        final String tableIdentifier = out.ref(getStrategy().getFullJavaIdentifier(tableOrUdt), 2);
-        final List<String> interfaces = out.ref(getStrategy().getJavaClassImplements(tableOrUdt, Mode.RECORD));
-        final List<? extends TypedElementDefinition<?>> columns = getTypedElements(tableOrUdt);
+        final String className = getStrategy().getJavaClassName(tableUdtOrEmbeddable, Mode.RECORD);
+        final String tableIdentifier = !(tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+            ? out.ref(getStrategy().getFullJavaIdentifier(tableUdtOrEmbeddable), 2)
+            : null;
+        final List<String> interfaces = out.ref(getStrategy().getJavaClassImplements(tableUdtOrEmbeddable, Mode.RECORD));
+        final List<? extends TypedElementDefinition<?>> columns = getTypedElements(tableUdtOrEmbeddable);
 
-        printPackage(out, tableOrUdt, Mode.RECORD);
+        printPackage(out, tableUdtOrEmbeddable, Mode.RECORD);
 
-        if (tableOrUdt instanceof TableDefinition)
-            generateRecordClassJavadoc((TableDefinition) tableOrUdt, out);
+        if (tableUdtOrEmbeddable instanceof TableDefinition)
+            generateRecordClassJavadoc((TableDefinition) tableUdtOrEmbeddable, out);
+        else if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+            generateEmbeddableClassJavadoc((EmbeddableDefinition) tableUdtOrEmbeddable, out);
         else
-            generateUDTRecordClassJavadoc((UDTDefinition) tableOrUdt, out);
+            generateUDTRecordClassJavadoc((UDTDefinition) tableUdtOrEmbeddable, out);
 
-        printClassAnnotations(out, tableOrUdt.getSchema());
-        if (tableOrUdt instanceof TableDefinition)
-            printTableJPAAnnotation(out, (TableDefinition) tableOrUdt);
+        printClassAnnotations(out, tableUdtOrEmbeddable.getSchema());
+        if (tableUdtOrEmbeddable instanceof TableDefinition)
+            printTableJPAAnnotation(out, (TableDefinition) tableUdtOrEmbeddable);
 
         Class<?> baseClass;
-        if (tableOrUdt instanceof UDTDefinition)
+        if (tableUdtOrEmbeddable instanceof UDTDefinition)
             baseClass = UDTRecordImpl.class;
+        else if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+            baseClass = EmbeddableRecordImpl.class;
         else if (generateRelations() && key != null)
             baseClass = UpdatableRecordImpl.class;
         else
@@ -1194,12 +1242,14 @@ public class JavaGenerator extends AbstractGenerator {
             interfaces.add(rowTypeRecord);
         }
 
-        if (generateInterfaces()) {
-            interfaces.add(out.ref(getStrategy().getFullJavaClassName(tableOrUdt, Mode.INTERFACE)));
-        }
+        if (generateInterfaces())
+            interfaces.add(out.ref(getStrategy().getFullJavaClassName(tableUdtOrEmbeddable, Mode.INTERFACE)));
 
         if (scala)
-            out.println("class %s extends %s[%s](%s)[[before= with ][separator= with ][%s]] {", className, baseClass, className, tableIdentifier, interfaces);
+            if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+                out.println("class %s extends %s[%s]()[[before= with ][separator= with ][%s]] {", className, baseClass, className, interfaces);
+            else
+                out.println("class %s extends %s[%s](%s)[[before= with ][separator= with ][%s]] {", className, baseClass, className, tableIdentifier, interfaces);
         else
             out.println("public class %s extends %s<%s>[[before= implements ][%s]] {", className, baseClass, className, interfaces);
 
@@ -1208,13 +1258,27 @@ public class JavaGenerator extends AbstractGenerator {
         for (int i = 0; i < degree; i++) {
             TypedElementDefinition<?> column = columns.get(i);
 
-            if (tableOrUdt instanceof TableDefinition) {
+            if (tableUdtOrEmbeddable instanceof TableDefinition) {
                 generateRecordSetter(column, i, out);
                 generateRecordGetter(column, i, out);
+            }
+            else if (tableUdtOrEmbeddable instanceof EmbeddableDefinition) {
+                generateEmbeddableSetter(column, i, out);
+                generateEmbeddableGetter(column, i, out);
             }
             else {
                 generateUDTRecordSetter(column, i, out);
                 generateUDTRecordGetter(column, i, out);
+            }
+        }
+
+        if (tableUdtOrEmbeddable instanceof TableDefinition) {
+            List<EmbeddableDefinition> embeddables = ((TableDefinition) tableUdtOrEmbeddable).getEmbeddables();
+
+            for (int i = 0; i < embeddables.size(); i++) {
+                EmbeddableDefinition embeddable = embeddables.get(i);
+
+                // [#2530] TODO: Implement setters and getters for embeddables here
             }
         }
 
@@ -1239,10 +1303,10 @@ public class JavaGenerator extends AbstractGenerator {
             }
         }
 
-        if (tableOrUdt instanceof UDTDefinition) {
+        if (tableUdtOrEmbeddable instanceof UDTDefinition) {
 
             // [#799] Oracle UDT's can have member procedures
-            for (RoutineDefinition routine : ((UDTDefinition) tableOrUdt).getRoutines()) {
+            for (RoutineDefinition routine : ((UDTDefinition) tableUdtOrEmbeddable).getRoutines()) {
 
                 // Instance methods ship with a SELF parameter at the first position
                 // [#1584] Static methods don't have that
@@ -1303,6 +1367,9 @@ public class JavaGenerator extends AbstractGenerator {
             for (int i = 1; i <= degree; i++) {
                 TypedElementDefinition<?> column = columns.get(i - 1);
 
+                if (column instanceof EmbeddableColumnDefinition)
+                    column = ((EmbeddableColumnDefinition) column).getColumn();
+
                 final String colTypeFull = getJavaType(column.getType(resolver()));
                 final String colType = out.ref(colTypeFull);
                 final String colIdentifier = out.ref(getStrategy().getFullJavaIdentifier(column), colRefSegments(column));
@@ -1318,7 +1385,12 @@ public class JavaGenerator extends AbstractGenerator {
                         out.tab(1).overrideInherit();
 
                     out.tab(1).println("public %s<%s> field%s() {", Field.class, colType, i);
-                    out.tab(2).println("return %s;", colIdentifier);
+
+                    if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+                        out.tab(2).println("return (%s<%s>) FIELDS[%s];", Field.class, colType, i - 1);
+                    else
+                        out.tab(2).println("return %s;", colIdentifier);
+
                     out.tab(1).println("}");
                 }
             }
@@ -1401,8 +1473,8 @@ public class JavaGenerator extends AbstractGenerator {
                 }
             }
 
-            List<String> arguments = new ArrayList<String>(degree);
-            List<String> calls = new ArrayList<String>(degree);
+            List<String> arguments = new ArrayList<>(degree);
+            List<String> calls = new ArrayList<>(degree);
             for (int i = 1; i <= degree; i++) {
                 TypedElementDefinition<?> column = columns.get(i - 1);
 
@@ -1440,24 +1512,42 @@ public class JavaGenerator extends AbstractGenerator {
             }
         }
 
-        if (generateInterfaces()) {
-            printFromAndInto(out, tableOrUdt);
-        }
+        if (generateInterfaces())
+            printFromAndInto(out, tableUdtOrEmbeddable);
 
         if (scala) {
         }
         else {
             out.tab(1).header("Constructors");
+
+            if (tableUdtOrEmbeddable instanceof EmbeddableDefinition) {
+                out.println();
+                out.tab(1).println("private static final %s<?>[] FIELDS = {", Field.class);
+
+                for (EmbeddableColumnDefinition column : ((EmbeddableDefinition) tableUdtOrEmbeddable).getColumns()) {
+                    final String colIdentifier = out.ref(getStrategy().getFullJavaIdentifier(column.getColumn()), colRefSegments(column));
+
+                    out.tab(2).println("%s.field(%s.name(\"%s\"), %s.getDataType()),", DSL.class, DSL.class, column.getOutputName(), colIdentifier);
+                }
+
+                out.tab(1).println("};");
+                out.println();
+            }
+
             out.tab(1).javadoc("Create a detached %s", className);
+
             out.tab(1).println("public %s() {", className);
-            out.tab(2).println("super(%s);", tableIdentifier);
+            if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+                out.tab(2).println("super(FIELDS);");
+            else
+                out.tab(2).println("super(%s);", tableIdentifier);
             out.tab(1).println("}");
         }
 
         // [#3130] Invalid UDTs may have a degree of 0
         // [#3176] Avoid generating constructors for tables with more than 255 columns (Java's method argument limit)
         if (degree > 0 && degree < 256) {
-            List<String> arguments = new ArrayList<String>(degree);
+            List<String> arguments = new ArrayList<>(degree);
 
             for (int i = 0; i < degree; i++) {
                 final TypedElementDefinition<?> column = columns.get(i);
@@ -1465,7 +1555,7 @@ public class JavaGenerator extends AbstractGenerator {
                 final String type = out.ref(getJavaType(column.getType(resolver())));
 
                 if (scala)
-                	arguments.add(columnMember + " : " + type);
+                    arguments.add(columnMember + " : " + type);
                 else
                     arguments.add(type + " " + columnMember);
             }
@@ -1478,7 +1568,11 @@ public class JavaGenerator extends AbstractGenerator {
             }
             else {
                 out.tab(1).println("public %s([[%s]]) {", className, arguments);
-                out.tab(2).println("super(%s);", tableIdentifier);
+
+                if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+                    out.tab(2).println("this();", tableIdentifier);
+                else
+                    out.tab(2).println("super(%s);", tableIdentifier);
             }
 
             out.println();
@@ -1488,7 +1582,7 @@ public class JavaGenerator extends AbstractGenerator {
                 final String columnMember = getStrategy().getJavaMemberName(column, Mode.DEFAULT);
 
                 if (scala)
-                	out.tab(2).println("set(%s, %s)", i, columnMember);
+                    out.tab(2).println("set(%s, %s)", i, columnMember);
                 else
                     out.tab(2).println("set(%s, %s);", i, columnMember);
             }
@@ -1496,10 +1590,12 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).println("}");
         }
 
-        if (tableOrUdt instanceof TableDefinition)
-            generateRecordClassFooter((TableDefinition) tableOrUdt, out);
+        if (tableUdtOrEmbeddable instanceof TableDefinition)
+            generateRecordClassFooter((TableDefinition) tableUdtOrEmbeddable, out);
+        else if (tableUdtOrEmbeddable instanceof EmbeddableDefinition)
+            generateEmbeddableClassFooter((EmbeddableDefinition) tableUdtOrEmbeddable, out);
         else
-            generateUDTRecordClassFooter((UDTDefinition) tableOrUdt, out);
+            generateUDTRecordClassFooter((UDTDefinition) tableUdtOrEmbeddable, out);
 
         out.println("}");
     }
@@ -1508,6 +1604,13 @@ public class JavaGenerator extends AbstractGenerator {
      * Subclasses may override this method to provide their own record setters.
      */
     protected void generateRecordSetter(TypedElementDefinition<?> column, int index, JavaWriter out) {
+        generateRecordSetter0(column, index, out);
+    }
+
+    /**
+     * Subclasses may override this method to provide their own embeddable setters.
+     */
+    protected void generateEmbeddableSetter(TypedElementDefinition<?> column, int index, JavaWriter out) {
         generateRecordSetter0(column, index, out);
     }
 
@@ -1621,6 +1724,13 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     /**
+     * Subclasses may override this method to provide their own embeddable getters.
+     */
+    protected void generateEmbeddableGetter(TypedElementDefinition<?> column, int index, JavaWriter out) {
+        generateRecordGetter0(column, index, out);
+    }
+
+    /**
      * Subclasses may override this method to provide their own record getters.
      */
     protected void generateUDTRecordGetter(TypedElementDefinition<?> column, int index, JavaWriter out) {
@@ -1637,7 +1747,7 @@ public class JavaGenerator extends AbstractGenerator {
         if (!printDeprecationIfUnknownType(out, typeFull))
             out.tab(1).javadoc("Getter for <code>%s</code>.%s", name, columnComment(column, comment));
 
-        if (column.getContainer() instanceof TableDefinition)
+        if (column instanceof ColumnDefinition)
             printColumnJPAAnnotation(out, (ColumnDefinition) column);
         printValidationAnnotation(out, column);
 
@@ -1685,6 +1795,19 @@ public class JavaGenerator extends AbstractGenerator {
             printClassJavadoc(out, table);
         else
             printClassJavadoc(out, "The table <code>" + table.getQualifiedInputName() + "</code>.");
+    }
+
+    /**
+     * Subclasses may override this method to provide record class footer code.
+     */
+    @SuppressWarnings("unused")
+    protected void generateEmbeddableClassFooter(EmbeddableDefinition embeddable, JavaWriter out) {}
+
+    /**
+     * Subclasses may override this method to provide their own Javadoc.
+     */
+    protected void generateEmbeddableClassJavadoc(EmbeddableDefinition embeddable, JavaWriter out) {
+        printClassJavadoc(out, "The embeddable <code>" + embeddable.getQualifiedInputName() + "</code>.");
     }
 
     private String refRowType(JavaWriter out, Collection<? extends TypedElementDefinition<?>> columns) {
@@ -1753,7 +1876,7 @@ public class JavaGenerator extends AbstractGenerator {
             printTableJPAAnnotation(out, (TableDefinition) tableOrUDT);
 
         if (scala)
-        	out.println("trait %s[[before= extends ][%s]] {", className, interfaces);
+            out.println("trait %s[[before= extends ][%s]] {", className, interfaces);
         else
             out.println("public interface %s[[before= extends ][%s]] {", className, interfaces);
 
@@ -1782,14 +1905,14 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).javadoc("Load data from another generated Record/POJO implementing the common interface %s", local);
 
             if (scala)
-            	out.tab(1).println("def from(from : %s)", qualified);
+                out.tab(1).println("def from(from : %s)", qualified);
             else
                 out.tab(1).println("public void from(%s from);", qualified);
 
             out.tab(1).javadoc("Copy data into another generated Record/POJO implementing the common interface %s", local);
 
             if (scala)
-            	out.tab(1).println("def into [E <: %s](into : E) : E", qualified);
+                out.tab(1).println("def into [E <: %s](into : E) : E", qualified);
             else
                 out.tab(1).println("public <E extends %s> E into(E into);", qualified);
         }
@@ -1984,15 +2107,15 @@ public class JavaGenerator extends AbstractGenerator {
 
             if (scala) {
                 printDeprecationIfUnknownType(out, attrTypeFull);
-                out.tab(1).println("private val %s : %s[%s, %s] = %s.createField(\"%s\", %s, this, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ")",
-                    attrId, UDTField.class, recordType, attrType, UDTImpl.class, attrName, attrTypeRef, escapeString(""), converter, binding);
+                out.tab(1).println("private val %s : %s[%s, %s] = %s.createField(%s.name(\"%s\"), %s, this, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ")",
+                    attrId, UDTField.class, recordType, attrType, UDTImpl.class, DSL.class, attrName, attrTypeRef, escapeString(""), converter, binding);
             }
             else {
                 if (!printDeprecationIfUnknownType(out, attrTypeFull))
                     out.tab(1).javadoc("The attribute <code>%s</code>.%s", attribute.getQualifiedOutputName(), columnComment(attribute, attrComment));
 
-                out.tab(1).println("public static final %s<%s, %s> %s = createField(\"%s\", %s, %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ");",
-                    UDTField.class, recordType, attrType, attrId, attrName, attrTypeRef, udtId, escapeString(""), converter, binding);
+                out.tab(1).println("public static final %s<%s, %s> %s = createField(%s.name(\"%s\"), %s, %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ");",
+                    UDTField.class, recordType, attrType, attrId, DSL.class, attrName, attrTypeRef, udtId, escapeString(""), converter, binding);
             }
         }
 
@@ -2037,7 +2160,7 @@ public class JavaGenerator extends AbstractGenerator {
         else {
             out.tab(1).overrideInherit();
             out.tab(1).println("public %s getSchema() {", Schema.class);
-            out.tab(2).println("return %s;", schemaId);
+            out.tab(2).println("return %s != null ? %s : new %s(%s.name(\"%s\"));", schemaId, schemaId, SchemaImpl.class, DSL.class, schema.getOutputName());
             out.tab(1).println("}");
         }
 
@@ -2190,7 +2313,7 @@ public class JavaGenerator extends AbstractGenerator {
         printClassAnnotations(out, schema);
 
         if (scala)
-        	out.println("object UDTs {");
+            out.println("object UDTs {");
         else
             out.println("public class UDTs {");
 
@@ -2202,7 +2325,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).javadoc("The type <code>%s</code>", udt.getQualifiedOutputName());
 
             if (scala)
-            	out.tab(1).println("val %s = %s", id, fullId);
+                out.tab(1).println("val %s = %s", id, fullId);
             else
                 out.tab(1).println("public static %s %s = %s;", className, id, fullId);
         }
@@ -2392,7 +2515,7 @@ public class JavaGenerator extends AbstractGenerator {
         final String className = getStrategy().getJavaClassName(e, Mode.ENUM);
         final List<String> interfaces = out.ref(getStrategy().getJavaClassImplements(e, Mode.ENUM));
         final List<String> literals = e.getLiterals();
-        final List<String> identifiers = new ArrayList<String>(literals.size());
+        final List<String> identifiers = new ArrayList<>(literals.size());
 
         for (int i = 0; i < literals.size(); i++) {
             String identifier = convertToIdentifier(literals.get(i), language);
@@ -2780,16 +2903,24 @@ public class JavaGenerator extends AbstractGenerator {
         printClassAnnotations(out, schema);
 
         if (scala)
-        	out.println("object Tables {");
+            out.println("object Tables {");
         else
             out.println("public class Tables {");
 
         for (TableDefinition table : database.getTables(schema)) {
-            final String className = scala
+            final String className = getStrategy().getJavaClassName(table);
+            final String fullClassName = scala
                 ? ""
                 : out.ref(getStrategy().getFullJavaClassName(table));
             final String id = getStrategy().getJavaIdentifier(table);
-            final String fullId = getStrategy().getFullJavaIdentifier(table);
+
+            // [#8863] Use the imported table class to dereference the singleton
+            //         table instance, *only* if the class name is not equal to
+            //         the instance name. Otherwise, we would get a
+            //         "error: self-reference in initializer" compilation error
+            final String referencedId = className.equals(id)
+                ? getStrategy().getFullJavaIdentifier(table)
+                : out.ref(getStrategy().getFullJavaIdentifier(table), 2);
             final String comment = !StringUtils.isBlank(table.getComment()) && generateCommentsOnTables()
                 ? escapeEntities(table.getComment())
                 : "The table <code>" + table.getQualifiedOutputName() + "</code>.";
@@ -2801,9 +2932,9 @@ public class JavaGenerator extends AbstractGenerator {
                 out.tab(1).javadoc(comment);
 
                 if (scala)
-                	out.tab(1).println("val %s = %s", id, fullId);
+                    out.tab(1).println("val %s = %s", id, referencedId);
                 else
-                	out.tab(1).println("public static final %s %s = %s;", className, id, fullId);
+                    out.tab(1).println("public static final %s %s = %s;", fullClassName, id, referencedId);
             }
 
             // [#3797] Table-valued functions generate two different literals in
@@ -2871,7 +3002,7 @@ public class JavaGenerator extends AbstractGenerator {
             }
 
             if (scala)
-            	tType = Record.class.getName() + keyColumns.size() + "[" + generics + "]";
+                tType = Record.class.getName() + keyColumns.size() + "[" + generics + "]";
             else
                 tType = Record.class.getName() + keyColumns.size() + "<" + generics + ">";
         }
@@ -2929,18 +3060,18 @@ public class JavaGenerator extends AbstractGenerator {
         // -------------------------------
         if (scala) {
             out.println();
-            out.tab(1).println("override protected def getId(o : %s) : %s = {", pType, tType);
+            out.tab(1).println("override def getId(o : %s) : %s = {", pType, tType);
         }
         else {
             out.tab(1).overrideInherit();
-            out.tab(1).println("protected %s getId(%s object) {", tType, pType);
+            out.tab(1).println("public %s getId(%s object) {", tType, pType);
         }
 
         if (keyColumns.size() == 1) {
-        	if (scala)
+            if (scala)
                 out.tab(2).println("o.%s", getStrategy().getJavaGetterName(keyColumns.get(0), Mode.POJO));
-        	else
-        	    out.tab(2).println("return object.%s();", getStrategy().getJavaGetterName(keyColumns.get(0), Mode.POJO));
+            else
+                out.tab(2).println("return object.%s();", getStrategy().getJavaGetterName(keyColumns.get(0), Mode.POJO));
         }
 
         // [#2574] This should be replaced by a call to a method on the target table's Key type
@@ -2949,16 +3080,16 @@ public class JavaGenerator extends AbstractGenerator {
             String separator = "";
 
             for (ColumnDefinition column : keyColumns) {
-            	if (scala)
-            		params += separator + "o." + getStrategy().getJavaGetterName(column, Mode.POJO);
-            	else
-            	    params += separator + "object." + getStrategy().getJavaGetterName(column, Mode.POJO) + "()";
+                if (scala)
+                    params += separator + "o." + getStrategy().getJavaGetterName(column, Mode.POJO);
+                else
+                    params += separator + "object." + getStrategy().getJavaGetterName(column, Mode.POJO) + "()";
 
                 separator = ", ";
             }
 
             if (scala)
-            	out.tab(2).println("compositeKeyRecord(%s)", params);
+                out.tab(2).println("compositeKeyRecord(%s)", params);
             else
                 out.tab(2).println("return compositeKeyRecord(%s);", params);
         }
@@ -2971,6 +3102,22 @@ public class JavaGenerator extends AbstractGenerator {
             final String colTypeFull = getJavaType(column.getType(resolver()));
             final String colType = out.ref(colTypeFull);
             final String colIdentifier = out.ref(getStrategy().getFullJavaIdentifier(column), colRefSegments(column));
+
+            // fetchRangeOf[Column]([T]...)
+            // -----------------------
+            if (!printDeprecationIfUnknownType(out, colTypeFull))
+                out.tab(1).javadoc("Fetch records that have <code>%s BETWEEN lowerInclusive AND upperInclusive</code>", colName);
+
+            if (scala) {
+                out.tab(1).println("def fetchRangeOf%s(lowerInclusive : %s, upperInclusive : %s) : %s[%s] = {", colClass, colType, colType, List.class, pType);
+                out.tab(2).println("fetchRange(%s, lowerInclusive, upperInclusive)", colIdentifier);
+                out.tab(1).println("}");
+            }
+            else {
+                out.tab(1).println("public %s<%s> fetchRangeOf%s(%s lowerInclusive, %s upperInclusive) {", List.class, pType, colClass, colType, colType);
+                out.tab(2).println("return fetchRange(%s, lowerInclusive, upperInclusive);", colIdentifier);
+                out.tab(1).println("}");
+            }
 
             // fetchBy[Column]([T]...)
             // -----------------------
@@ -3181,7 +3328,7 @@ public class JavaGenerator extends AbstractGenerator {
     /**
      * Subclasses may override this method to provide their own pojo copy constructors.
      */
-    private void generatePojoMultiConstructor(Definition tableOrUDT, JavaWriter out) {
+    protected void generatePojoMultiConstructor(Definition tableOrUDT, JavaWriter out) {
         final String className = getStrategy().getJavaClassName(tableOrUDT, Mode.POJO);
 
         int maxLength = 0;
@@ -3282,7 +3429,7 @@ public class JavaGenerator extends AbstractGenerator {
             // [#3010] Invalid UDTs may have no attributes. Avoid generating this constructor in that case
             int size = getTypedElements(tableOrUDT).size();
             if (size > 0) {
-                List<String> nulls = new ArrayList<String>(size);
+                List<String> nulls = new ArrayList<>(size);
                 for (TypedElementDefinition<?> column : getTypedElements(tableOrUDT))
 
                     // Avoid ambiguities between a single-T-value constructor
@@ -3622,18 +3769,16 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     private List<? extends TypedElementDefinition<? extends Definition>> getTypedElements(Definition definition) {
-        if (definition instanceof TableDefinition) {
+        if (definition instanceof TableDefinition)
             return ((TableDefinition) definition).getColumns();
-        }
-        else if (definition instanceof UDTDefinition) {
+        else if (definition instanceof EmbeddableDefinition)
+            return ((EmbeddableDefinition) definition).getColumns();
+        else if (definition instanceof UDTDefinition)
             return ((UDTDefinition) definition).getAttributes();
-        }
-        else if (definition instanceof RoutineDefinition) {
+        else if (definition instanceof RoutineDefinition)
             return ((RoutineDefinition) definition).getAllParameters();
-        }
-        else {
+        else
             throw new IllegalArgumentException("Unsupported type : " + definition);
-        }
     }
 
     /**
@@ -3678,7 +3823,6 @@ public class JavaGenerator extends AbstractGenerator {
         final SchemaDefinition schema = table.getSchema();
         final UniqueKeyDefinition primaryKey = table.getPrimaryKey();
 
-        final boolean updatable = generateRelations() && primaryKey != null;
         final String className = getStrategy().getJavaClassName(table);
         final String tableId = scala
             ? out.ref(getStrategy().getFullJavaIdentifier(table), 2)
@@ -3731,7 +3875,7 @@ public class JavaGenerator extends AbstractGenerator {
         }
         else {
             out.println("public class %s extends %s<%s>[[before= implements ][%s]] {",
-            		className, TableImpl.class, recordType, interfaces);
+                    className, TableImpl.class, recordType, interfaces);
             out.printSerial();
             printSingletonInstance(out, table);
         }
@@ -3752,15 +3896,36 @@ public class JavaGenerator extends AbstractGenerator {
                 out.tab(1).javadoc("The column <code>%s</code>.%s", column.getQualifiedOutputName(), columnComment(column, columnComment));
 
             if (scala) {
-                out.tab(1).println("val %s : %s[%s, %s] = createField(\"%s\", %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ")",
-                        columnId, TableField.class, recordType, columnType, columnName, columnTypeRef, escapeString(columnComment), converter, binding);
+                out.tab(1).println("val %s : %s[%s, %s] = createField(%s.name(\"%s\"), %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ")",
+                        columnId, TableField.class, recordType, columnType, DSL.class, columnName, columnTypeRef, escapeString(columnComment), converter, binding);
             }
             else {
                 String isStatic = generateInstanceFields() ? "" : "static ";
                 String tableRef = generateInstanceFields() ? "this" : out.ref(getStrategy().getJavaIdentifier(table), 2);
 
-                out.tab(1).println("public %sfinal %s<%s, %s> %s = createField(\"%s\", %s, %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ");",
-                    isStatic, TableField.class, recordType, columnType, columnId, columnName, columnTypeRef, tableRef, escapeString(columnComment), converter, binding);
+                out.tab(1).println("public %sfinal %s<%s, %s> %s = createField(%s.name(\"%s\"), %s, %s, \"%s\"" + converterTemplate(converter) + converterTemplate(binding) + ");",
+                    isStatic, TableField.class, recordType, columnType, columnId, DSL.class, columnName, columnTypeRef, tableRef, escapeString(columnComment), converter, binding);
+            }
+        }
+
+        // [#2530] Embeddable types
+        for (EmbeddableDefinition embeddable : table.getEmbeddables()) {
+            final String columnId = out.ref(getStrategy().getJavaIdentifier(embeddable), colRefSegments(null));
+            final String columnType = out.ref(getStrategy().getFullJavaClassName(embeddable, Mode.RECORD));
+
+            final List<String> columnIds = new ArrayList<>();
+            for (EmbeddableColumnDefinition column : embeddable.getColumns())
+                columnIds.add(out.ref(getStrategy().getJavaIdentifier(column), colRefSegments(column)));
+
+            out.tab(1).javadoc("The embeddable type <code>%s</code>.", embeddable.getOutputName());
+
+            if (scala) {
+                out.tab(1).println("val %s : %s[%s, %s] = %s.createEmbeddable(%s.name(\"%s\"), classOf[%s], this, [[%s]])",
+                        columnId, TableField.class, recordType, columnType, Internal.class, DSL.class, embeddable.getName(), columnType, columnIds);
+            }
+            else {
+                out.tab(1).println("public final %s<%s, %s> %s = %s.createEmbeddable(%s.name(\"%s\"), %s.class, this, [[%s]]);",
+                    TableField.class, recordType, columnType, columnId, Internal.class, DSL.class, embeddable.getName(), columnType, columnIds);
             }
         }
 
@@ -3842,29 +4007,17 @@ public class JavaGenerator extends AbstractGenerator {
         }
 
         if (generateImplicitJoinPathsToOne() && generateGlobalKeyReferences()) {
-            boolean hasInboundForeignKeys = false;
+            out.println();
 
-            uniqueKeyLoop:
-            for (UniqueKeyDefinition u : table.getUniqueKeys()) {
-                if (!u.getForeignKeys().isEmpty()) {
-                    hasInboundForeignKeys = true;
-                    break uniqueKeyLoop;
-                }
+            if (scala) {
+                out.tab(1).println("def this(child : %s[_ <: %s], key : %s[_ <: %s, %s]) = {", Table.class, Record.class, ForeignKey.class, Record.class, recordType);
+                out.tab(2).println("this(%s.createPathAlias(child, key), child, key, %s, null)", Internal.class, tableId);
+                out.tab(1).println("}");
             }
-
-            if (hasInboundForeignKeys) {
-                out.println();
-
-                if (scala) {
-                    out.tab(1).println("def this(child : %s[_ <: %s], key : %s[_ <: %s, %s]) = {", Table.class, Record.class, ForeignKey.class, Record.class, recordType);
-                    out.tab(2).println("this(%s.createPathAlias(child, key), child, key, %s, null)", Internal.class, tableId);
-                    out.tab(1).println("}");
-                }
-                else {
-                    out.tab(1).println("public <O extends %s> %s(%s<O> child, %s<O, %s> key) {", Record.class, className, Table.class, ForeignKey.class, recordType);
-                    out.tab(2).println("super(child, key, %s);", tableId);
-                    out.tab(1).println("}");
-                }
+            else {
+                out.tab(1).println("public <O extends %s> %s(%s<O> child, %s<O, %s> key) {", Record.class, className, Table.class, ForeignKey.class, recordType);
+                out.tab(2).println("super(child, key, %s);", tableId);
+                out.tab(1).println("}");
             }
         }
 
@@ -3902,21 +4055,28 @@ public class JavaGenerator extends AbstractGenerator {
         }
 
         // Add primary / unique / foreign key information
-        if (generateRelations() && generateGlobalKeyReferences()) {
+        if (generateRelations()) {
             IdentityDefinition identity = table.getIdentity();
 
             // The identity column
             if (identity != null) {
                 final String identityTypeFull = getJavaType(identity.getColumn().getType(resolver()));
                 final String identityType = out.ref(identityTypeFull);
-                final String identityFullId = out.ref(getStrategy().getFullJavaIdentifier(identity), 2);
+                final String identityFullId = generateGlobalKeyReferences()
+                    ? out.ref(getStrategy().getFullJavaIdentifier(identity), 2)
+                    : null;
 
                 if (scala) {
                     out.println();
 
                     printDeprecationIfUnknownType(out, identityTypeFull);
                     out.tab(1).println("override def getIdentity : %s[%s, %s] = {", Identity.class, recordType, identityType);
-                    out.tab(2).println("%s", identityFullId);
+
+                    if (identityFullId != null)
+                        out.tab(2).println("%s", identityFullId);
+                    else
+                        printCreateIdentity(out, identity);
+
                     out.tab(1).println("}");
                 }
                 else {
@@ -3926,25 +4086,46 @@ public class JavaGenerator extends AbstractGenerator {
                         out.tab(1).overrideInherit();
 
                     out.tab(1).println("public %s<%s, %s> getIdentity() {", Identity.class, recordType, identityType);
-                    out.tab(2).println("return %s;", identityFullId);
+                    out.tab(2).print("return ");
+
+                    if (identityFullId != null)
+                        out.tab(2).print("%s", identityFullId);
+                    else
+                        printCreateIdentity(out, identity);
+
+                    out.println(";");
                     out.tab(1).println("}");
                 }
             }
 
             // The primary / main unique key
             if (primaryKey != null) {
-                final String keyFullId = out.ref(getStrategy().getFullJavaIdentifier(primaryKey), 2);
+                final String keyFullId = generateGlobalKeyReferences()
+                    ? out.ref(getStrategy().getFullJavaIdentifier(primaryKey), 2)
+                    : null;
 
                 if (scala) {
                     out.println();
                     out.tab(1).println("override def getPrimaryKey : %s[%s] = {", UniqueKey.class, recordType);
-                    out.tab(2).println("%s", keyFullId);
+
+                    if (keyFullId != null)
+                        out.tab(2).println("%s", keyFullId);
+                    else
+                        printCreateUniqueKey(out, primaryKey);
+
                     out.tab(1).println("}");
                 }
                 else {
                     out.tab(1).overrideInherit();
                     out.tab(1).println("public %s<%s> getPrimaryKey() {", UniqueKey.class, recordType);
-                    out.tab(2).println("return %s;", keyFullId);
+                    out.tab(2).print("return ");
+
+                    if (keyFullId != null)
+                        out.tab(2).print("%s", keyFullId);
+                    else
+                        printCreateUniqueKey(out, primaryKey);
+
+                    out.println(";");
                     out.tab(1).println("}");
                 }
             }
@@ -3952,25 +4133,64 @@ public class JavaGenerator extends AbstractGenerator {
             // The remaining unique keys
             List<UniqueKeyDefinition> uniqueKeys = table.getUniqueKeys();
             if (uniqueKeys.size() > 0) {
-                final List<String> keyFullIds = out.ref(getStrategy().getFullJavaIdentifiers(uniqueKeys), 2);
+                if (generateGlobalKeyReferences()) {
+                    final List<String> keyFullIds = out.ref(getStrategy().getFullJavaIdentifiers(uniqueKeys), 2);
 
-                if (scala) {
-                    out.println();
-                    out.tab(1).println("override def getKeys : %s[ %s[%s] ] = {", List.class, UniqueKey.class, recordType);
-                    out.tab(2).println("return %s.asList[ %s[%s] ]([[%s]])", Arrays.class, UniqueKey.class, recordType, keyFullIds);
-                    out.tab(1).println("}");
+                    if (scala) {
+                        out.println();
+                        out.tab(1).println("override def getKeys : %s[ %s[%s] ] = {", List.class, UniqueKey.class, recordType);
+                        out.tab(2).println("return %s.asList[ %s[%s] ]([[%s]])", Arrays.class, UniqueKey.class, recordType, keyFullIds);
+                        out.tab(1).println("}");
+                    }
+                    else {
+                        out.tab(1).overrideInherit();
+                        out.tab(1).println("public %s<%s<%s>> getKeys() {", List.class, UniqueKey.class, recordType);
+                        out.tab(2).println("return %s.<%s<%s>>asList([[%s]]);", Arrays.class, UniqueKey.class, recordType, keyFullIds);
+                        out.tab(1).println("}");
+                    }
                 }
                 else {
-                    out.tab(1).overrideInherit();
-                    out.tab(1).println("public %s<%s<%s>> getKeys() {", List.class, UniqueKey.class, recordType);
-                    out.tab(2).println("return %s.<%s<%s>>asList([[%s]]);", Arrays.class, UniqueKey.class, recordType, keyFullIds);
-                    out.tab(1).println("}");
+                    String separator = "  ";
+
+                    if (scala) {
+                        out.println();
+                        out.tab(1).println("override def getKeys : %s[ %s[%s] ] = {", List.class, UniqueKey.class, recordType);
+                        out.tab(2).println("return %s.asList[ %s[%s] ](", Arrays.class, UniqueKey.class, recordType);
+
+                        for (UniqueKeyDefinition uniqueKey : uniqueKeys) {
+                            out.tab(3).print("%s", separator);
+                            printCreateUniqueKey(out, uniqueKey);
+                            out.println();
+                            separator = ", ";
+                        }
+
+                        out.tab(2).println(")");
+                        out.tab(1).println("}");
+                    }
+                    else {
+                        out.tab(1).overrideInherit();
+                        out.tab(1).println("public %s<%s<%s>> getKeys() {", List.class, UniqueKey.class, recordType);
+                        out.tab(2).println("return %s.<%s<%s>>asList(", Arrays.class, UniqueKey.class, recordType);
+
+                        for (UniqueKeyDefinition uniqueKey : uniqueKeys) {
+                            out.tab(3).print("%s", separator);
+                            printCreateUniqueKey(out, uniqueKey);
+                            out.println();
+                            separator = ", ";
+                        }
+
+                        out.tab(2).println(");");
+                        out.tab(1).println("}");
+
+                    }
                 }
             }
 
             // Foreign keys
             List<ForeignKeyDefinition> foreignKeys = table.getForeignKeys();
-            if (foreignKeys.size() > 0) {
+
+            // [#7554] Not yet supported with global key references turned off
+            if (foreignKeys.size() > 0 && generateGlobalKeyReferences()) {
                 final List<String> keyFullIds = out.ref(getStrategy().getFullJavaIdentifiers(foreignKeys), 2);
 
                 if (scala) {
@@ -4010,78 +4230,77 @@ public class JavaGenerator extends AbstractGenerator {
             }
         }
 
-        // [#1596] Updatable tables can provide fields for optimistic locking
-        // if properly configured
-        if (updatable) {
-            patternLoop: for (String pattern : database.getRecordVersionFields()) {
-                Pattern p = Pattern.compile(pattern, Pattern.COMMENTS);
+        // [#1596] Updatable tables can provide fields for optimistic locking if properly configured.
+        // [#7904] Records being updatable isn't a strict requirement. Version and timestamp values
+        //         can still be generated
+        versionLoop: for (String pattern : database.getRecordVersionFields()) {
+            Pattern p = Pattern.compile(pattern, Pattern.COMMENTS);
 
-                for (ColumnDefinition column : table.getColumns()) {
-                    if ((p.matcher(column.getName()).matches() ||
-                         p.matcher(column.getQualifiedName()).matches())) {
+            for (ColumnDefinition column : table.getColumns()) {
+                if ((p.matcher(column.getName()).matches() ||
+                     p.matcher(column.getQualifiedName()).matches())) {
 
-                        final String columnTypeFull = getJavaType(column.getType(resolver()));
-                        final String columnType = out.ref(columnTypeFull);
-                        final String columnId = getStrategy().getJavaIdentifier(column);
+                    final String columnTypeFull = getJavaType(column.getType(resolver()));
+                    final String columnType = out.ref(columnTypeFull);
+                    final String columnId = getStrategy().getJavaIdentifier(column);
 
-                        if (scala) {
-                            out.println();
+                    if (scala) {
+                        out.println();
 
-                            printDeprecationIfUnknownType(out, columnTypeFull);
-                            out.tab(1).println("override def getRecordVersion : %s[%s, %s] = {", TableField.class, recordType, columnType);
-                            out.tab(2).println("%s", columnId);
-                            out.tab(1).println("}");
-                        }
-                        else {
-                            if (printDeprecationIfUnknownType(out, columnTypeFull))
-                                out.tab(1).override();
-                            else
-                                out.tab(1).overrideInherit();
-
-                            out.tab(1).println("public %s<%s, %s> getRecordVersion() {", TableField.class, recordType, columnType);
-                            out.tab(2).println("return %s;", columnId);
-                            out.tab(1).println("}");
-                        }
-
-                        // Avoid generating this method twice
-                        break patternLoop;
+                        printDeprecationIfUnknownType(out, columnTypeFull);
+                        out.tab(1).println("override def getRecordVersion : %s[%s, %s] = {", TableField.class, recordType, columnType);
+                        out.tab(2).println("%s", columnId);
+                        out.tab(1).println("}");
                     }
+                    else {
+                        if (printDeprecationIfUnknownType(out, columnTypeFull))
+                            out.tab(1).override();
+                        else
+                            out.tab(1).overrideInherit();
+
+                        out.tab(1).println("public %s<%s, %s> getRecordVersion() {", TableField.class, recordType, columnType);
+                        out.tab(2).println("return %s;", columnId);
+                        out.tab(1).println("}");
+                    }
+
+                    // Avoid generating this method twice
+                    break versionLoop;
                 }
             }
+        }
 
-            timestampLoop: for (String pattern : database.getRecordTimestampFields()) {
-                Pattern p = Pattern.compile(pattern, Pattern.COMMENTS);
+        timestampLoop: for (String pattern : database.getRecordTimestampFields()) {
+            Pattern p = Pattern.compile(pattern, Pattern.COMMENTS);
 
-                for (ColumnDefinition column : table.getColumns()) {
-                    if ((p.matcher(column.getName()).matches() ||
-                         p.matcher(column.getQualifiedName()).matches())) {
+            for (ColumnDefinition column : table.getColumns()) {
+                if ((p.matcher(column.getName()).matches() ||
+                     p.matcher(column.getQualifiedName()).matches())) {
 
-                        final String columnTypeFull = getJavaType(column.getType(resolver()));
-                        final String columnType = out.ref(columnTypeFull);
-                        final String columnId = getStrategy().getJavaIdentifier(column);
+                    final String columnTypeFull = getJavaType(column.getType(resolver()));
+                    final String columnType = out.ref(columnTypeFull);
+                    final String columnId = getStrategy().getJavaIdentifier(column);
 
-                        if (scala) {
-                            out.println();
+                    if (scala) {
+                        out.println();
 
-                            printDeprecationIfUnknownType(out, columnTypeFull);
-                            out.tab(1).println("override def getRecordTimestamp : %s[%s, %s] = {", TableField.class, recordType, columnType);
-                            out.tab(2).println("%s", columnId);
-                            out.tab(1).println("}");
-                        }
-                        else {
-                            if (printDeprecationIfUnknownType(out, columnTypeFull))
-                                out.tab(1).override();
-                            else
-                                out.tab(1).overrideInherit();
-
-                            out.tab(1).println("public %s<%s, %s> getRecordTimestamp() {", TableField.class, recordType, columnType);
-                            out.tab(2).println("return %s;", columnId);
-                            out.tab(1).println("}");
-                        }
-
-                        // Avoid generating this method twice
-                        break timestampLoop;
+                        printDeprecationIfUnknownType(out, columnTypeFull);
+                        out.tab(1).println("override def getRecordTimestamp : %s[%s, %s] = {", TableField.class, recordType, columnType);
+                        out.tab(2).println("%s", columnId);
+                        out.tab(1).println("}");
                     }
+                    else {
+                        if (printDeprecationIfUnknownType(out, columnTypeFull))
+                            out.tab(1).override();
+                        else
+                            out.tab(1).overrideInherit();
+
+                        out.tab(1).println("public %s<%s, %s> getRecordTimestamp() {", TableField.class, recordType, columnType);
+                        out.tab(2).println("return %s;", columnId);
+                        out.tab(1).println("}");
+                    }
+
+                    // Avoid generating this method twice
+                    break timestampLoop;
                 }
             }
         }
@@ -4181,6 +4400,27 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).println("}");
         }
 
+        // [#7809] fieldsRow()
+        int degree = table.getColumns().size();
+        String rowType = refRowType(out, table.getColumns());
+
+        if (generateRecordsImplementingRecordN() && degree > 0 && degree <= Constants.MAX_ROW_DEGREE) {
+            out.tab(1).header("Row%s type methods", degree);
+
+            if (scala) {
+                out.println();
+                out.tab(1).println("override def fieldsRow : %s[%s] = {", out.ref(Row.class.getName() + degree), rowType);
+                out.tab(2).println("super.fieldsRow.asInstanceOf[ %s[%s] ]", out.ref(Row.class.getName() + degree), rowType);
+                out.tab(1).println("}");
+            }
+            else {
+                out.tab(1).overrideInherit();
+                out.tab(1).println("public %s<%s> fieldsRow() {", out.ref(Row.class.getName() + degree), rowType);
+                out.tab(2).println("return (%s) super.fieldsRow();", out.ref(Row.class.getName() + degree));
+                out.tab(1).println("}");
+            }
+        }
+
         // [#1070] Table-valued functions should generate an additional set of call() methods
         if (table.isTableValuedFunction()) {
             for (boolean parametersAsField : new boolean[] { false, true }) {
@@ -4248,6 +4488,28 @@ public class JavaGenerator extends AbstractGenerator {
 
         generateTableClassFooter(table, out);
         out.println("}");
+        closeJavaWriter(out);
+    }
+
+    protected void generateEmbeddables(SchemaDefinition schema) {
+        log.info("Generating embeddables");
+
+        for (EmbeddableDefinition embeddable : database.getEmbeddables(schema)) {
+            try {
+                generateEmbeddable(schema, embeddable);
+            }
+            catch (Exception e) {
+                log.error("Error while generating embeddable " + embeddable, e);
+            }
+        }
+
+        watch.splitInfo("Tables generated");
+    }
+
+    @SuppressWarnings("unused")
+    protected void generateEmbeddable(SchemaDefinition schema, EmbeddableDefinition embeddable) {
+        JavaWriter out = newJavaWriter(getFile(embeddable, Mode.RECORD));
+        generateRecord0(embeddable, out);
         closeJavaWriter(out);
     }
 
@@ -4322,12 +4584,15 @@ public class JavaGenerator extends AbstractGenerator {
         else
             out.println("public class Sequences {");
 
+        boolean qualifySequenceClassReferences = containsConflictingDefinition(schema, database.getSequences(schema));
+
         for (SequenceDefinition sequence : database.getSequences(schema)) {
             final String seqTypeFull = getJavaType(sequence.getType(resolver()));
             final String seqType = out.ref(seqTypeFull);
             final String seqId = getStrategy().getJavaIdentifier(sequence);
             final String seqName = sequence.getOutputName();
-            final String schemaId = out.ref(getStrategy().getFullJavaIdentifier(schema), 2);
+            final String schemaId = qualifySequenceClassReferences ? getStrategy().getFullJavaIdentifier(schema)
+                : out.ref(getStrategy().getFullJavaIdentifier(schema), 2);
             final String typeRef = getJavaTypeReference(sequence.getDatabase(), sequence.getType(resolver()));
 
             if (!printDeprecationIfUnknownType(out, seqTypeFull))
@@ -4343,6 +4608,14 @@ public class JavaGenerator extends AbstractGenerator {
         closeJavaWriter(out);
 
         watch.splitInfo("Sequences generated");
+    }
+
+    private boolean containsConflictingDefinition(SchemaDefinition schema, List<? extends Definition> definitions) {
+        final String unqualifiedSchemaId = getStrategy().getJavaIdentifier(schema);
+        for (Definition def : definitions)
+            if (unqualifiedSchemaId.equals(getStrategy().getJavaIdentifier(def)))
+                return true;
+        return false;
     }
 
     protected void generateCatalog(CatalogDefinition catalog) {
@@ -4383,7 +4656,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).println("public static final %s %s = new %s();", className, catalogId, className);
         }
 
-        List<SchemaDefinition> schemas = new ArrayList<SchemaDefinition>();
+        List<SchemaDefinition> schemas = new ArrayList<>();
         if (generateGlobalSchemaReferences()) {
             for (SchemaDefinition schema : catalog.getSchemata()) {
                 if (generateSchemaIfEmpty(schema)) {
@@ -4560,7 +4833,7 @@ public class JavaGenerator extends AbstractGenerator {
             String getter = getStrategy().getJavaGetterName(column, Mode.INTERFACE);
 
             if (scala)
-            	out.tab(2).println("%s(from.%s)", setter, getter);
+                out.tab(2).println("%s(from.%s)", setter, getter);
             else
                 out.tab(2).println("%s(from.%s());", setter, getter);
         }
@@ -4569,7 +4842,7 @@ public class JavaGenerator extends AbstractGenerator {
 
         if (generateInterfaces() && !generateImmutableInterfaces()) {
             if (scala) {
-            	out.tab(1).println("public <E extends %s> E into(E into) {", qualified);
+                out.tab(1).println("public <E extends %s> E into(E into) {", qualified);
                 out.tab(2).println("into.from(this)");
                 out.tab(2).println("return into");
                 out.tab(1).println("}");
@@ -4647,33 +4920,36 @@ public class JavaGenerator extends AbstractGenerator {
             }
 
             StringBuilder sb1 = new StringBuilder();
-            String glue1 = "\n";
+            String glue1 = generateNewline();
 
             for (UniqueKeyDefinition uk : table.getUniqueKeys()) {
+                sb1.append(glue1);
+                sb1.append("\t")
+                   .append(scala ? "new " : "@")
 
-                // Single-column keys are annotated on the column itself
-                if (uk.getKeyColumns().size() > 1) {
-                    sb1.append(glue1);
-                    sb1.append("\t")
-                       .append(scala ? "new " : "@")
+                   // Since JPA 1.0
+                   .append(out.ref("javax.persistence.UniqueConstraint"))
+                   .append("(");
 
-                       // Since JPA 1.0
-                       .append(out.ref("javax.persistence.UniqueConstraint")).append("(columnNames = ").append(scala ? "Array(" : "{");
+                if (!StringUtils.isBlank(uk.getOutputName()))
+                    sb1.append("name = \"" + uk.getOutputName().replace("\"", "\\\"") + "\", ");
 
-                    String glue1Inner = "";
-                    for (ColumnDefinition column : uk.getKeyColumns()) {
-                        sb1.append(glue1Inner);
-                        sb1.append("\"");
-                        sb1.append(column.getName().replace("\"", "\\\""));
-                        sb1.append("\"");
+                sb1.append("columnNames = ")
+                   .append(scala ? "Array(" : "{");
 
-                        glue1Inner = ", ";
-                    }
+                String glue1Inner = "";
+                for (ColumnDefinition column : uk.getKeyColumns()) {
+                    sb1.append(glue1Inner);
+                    sb1.append("\"");
+                    sb1.append(column.getName().replace("\"", "\\\""));
+                    sb1.append("\"");
 
-                    sb1.append(scala ? ")" : "}").append(")");
-
-                    glue1 = ",\n";
+                    glue1Inner = ", ";
                 }
+
+                sb1.append(scala ? ")" : "}").append(")");
+
+                glue1 = "," + generateNewline();
             }
 
             if (sb1.length() > 0) {
@@ -4685,7 +4961,7 @@ public class JavaGenerator extends AbstractGenerator {
 
             if (StringUtils.isBlank(generateJPAVersion()) || "2.1".compareTo(generateJPAVersion()) <= 0) {
                 StringBuilder sb2 = new StringBuilder();
-                String glue2 = "\n";
+                String glue2 = generateNewline();
 
                 for (IndexDefinition index : table.getIndexes()) {
                     sb2.append(glue2);
@@ -4713,7 +4989,7 @@ public class JavaGenerator extends AbstractGenerator {
                     }
 
                     sb2.append("\")");
-                    glue2 = ",\n";
+                    glue2 = "," + generateNewline();
                 }
 
                 if (sb2.length() > 0) {
@@ -4731,7 +5007,6 @@ public class JavaGenerator extends AbstractGenerator {
     protected void printColumnJPAAnnotation(JavaWriter out, ColumnDefinition column) {
         if (generateJPAAnnotations()) {
             UniqueKeyDefinition pk = column.getPrimaryKey();
-            List<UniqueKeyDefinition> uks = column.getUniqueKeys();
 
             if (pk != null) {
                 if (pk.getKeyColumns().size() == 1) {
@@ -4744,14 +5019,6 @@ public class JavaGenerator extends AbstractGenerator {
                         out.tab(1).println("@%s(strategy = %s.IDENTITY)",
                             out.ref("javax.persistence.GeneratedValue"),
                             out.ref("javax.persistence.GenerationType"));
-                }
-            }
-
-            String unique = "";
-            for (UniqueKeyDefinition uk : uks) {
-                if (uk.getKeyColumns().size() == 1) {
-                    unique = ", unique = true";
-                    break;
                 }
             }
 
@@ -4775,11 +5042,13 @@ public class JavaGenerator extends AbstractGenerator {
                 }
             }
 
+            // [#8535] The unique flag is not set on the column, but only on
+            //         the table's @UniqueConstraint section.
+
             // Since JPA 1.0
             out.print("\t@%s(name = \"", out.ref("javax.persistence.Column"));
             out.print(column.getName().replace("\"", "\\\""));
             out.print("\"");
-            out.print(unique);
             out.print(nullable);
             out.print(length);
             out.print(precision);
@@ -4832,7 +5101,7 @@ public class JavaGenerator extends AbstractGenerator {
         if (generateDeprecationOnUnknownTypes() && "java.lang.Object".equals(type)) {
             out.tab(indentation).javadoc("@deprecated Unknown data type. "
                 + "Please define an explicit {@link org.jooq.Binding} to specify how this "
-                + "type should be handled. Deprecation can be turned off using <deprecationOnUnknownTypes/> "
+                + "type should be handled. Deprecation can be turned off using {@literal <deprecationOnUnknownTypes/>} "
                 + "in your code generator configuration.");
             out.tab(indentation).println("@java.lang.Deprecated");
             return true;
@@ -4878,7 +5147,7 @@ public class JavaGenerator extends AbstractGenerator {
         printPackage(out, routine);
 
         if (scala) {
-        	out.println("object %s {", className);
+            out.println("object %s {", className);
             for (ParameterDefinition parameter : routine.getAllParameters()) {
                 final String paramTypeFull = getJavaType(parameter.getType(resolver()));
                 final String paramType = out.ref(paramTypeFull);
@@ -4895,7 +5164,7 @@ public class JavaGenerator extends AbstractGenerator {
                     out.tab(1).javadoc("The parameter <code>%s</code>.%s", parameter.getQualifiedOutputName(), parameterComment(paramComment));
 
                 out.tab(1).println("val %s : %s[%s] = %s.createParameter(\"%s\", %s, %s, %s" + converterTemplate(converter) + converterTemplate(binding) + ")",
-                        paramId, Parameter.class, paramType, AbstractRoutine.class, paramName, paramTypeRef, isDefaulted, isUnnamed, converter, binding);
+                        paramId, Parameter.class, paramType, Internal.class, paramName, paramTypeRef, isDefaulted, isUnnamed, converter, binding);
             }
 
             out.println("}");
@@ -4913,7 +5182,7 @@ public class JavaGenerator extends AbstractGenerator {
         }
         else {
             out.println("public class %s extends %s<%s>[[before= implements ][%s]] {",
-            		className, AbstractRoutine.class, returnType, interfaces);
+                    className, AbstractRoutine.class, returnType, interfaces);
             out.printSerial();
 
             for (ParameterDefinition parameter : routine.getAllParameters()) {
@@ -4931,14 +5200,14 @@ public class JavaGenerator extends AbstractGenerator {
                 if (!printDeprecationIfUnknownType(out, paramTypeFull))
                     out.tab(1).javadoc("The parameter <code>%s</code>.%s", parameter.getQualifiedOutputName(), parameterComment(paramComment));
 
-                out.tab(1).println("public static final %s<%s> %s = createParameter(\"%s\", %s, %s, %s" + converterTemplate(converter) + converterTemplate(binding) + ");",
-                        Parameter.class, paramType, paramId, paramName, paramTypeRef, isDefaulted, isUnnamed, converter, binding);
+                out.tab(1).println("public static final %s<%s> %s = %s.createParameter(\"%s\", %s, %s, %s" + converterTemplate(converter) + converterTemplate(binding) + ");",
+                        Parameter.class, paramType, paramId, Internal.class, paramName, paramTypeRef, isDefaulted, isUnnamed, converter, binding);
             }
         }
 
 
         if (scala) {
-        	out.tab(1).println("{");
+            out.tab(1).println("{");
         }
         else {
             out.tab(1).javadoc("Create a new routine call instance");
@@ -4955,30 +5224,30 @@ public class JavaGenerator extends AbstractGenerator {
             final String paramId = getStrategy().getJavaIdentifier(parameter);
 
             if (parameter.equals(routine.getReturnValue())) {
-            	if (scala)
+                if (scala)
                     out.tab(2).println("setReturnParameter(%s.%s)", className, paramId);
-            	else
-            	    out.tab(2).println("setReturnParameter(%s);", paramId);
+                else
+                    out.tab(2).println("setReturnParameter(%s);", paramId);
             }
             else if (routine.getInParameters().contains(parameter)) {
                 if (routine.getOutParameters().contains(parameter)) {
-                	if (scala)
+                    if (scala)
                         out.tab(2).println("addInOutParameter(%s.%s)", className, paramId);
-                	else
-                		out.tab(2).println("addInOutParameter(%s);", paramId);
+                    else
+                        out.tab(2).println("addInOutParameter(%s);", paramId);
                 }
                 else {
-                	if (scala)
+                    if (scala)
                         out.tab(2).println("addInParameter(%s.%s)", className, paramId);
-                	else
-                	    out.tab(2).println("addInParameter(%s);", paramId);
+                    else
+                        out.tab(2).println("addInParameter(%s);", paramId);
                 }
             }
             else {
-            	if (scala)
+                if (scala)
                     out.tab(2).println("addOutParameter(%s.%s)", className, paramId);
-            	else
-            	    out.tab(2).println("addOutParameter(%s);", paramId);
+                else
+                    out.tab(2).println("addOutParameter(%s);", paramId);
             }
 
 
@@ -4994,7 +5263,7 @@ public class JavaGenerator extends AbstractGenerator {
         }
 
         if (routine.getOverload() != null) {
-        	if (scala)
+            if (scala)
                 out.tab(2).println("setOverloaded(true)");
             else
                 out.tab(2).println("setOverloaded(true);");
@@ -5022,7 +5291,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).javadoc("Set the <code>%s</code> parameter IN value to the routine", parameter.getOutputName());
 
             if (scala) {
-            	out.tab(1).println("def %s(%s : %s) : Unit = {", setter, paramName, refNumberType(out, parameter.getType(resolver())));
+                out.tab(1).println("def %s(%s : %s) : Unit = {", setter, paramName, refNumberType(out, parameter.getType(resolver())));
                 out.tab(2).println("set%s(%s.%s, %s)", numberValue, className, paramId, paramName);
                 out.tab(1).println("}");
             }
@@ -5124,7 +5393,7 @@ public class JavaGenerator extends AbstractGenerator {
 
         if (scala)
             out.tab(1).print("def %s(",
-        		getStrategy().getJavaMethodName(function, Mode.DEFAULT));
+                getStrategy().getJavaMethodName(function, Mode.DEFAULT));
         else
             out.tab(1).print("public static %s<%s> %s(",
                 function.isAggregate() ? AggregateFunction.class : Field.class,
@@ -5136,7 +5405,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.print(separator);
 
             if (scala) {
-            	out.print("%s : ", getStrategy().getJavaMemberName(parameter));
+                out.print("%s : ", getStrategy().getJavaMemberName(parameter));
 
                 if (parametersAsField) {
                     out.print("%s[%s]", Field.class, refExtendsNumberType(out, parameter.getType(resolver())));
@@ -5158,13 +5427,13 @@ public class JavaGenerator extends AbstractGenerator {
         }
 
         if (scala) {
-        	out.println(") : %s[%s] = {",
+            out.println(") : %s[%s] = {",
                 function.isAggregate() ? AggregateFunction.class : Field.class,
                 functionType);
             out.tab(2).println("val %s = new %s", localVar, className);
         }
         else {
-        	out.println(") {");
+            out.println(") {");
             out.tab(2).println("%s %s = new %s();", className, localVar, className);
         }
 
@@ -5275,17 +5544,15 @@ public class JavaGenerator extends AbstractGenerator {
 
         // [#2502] - Some name mangling in the event of procedure arguments
         // called "configuration"
-        Set<String> names = new HashSet<String>();
+        Set<String> names = new HashSet<>();
 
-        for (Definition definition : definitions) {
+        for (Definition definition : definitions)
             names.add(getStrategy().getJavaMemberName(definition));
-        }
 
         String name = defaultName;
 
-        while (names.contains(name)) {
+        while (names.contains(name))
             name += "_";
-        }
 
         return name;
     }
@@ -5318,10 +5585,10 @@ public class JavaGenerator extends AbstractGenerator {
 
         String glue = "";
         if (!instance) {
-        	if (scala)
-        		out.print("%s : %s", configurationArgument, Configuration.class);
-        	else
-        	    out.print("%s %s", Configuration.class, configurationArgument);
+            if (scala)
+                out.print("%s : %s", configurationArgument, Configuration.class);
+            else
+                out.print("%s %s", Configuration.class, configurationArgument);
 
             glue = ", ";
         }
@@ -5336,7 +5603,7 @@ public class JavaGenerator extends AbstractGenerator {
             final String paramMember = getStrategy().getJavaMemberName(parameter);
 
             if (scala)
-            	out.print("%s%s : %s", glue, paramMember, paramType);
+                out.print("%s%s : %s", glue, paramMember, paramType);
             else
                 out.print("%s%s %s", glue, paramType, paramMember);
 
@@ -5344,7 +5611,7 @@ public class JavaGenerator extends AbstractGenerator {
         }
 
         if (scala) {
-        	out.println(") : %s = {", functionType);
+            out.println(") : %s = {", functionType);
             out.tab(2).println("val %s = new %s()", localVar, className);
         }
         else {
@@ -5398,7 +5665,7 @@ public class JavaGenerator extends AbstractGenerator {
             out.tab(1).javadoc("Call <code>%s</code>", procedure.getQualifiedOutputName());
 
         if (scala) {
-        	out.tab(1).print("def ");
+            out.tab(1).print("def ");
         }
         else {
             out.tab(1).print("public ");
@@ -5424,10 +5691,10 @@ public class JavaGenerator extends AbstractGenerator {
 
         String glue = "";
         if (!instance) {
-        	if (scala)
-        		out.print("%s : %s", configurationArgument, Configuration.class);
-        	else
-        		out.print("%s %s", Configuration.class, configurationArgument);
+            if (scala)
+                out.print("%s : %s", configurationArgument, Configuration.class);
+            else
+                out.print("%s %s", Configuration.class, configurationArgument);
 
             glue = ", ";
         }
@@ -5510,24 +5777,24 @@ public class JavaGenerator extends AbstractGenerator {
                         out.tab(2).println("from((%s) %s.%s());", columnTypeInterface, localVar, getter);
                 }
                 else {
-                	if (scala)
+                    if (scala)
                         out.tab(2).println("from(%s.%s)", localVar, getter);
-                	else
-                	    out.tab(2).println("from(%s.%s());", localVar, getter);
+                    else
+                        out.tab(2).println("from(%s.%s());", localVar, getter);
                 }
             }
 
             if (outParams.size() == 1) {
-            	if (scala)
+                if (scala)
                     out.tab(2).println("return %s.%s", localVar, getter);
-            	else
-            	    out.tab(2).println("return %s.%s();", localVar, getter);
+                else
+                    out.tab(2).println("return %s.%s();", localVar, getter);
             }
             else if (outParams.size() > 1) {
-            	if (scala)
+                if (scala)
                     out.tab(2).println("return %s", localVar);
-            	else
-            	    out.tab(2).println("return %s;", localVar);
+                else
+                    out.tab(2).println("return %s;", localVar);
             }
         }
 
@@ -5659,16 +5926,47 @@ public class JavaGenerator extends AbstractGenerator {
 
     protected void printClassAnnotations(JavaWriter out, SchemaDefinition schema, CatalogDefinition catalog) {
         if (generateGeneratedAnnotation()) {
-            out.println("@%s(", out.ref("javax.annotation.Generated"));
+
+            // [#7581] The concrete annotation type depends on the JDK, with
+            //         javax.annotation.Generated being deprecated in JDK 9
+            GeneratedAnnotationType type = generateGeneratedAnnotationType();
+            if (type == null)
+                type = GeneratedAnnotationType.DETECT_FROM_JDK;
+
+            String generated;
+            switch (type) {
+                case DETECT_FROM_JDK:
+                    try {
+
+                        // Seems more reliable than tampering with java.version
+                        Reflect.on("java.util.Optional").call("of", new Object()).call("stream");
+                        generated = "javax.annotation.processing.Generated";
+                    }
+                    catch (ReflectException e) {
+                        generated = "javax.annotation.Generated";
+                    }
+
+                    break;
+                case JAVAX_ANNOTATION_GENERATED:
+                    generated = "javax.annotation.Generated";
+                    break;
+                case JAVAX_ANNOTATION_PROCESSING_GENERATED:
+                    generated = "javax.annotation.processing.Generated";
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported type: " + type);
+            }
+
+            out.println("@%s(", out.ref(generated));
 
             if (useSchemaVersionProvider() || useCatalogVersionProvider()) {
                 boolean hasCatalogVersion = !StringUtils.isBlank(catalogVersions.get(catalog));
                 boolean hasSchemaVersion = !StringUtils.isBlank(schemaVersions.get(schema));
 
-            	if (scala)
+                if (scala)
                     out.tab(1).println("value = %s(", out.ref("scala.Array"));
-            	else
-            	    out.tab(1).println("value = {");
+                else
+                    out.tab(1).println("value = {");
 
                 out.tab(2).println("\"http://www.jooq.org\",");
                 out.tab(2).println("\"jOOQ version:%s\"%s", Constants.VERSION, (hasCatalogVersion || hasSchemaVersion ? "," : ""));
@@ -5687,10 +5985,10 @@ public class JavaGenerator extends AbstractGenerator {
                 out.tab(1).println("comments = \"This class is generated by jOOQ\"");
             }
             else {
-            	if (scala)
+                if (scala)
                     out.tab(1).println("value = %s(", out.ref("scala.Array"));
-            	else
-            	    out.tab(1).println("value = {");
+                else
+                    out.tab(1).println("value = {");
 
                 out.tab(2).println("\"http://www.jooq.org\",");
                 out.tab(2).println("\"jOOQ version:%s\"", Constants.VERSION);
@@ -5740,8 +6038,8 @@ public class JavaGenerator extends AbstractGenerator {
      */
     protected void printJavadocParagraph(JavaWriter out, String comment, String indent) {
 
-        // [#3450] [#4880] Must not print */ inside Javadoc
-        String escaped = comment.replace("/*", "/ *").replace("*/", "* /");
+        // [#3450] [#4880] [#7693] Must not print */ inside Javadoc
+        String escaped = JavaWriter.escapeJavadoc(comment);
         printParagraph(out, escaped, indent + " * ");
     }
 
@@ -5859,9 +6157,9 @@ public class JavaGenerator extends AbstractGenerator {
                 db,
                 type.getSchema(),
                 baseType.last(),
-                0,
-                0,
-                0,
+                type.getPrecision(),
+                type.getScale(),
+                type.getLength(),
                 true,
                 false,
                 null,
@@ -6125,6 +6423,9 @@ public class JavaGenerator extends AbstractGenerator {
             }
             else {
                 sqlDataTypeRef = SQLDataType.class.getCanonicalName() + ".OTHER";
+
+                if (sb.length() == 0)
+                    sb.append(sqlDataTypeRef);
             }
 
             if (!dataType.nullable())
@@ -6191,7 +6492,7 @@ public class JavaGenerator extends AbstractGenerator {
     @SafeVarargs
 
     private static final <T> List<T> list(T... objects) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
 
         if (objects != null)
             for (T object : objects)
@@ -6202,7 +6503,7 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     private static final <T> List<T> list(T first, List<T> remaining) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
 
         result.addAll(list(first));
         result.addAll(remaining);
@@ -6211,7 +6512,7 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     private static final <T> List<T> first(Collection<T> objects) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
 
         if (objects != null) {
             for (T object : objects) {
@@ -6224,7 +6525,7 @@ public class JavaGenerator extends AbstractGenerator {
     }
 
     private static final <T> List<T> remaining(Collection<T> objects) {
-        List<T> result = new ArrayList<T>();
+        List<T> result = new ArrayList<>();
 
         if (objects != null) {
             result.addAll(objects);
@@ -6257,7 +6558,14 @@ public class JavaGenerator extends AbstractGenerator {
     // [#3880] Users may need to call this method
     protected JavaWriter newJavaWriter(File file) {
         file = fixSuffix(file);
-        return new JavaWriter(file, generateFullyQualifiedTypes(), targetEncoding, generateJavadoc());
+        JavaWriter result = new JavaWriter(file, generateFullyQualifiedTypes(), targetEncoding, generateJavadoc(), fileCache);
+
+        if (generateIndentation != null)
+            result.tabString(generateIndentation);
+        if (generateNewline != null)
+            result.newlineString(generateNewline);
+
+        return result;
     }
 
     protected File getFile(Definition definition) {

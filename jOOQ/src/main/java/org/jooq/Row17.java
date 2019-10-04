@@ -49,30 +49,57 @@ import static org.jooq.SQLDialect.H2;
 import static org.jooq.SQLDialect.HSQLDB;
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
 // ...
 // ...
 // ...
+// ...
 
-import java.util.Collection;
-
-import javax.annotation.Generated;
-
+import org.jooq.Comparator;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 
+import java.util.Collection;
+
 /**
- * A model type for a row value expression with degree <code>17</code>.
+ * A row value expression.
+ * <p>
+ * Row value expressions are mainly useful for use in predicates, when comparing
+ * several values in one go, which can be more elegant than expanding the row
+ * value expression predicate in other equivalent syntaxes. This is especially
+ * true for non-equality predicates. For instance, the following two predicates
+ * are equivalent in SQL:
+ * <p>
+ * <code><pre>
+ * (A, B) &gt; (X, Y)
+ * (A &gt; X) OR (A = X AND B &gt; Y)
+ * </pre></code>
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select()
+ *    .from(CUSTOMER)
+ *    .where(row(CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME).in(
+ *        select(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).from(ACTOR)
+ *    ))
+ *    .fetch();
+ * </pre></code>
  * <p>
  * Note: Not all databases support row value expressions, but many row value
  * expression operations can be emulated on all databases. See relevant row
  * value expression method Javadocs for details.
+ * <p>
+ * Instances can be created using {@link DSL#row(Object...)} and overloads.
  *
  * @author Lukas Eder
  */
-@Generated("This class was generated using jOOQ-tools")
 public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> extends Row {
 
     // ------------------------------------------------------------------------
@@ -267,7 +294,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see #greaterThan(Select)
      * @see #greaterOrEqual(Select)
      */
-    @Support
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition compare(Comparator comparator, QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     // ------------------------------------------------------------------------
@@ -330,7 +357,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition equal(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -386,7 +413,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition eq(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -395,7 +422,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * <p>
      * Row non-equality comparison predicates can be emulated in those
      * databases that do not support such predicates natively:
-     * <code>(A, B) &lt;> (1, 2)</code> is equivalent to
+     * <code>(A, B) &lt;&gt; (1, 2)</code> is equivalent to
      * <code>NOT(A = 1 AND B = 2)</code>
      */
     @Support
@@ -445,7 +472,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition notEqual(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -501,7 +528,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition ne(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     // ------------------------------------------------------------------------
@@ -624,7 +651,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition lessThan(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -680,7 +707,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition lt(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -739,7 +766,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition lessOrEqual(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -795,7 +822,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition le(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -804,8 +831,8 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * <p>
      * Row order comparison predicates can be emulated in those
      * databases that do not support such predicates natively:
-     * <code>(A, B, C) > (1, 2, 3)</code> is equivalent to
-     * <code>A > 1 OR (A = 1 AND B > 2) OR (A = 1 AND B = 2 AND C > 3)</code>
+     * <code>(A, B, C) &gt; (1, 2, 3)</code> is equivalent to
+     * <code>A &gt; 1 OR (A = 1 AND B &gt; 2) OR (A = 1 AND B = 2 AND C &gt; 3)</code>
      */
     @Support
     Condition greaterThan(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row);
@@ -854,7 +881,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition greaterThan(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -910,7 +937,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition gt(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -919,8 +946,8 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * <p>
      * Row order comparison predicates can be emulated in those
      * databases that do not support such predicates natively:
-     * <code>(A, B) >= (1, 2)</code> is equivalent to
-     * <code>A > 1 OR (A = 1 AND B > 2) OR (A = 1 AND B = 2)</code>
+     * <code>(A, B) &gt;= (1, 2)</code> is equivalent to
+     * <code>A &gt; 1 OR (A = 1 AND B &gt; 2) OR (A = 1 AND B = 2)</code>
      */
     @Support
     Condition greaterOrEqual(Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17> row);
@@ -969,7 +996,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition greaterOrEqual(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     /**
@@ -1025,7 +1052,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * @see DSL#any(Select)
      * @see DSL#any(Object...)
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    @Support({ CUBRID, FIREBIRD, H2, HSQLDB, POSTGRES })
     Condition ge(QuantifiedSelect<? extends Record17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17>> select);
 
     // ------------------------------------------------------------------------
@@ -1074,7 +1101,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * This is the same as calling <code>between(minValue).and(maxValue)</code>
      * <p>
      * The expression <code>A BETWEEN B AND C</code> is equivalent to the
-     * expression <code>A >= B AND A &lt;= C</code> for those SQL dialects that do
+     * expression <code>A &gt;= B AND A &lt;= C</code> for those SQL dialects that do
      * not properly support the <code>BETWEEN</code> predicate for row value
      * expressions
      */
@@ -1136,7 +1163,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * This is the same as calling <code>betweenSymmetric(minValue).and(maxValue)</code>
      * <p>
      * The expression <code>A BETWEEN SYMMETRIC B AND C</code> is equivalent to
-     * the expression <code>(A >= B AND A &lt;= C) OR (A >= C AND A &lt;= B)</code>
+     * the expression <code>(A &gt;= B AND A &lt;= C) OR (A &gt;= C AND A &lt;= B)</code>
      * for those SQL dialects that do not properly support the
      * <code>BETWEEN</code> predicate for row value expressions
      */
@@ -1198,7 +1225,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * This is the same as calling <code>notBetween(minValue).and(maxValue)</code>
      * <p>
      * The expression <code>A NOT BETWEEN B AND C</code> is equivalent to the
-     * expression <code>A &lt; B OR A > C</code> for those SQL dialects that do
+     * expression <code>A &lt; B OR A &gt; C</code> for those SQL dialects that do
      * not properly support the <code>BETWEEN</code> predicate for row value
      * expressions
      */
@@ -1260,7 +1287,7 @@ public interface Row17<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T
      * This is the same as calling <code>notBetweenSymmetric(minValue).and(maxValue)</code>
      * <p>
      * The expression <code>A NOT BETWEEN SYMMETRIC B AND C</code> is equivalent
-     * to the expression <code>(A &lt; B OR A > C) AND (A &lt; C OR A > B)</code> for
+     * to the expression <code>(A &lt; B OR A &gt; C) AND (A &lt; C OR A &gt; B)</code> for
      * those SQL dialects that do not properly support the <code>BETWEEN</code>
      * predicate for row value expressions
      */

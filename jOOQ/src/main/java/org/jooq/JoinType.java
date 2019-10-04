@@ -38,7 +38,28 @@
 
 package org.jooq;
 
+// ...
+// ...
+// ...
+// ...
+import static org.jooq.SQLDialect.CUBRID;
+// ...
+import static org.jooq.SQLDialect.DERBY;
+import static org.jooq.SQLDialect.FIREBIRD;
+import static org.jooq.SQLDialect.H2;
+// ...
+import static org.jooq.SQLDialect.HSQLDB;
+// ...
+// ...
+import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
+// ...
+// ...
+import static org.jooq.SQLDialect.POSTGRES;
+// ...
+// ...
+// ...
 // ...
 // ...
 // ...
@@ -46,7 +67,7 @@ import static org.jooq.SQLDialect.MYSQL;
 import org.jooq.impl.DSL;
 
 /**
- * The type of join
+ * The type of join.
  *
  * @author Lukas Eder
  */
@@ -56,7 +77,7 @@ public enum JoinType {
      * <code>INNER JOIN</code> two tables.
      */
     @Support
-    JOIN("join", true),
+    JOIN("join", "inner join", "join", true),
 
     /**
      * <code>CROSS JOIN</code> two tables.
@@ -68,54 +89,60 @@ public enum JoinType {
      * <code>LEFT OUTER JOIN</code> two tables.
      */
     @Support
-    LEFT_OUTER_JOIN("left outer join", true),
+    LEFT_OUTER_JOIN("left outer join", "left outer join", "left join", true),
 
     /**
      * <code>RIGHT OUTER JOIN</code> two tables.
      */
-    @Support
-    RIGHT_OUTER_JOIN("right outer join", true),
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    RIGHT_OUTER_JOIN("right outer join", "right outer join", "right join", true),
 
     /**
      * <code>FULL OUTER JOIN</code> two tables.
      */
-    @Support
-    FULL_OUTER_JOIN("full outer join", true),
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    FULL_OUTER_JOIN("full outer join", "full outer join", "full join", true),
 
     /**
      * <code>NATURAL INNER JOIN</code> two tables.
      */
     @Support
-    NATURAL_JOIN("natural join", false),
+    NATURAL_JOIN("natural join", "natural inner join", "natural join", false),
 
     /**
      * <code>NATURAL LEFT OUTER JOIN</code> two tables.
      */
     @Support
-    NATURAL_LEFT_OUTER_JOIN("natural left outer join", false),
+    NATURAL_LEFT_OUTER_JOIN("natural left outer join", "natural left outer join", "natural left join", false),
 
     /**
      * <code>NATURAL RIGHT OUTER JOIN</code> two tables.
      */
-    @Support
-    NATURAL_RIGHT_OUTER_JOIN("natural right outer join", false),
+    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES })
+    NATURAL_RIGHT_OUTER_JOIN("natural right outer join", "natural right outer join", "natural right join", false),
+
+    /**
+     * <code>NATURAL FULL OUTER JOIN</code> two tables.
+     */
+    @Support({ FIREBIRD, HSQLDB, POSTGRES })
+    NATURAL_FULL_OUTER_JOIN("natural full outer join", "natural full outer join", "natural full join", false),
 
     /**
      * <code>CROSS APPLY</code> two tables.
      */
-    @Support({})
+    @Support({ POSTGRES })
     CROSS_APPLY("cross apply", false),
 
     /**
      * <code>OUTER APPLY</code> two tables.
      */
-    @Support({})
+    @Support({ POSTGRES })
     OUTER_APPLY("outer apply", false),
 
     /**
      * <code>STRAIGHT_JOIN</code> two tables.
      */
-    @Support({ MYSQL })
+    @Support({ MARIADB, MYSQL })
     STRAIGHT_JOIN("straight_join", true),
 
     /**
@@ -132,22 +159,34 @@ public enum JoinType {
 
     ;
 
-    private final String  sql;
-    private final Keyword keyword;
+    private final String  defaultSql;
+    private final Keyword defaultKeyword;
+    private final Keyword includingOptionalKeywords;
+    private final Keyword excludingOptionalKeywords;
     private final boolean qualified;
 
     private JoinType(String sql, boolean qualified) {
-        this.sql = sql;
-        this.keyword = DSL.keyword(sql);
+        this(sql, sql, sql, qualified);
+    }
+
+    private JoinType(String defaultSql, String includingOptionalKeywords, String excludingOptionalKeywords, boolean qualified) {
+        this.defaultSql = defaultSql;
+        this.includingOptionalKeywords = DSL.keyword(includingOptionalKeywords);
+        this.excludingOptionalKeywords = DSL.keyword(excludingOptionalKeywords);
+        this.defaultKeyword = DSL.keyword(defaultSql);
         this.qualified = qualified;
     }
 
     public final String toSQL() {
-        return sql;
+        return defaultSql;
     }
 
     public final Keyword toKeyword() {
-        return keyword;
+        return defaultKeyword;
+    }
+
+    public final Keyword toKeyword(boolean includeOptionalKeywords) {
+        return includeOptionalKeywords ? includingOptionalKeywords : excludingOptionalKeywords;
     }
 
     /**

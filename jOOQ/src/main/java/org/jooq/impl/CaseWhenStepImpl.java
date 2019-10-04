@@ -51,14 +51,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.jooq.CaseWhenStep;
-import org.jooq.Clause;
-import org.jooq.Configuration;
 import org.jooq.Context;
 import org.jooq.DataType;
 import org.jooq.Field;
-import org.jooq.QueryPart;
+// ...
 
-final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWhenStep<V, T> {
+final class CaseWhenStepImpl<V, T> extends AbstractField<T> implements CaseWhenStep<V, T> {
 
     /**
      * Generated UID
@@ -68,7 +66,7 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
     private final Field<V>       value;
     private final List<Field<V>> compareValues;
     private final List<Field<T>> results;
-    private Field<T>             otherwise;
+    private Field<T>             else_;
 
     CaseWhenStepImpl(Field<V> value, Field<V> compareValue, Field<T> result) {
         this(value, result.getDataType());
@@ -84,11 +82,11 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
     }
 
     private CaseWhenStepImpl(Field<V> value, DataType<T> type) {
-        super("case", type);
+        super(DSL.name("case"), type);
 
         this.value = value;
-        this.compareValues = new ArrayList<Field<V>>();
-        this.results = new ArrayList<Field<T>>();
+        this.compareValues = new ArrayList<>();
+        this.results = new ArrayList<>();
     }
 
 
@@ -102,12 +100,22 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
 
     @Override
     public final Field<T> otherwise(T result) {
-        return otherwise(Tools.field(result));
+        return else_(result);
     }
 
     @Override
     public final Field<T> otherwise(Field<T> result) {
-        this.otherwise = result;
+        return else_(result);
+    }
+
+    @Override
+    public final Field<T> else_(T result) {
+        return else_(Tools.field(result));
+    }
+
+    @Override
+    public final Field<T> else_(Field<T> result) {
+        this.else_ = result;
 
         return this;
     }
@@ -152,28 +160,17 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
     }
 
     @Override
-    final QueryPart getFunction0(Configuration configuration) {
-        switch (configuration.dialect().family()) {
+    public final void accept(Context<?> ctx) {
+        switch (ctx.family()) {
+
 
 
 
 
 
             default:
-                return new Native();
-        }
-    }
-
-    private abstract class Base extends AbstractQueryPart {
-
-        /**
-         * Generated UID
-         */
-        private static final long serialVersionUID = 6146002888421945901L;
-
-        @Override
-        public final Clause[] clauses(Context<?> ctx) {
-            return null;
+                ctx.visit(new Native());
+                break;
         }
     }
 
@@ -215,7 +212,8 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
 
 
 
-    private class Native extends Base {
+
+    private class Native extends AbstractQueryPart {
 
         /**
          * Generated UID
@@ -228,7 +226,7 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
                .visit(K_CASE);
 
             int size = compareValues.size();
-            switch (ctx.configuration().dialect()) {
+            switch (ctx.family()) {
 
                 // The DERBY dialect doesn't support the simple CASE clause
                 case DERBY: {
@@ -263,14 +261,14 @@ final class CaseWhenStepImpl<V, T> extends AbstractFunction<T> implements CaseWh
                 }
             }
 
-            if (otherwise != null)
+            if (else_ != null)
                 ctx.formatSeparator()
                    .visit(K_ELSE).sql(' ')
-                   .visit(otherwise);
+                   .visit(else_);
 
             ctx.formatIndentEnd();
 
-            if (size > 1 || otherwise != null)
+            if (size > 1 || else_ != null)
                 ctx.formatSeparator();
             else
                 ctx.sql(' ');

@@ -49,6 +49,7 @@ import static org.jooq.SQLDialect.HSQLDB;
 // ...
 // ...
 import static org.jooq.SQLDialect.MARIADB;
+// ...
 import static org.jooq.SQLDialect.MYSQL;
 // ...
 import static org.jooq.SQLDialect.POSTGRES;
@@ -74,9 +75,9 @@ import static org.jooq.SQLDialect.SQLITE;
  *     FROM T_AUTHOR
  *     JOIN T_BOOK ON T_AUTHOR.ID = T_BOOK.AUTHOR_ID
  *    WHERE T_BOOK.LANGUAGE = 'DE'
- *      AND T_BOOK.PUBLISHED > '2008-01-01'
+ *      AND T_BOOK.PUBLISHED &gt; '2008-01-01'
  * GROUP BY T_AUTHOR.FIRST_NAME, T_AUTHOR.LAST_NAME
- *   HAVING COUNT(*) > 5
+ *   HAVING COUNT(*) &gt; 5
  * ORDER BY T_AUTHOR.LAST_NAME ASC NULLS FIRST
  *    LIMIT 2
  *   OFFSET 1
@@ -129,8 +130,19 @@ public interface SelectOffsetStep<R extends Record> extends SelectForUpdateStep<
      * emulated with a <code>ROW_NUMBER()</code> window function and nested
      * <code>SELECT</code> statements.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
+    @Support
     SelectForUpdateStep<R> offset(int offset);
+
+    /**
+     * Add an <code>OFFSET</code> clause to the query.
+     * <p>
+     * If there is no <code>LIMIT .. OFFSET</code> or <code>TOP</code> clause in
+     * your RDBMS, or if your RDBMS does not natively support offsets, this is
+     * emulated with a <code>ROW_NUMBER()</code> window function and nested
+     * <code>SELECT</code> statements.
+     */
+    @Support
+    SelectForUpdateStep<R> offset(Number offset);
 
     /**
      * Add an <code>OFFSET</code> clause to the query using a named parameter.
@@ -140,6 +152,6 @@ public interface SelectOffsetStep<R extends Record> extends SelectForUpdateStep<
      * emulated with a <code>ROW_NUMBER()</code> window function and nested
      * <code>SELECT</code> statements.
      */
-    @Support({ CUBRID, DERBY, FIREBIRD, H2, HSQLDB, MARIADB, MYSQL, POSTGRES, SQLITE })
-    SelectForUpdateStep<R> offset(Param<Integer> offset);
+    @Support
+    SelectForUpdateStep<R> offset(Param<? extends Number> offset);
 }

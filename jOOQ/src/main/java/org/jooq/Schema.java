@@ -41,8 +41,38 @@ package org.jooq;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.jooq.impl.DSL;
+
 /**
- * An object representing a database schema.
+ * A schema.
+ * <p>
+ * Standard SQL object identifiers come in 3 parts:
+ * <code>[catalog].[schema].[object]</code>. The schema is an object that groups
+ * a set of objects, where objects can be {@link Table}, {@link Sequence},
+ * {@link Routine} and many other types of objects.
+ * <p>
+ * If your RDBMS supports schemas, and jOOQ supports using schemas with your
+ * RDBMS, then generated schemas references can be used to qualify objects
+ * <p>
+ * <strong>Example:</strong>
+ * <p>
+ * <code><pre>
+ * // Assuming import static org.jooq.impl.DSL.*;
+ *
+ * using(configuration)
+ *    .select(SCHEMA.ACTOR.FIRST_NAME, SCHEMA.ACTOR.LAST_NAME)
+ *    .from(SCHEMA.ACTOR)
+ *    .fetch();
+ * </pre></code>
+ * <p>
+ * <strong>Compatibility:</strong>
+ * <p>
+ * Database products like {@link SQLDialect#MYSQL} and related dialects, such as
+ * {@link SQLDialect#MARIADB} use catalogs ("databases") instead of schemas, and
+ * lack schema support. For historic reasons, jOOQ treats MySQL catalogs as
+ * schemas and does not support any catalog qualifier in MySQL.
+ * <p>
+ * Instances can be created using {@link DSL#schema(Name)} and overloads.
  *
  * @author Lukas Eder
  */
@@ -52,11 +82,6 @@ public interface Schema extends Named {
      * The catalog of this schema.
      */
     Catalog getCatalog();
-
-    /**
-     * The comment of this schema.
-     */
-    String getComment();
 
     /**
      * Stream all tables contained in this schema.
